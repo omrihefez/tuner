@@ -65,9 +65,23 @@ function renderStrings() {
     btn.addEventListener("click", () => {
       state.selectedString = (state.selectedString === i) ? null : i;
       renderStrings();
+      updateAutoIndicator();
     });
     $strings.appendChild(btn);
   });
+}
+
+function updateAutoIndicator() {
+  const el = document.getElementById("auto-indicator");
+  if (!el) return;
+  if (state.selectedString === null) {
+    el.textContent = "Auto-detect — play any string, the tuner picks the closest. Tap a string to lock manually.";
+    el.classList.remove("manual");
+  } else {
+    const midi = TUNINGS[state.tuningKey].notes[state.selectedString];
+    el.textContent = `Locked to ${noteLabel(midi)}. Tap the highlighted button again to release.`;
+    el.classList.add("manual");
+  }
 }
 
 // === Auto-detect closest string ===
@@ -170,39 +184,56 @@ function tick() {
   state.rafId = requestAnimationFrame(tick);
 }
 
-// === Mic start/stop ===
-async function start() {
-  try {
-    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
-    state.micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-    });
-    const source = state.audioCtx.createMediaStreamSource(state.micStream);
-    state.analyser = state.audioCtx.createAnalyser();
-    state.analyser.fftSize = 4096;     // ~93 ms at 44.1 kHz — enough cycles of even E1 (41 Hz = ~24 ms)
-    state.analyser.smoothingTimeConstant = 0;
-    source.connect(state.analyser);
-
-    $startBtn.textContent = "Stop";
-    $startBtn.classList.add("listening");
-    $micStatus.textContent = "Listening…";
-    $micStatus.classList.remove("hidden", "error");
-
-    tick();
-  } catch (err) {
-    const name = err.name || "Error";
-    let msg = `Mic error: ${err.message || name}`;
-    if (name === "NotAllowedError" || /denied/i.test(err.message || "")) {
-      msg = "Mic permission denied. Tap the 🔒 lock icon in the URL bar → Permissions → Microphone → Allow, then reload. Or open this page in Incognito for a fresh prompt.";
-    } else if (name === "NotFoundError") {
-      msg = "No microphone found on this device.";
-    } else if (location.protocol !== "https:") {
-      msg = "Mic only works over HTTPS. Visit the site at https://tuner.omrihefez.com.";
-    }
-    $micStatus.textContent = msg;
-    $micStatus.classList.remove("hidden");
-    $micStatus.classList.add("error");
+// === Mic start ===
+// IMPORTANT: getUserMedia MUST be called synchronously inside the click handler,
+// not behind any async/await. Chrome on Android loses the user-gesture context
+// across awaits and will deny mic access without showing a prompt. Pattern:
+//   click → getUserMedia (sync promise) → .then(setup AudioContext etc.).
+function start() {
+  diag("start clicked");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showMicError("This browser doesn't support getUserMedia. Try Chrome or Samsung Internet.");
+    return;
   }
+  diag("calling getUserMedia({audio:true})…");
+  // audio:true is the simplest possible constraint — Chrome won't reject it for unsupported sub-constraints.
+  // No AudioContext creation before this call — that could break the user-gesture chain on some browsers.
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => {
+      diag("getUserMedia resolved — stream tracks: " + stream.getAudioTracks().length);
+      state.micStream = stream;
+      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = state.audioCtx.createMediaStreamSource(stream);
+      state.analyser = state.audioCtx.createAnalyser();
+      state.analyser.fftSize = 4096;
+      state.analyser.smoothingTimeConstant = 0;
+      source.connect(state.analyser);
+
+      $startBtn.textContent = "Stop";
+      $startBtn.classList.add("listening");
+      $micStatus.textContent = "Listening…";
+      $micStatus.classList.remove("hidden", "error");
+      tick();
+    })
+    .catch((err) => {
+      const name = err.name || "Error";
+      diag("getUserMedia rejected: " + name + " — " + (err.message || ""));
+      let msg = `Mic error: ${err.message || name}`;
+      if (name === "NotAllowedError" || /denied/i.test(err.message || "")) {
+        msg = "Mic permission denied. Open Chrome ⋮ menu → Settings → Site settings → Microphone → tuner.omrihefez.com → Allow, then reload. Or try https://bass.omrihefez.com for a fresh prompt.";
+      } else if (name === "NotFoundError") {
+        msg = "No microphone found on this device.";
+      } else if (location.protocol !== "https:") {
+        msg = "Mic only works over HTTPS.";
+      }
+      showMicError(msg);
+    });
+}
+
+function showMicError(msg) {
+  $micStatus.textContent = msg;
+  $micStatus.classList.remove("hidden");
+  $micStatus.classList.add("error");
 }
 
 function stop() {
@@ -251,6 +282,7 @@ document.querySelectorAll(".tuning").forEach(btn => {
     state.selectedString = null;
     document.querySelectorAll(".tuning").forEach(b => b.classList.toggle("active", b === btn));
     renderStrings();
+    updateAutoIndicator();
   });
 });
 
@@ -259,8 +291,49 @@ $startBtn.addEventListener("click", () => {
   else start();
 });
 
+// === Inline diagnostic log (visible at page bottom). Helps debug why mic prompt isn't appearing on a real device. ===
+function diag(msg) {
+  const el = document.getElementById("diag-log");
+  if (!el) return;
+  const ts = new Date().toISOString().slice(11, 23);
+  el.textContent = (el.textContent || "") + `[${ts}] ${msg}\n`;
+  el.scrollTop = el.scrollHeight;
+}
+window.addEventListener("error", (e) => diag("page error: " + e.message));
+window.addEventListener("unhandledrejection", (e) => diag("unhandled rejection: " + (e.reason && e.reason.message || e.reason)));
+diag("page loaded — protocol=" + location.protocol + " host=" + location.host);
+diag("UA: " + (navigator.userAgent || "").slice(0, 110));
+diag("mediaDevices: " + (!!navigator.mediaDevices) + " getUserMedia: " + (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)));
+
 // Initial render
 renderStrings();
+updateAutoIndicator();
+
+// === Diagnostic: surface permission state up-front so the user knows what to expect ===
+async function checkPermissionState() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    $micStatus.textContent = "This browser doesn't expose getUserMedia. Try Chrome or Samsung Internet.";
+    $micStatus.classList.remove("hidden");
+    $micStatus.classList.add("error");
+    return;
+  }
+  if (!navigator.permissions || !navigator.permissions.query) return;
+  try {
+    const result = await navigator.permissions.query({ name: "microphone" });
+    if (result.state === "denied") {
+      $micStatus.textContent = "Microphone is blocked for this site. Open the kebab menu (⋮) → Settings → Site settings → Microphone → tuner.omrihefez.com → Allow. Or visit https://bass.omrihefez.com for a fresh prompt.";
+      $micStatus.classList.remove("hidden");
+      $micStatus.classList.add("error");
+    }
+    result.addEventListener("change", () => {
+      if (result.state === "granted") {
+        $micStatus.classList.add("hidden");
+        $micStatus.classList.remove("error");
+      }
+    });
+  } catch { /* some browsers don't support querying 'microphone' */ }
+}
+checkPermissionState();
 
 // Register service worker for PWA installability
 if ("serviceWorker" in navigator) {

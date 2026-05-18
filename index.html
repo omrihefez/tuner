@@ -35,6 +35,9 @@
         <button class="tuning" data-tuning="halfStep">Half-step down</button>
       </div>
       <div id="strings" class="strings"></div>
+      <div id="auto-indicator" class="auto-indicator">
+        Auto-detect — play any string, the tuner picks the closest. Tap a string to lock manually.
+      </div>
     </section>
 
     <section class="meter-section">
@@ -63,6 +66,10 @@
 
     <footer>
       <span class="hint">Allow mic access · play one string at a time · A<sub>ref</sub> applies to all strings</span>
+      <details class="diag">
+        <summary>diagnostic log</summary>
+        <pre id="diag-log"></pre>
+      </details>
     </footer>
   </main>
   <script type="module" src="/tuner.js"></script>

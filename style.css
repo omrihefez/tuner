@@ -150,6 +150,23 @@ header h1 {
   font-variant-numeric: tabular-nums;
 }
 
+.auto-indicator {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(141, 224, 201, 0.08);
+  border: 1px solid rgba(141, 224, 201, 0.25);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  color: var(--good);
+  line-height: 1.4;
+}
+
+.auto-indicator.manual {
+  background: rgba(122, 165, 255, 0.08);
+  border-color: rgba(122, 165, 255, 0.25);
+  color: var(--accent);
+}
+
 .meter-section {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -313,6 +330,38 @@ footer .hint {
   font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.5;
+  display: block;
+}
+
+.diag {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.diag summary {
+  font-size: 0.7rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.diag summary::-webkit-details-marker { display: none; }
+.diag summary::before { content: "▸ "; }
+.diag[open] summary::before { content: "▾ "; }
+
+#diag-log {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 @media (max-width: 360px) {
