@@ -1,10 +1,17 @@
-// Minimal service worker for PWA installability + offline shell.
-const CACHE = "tuner-v2";
+// Service worker — offline shell + version-controlled cache.
+// Bumping CACHE invalidates the old cache; the update-prompt in tuner.js shows
+// the user a "Reload" toast when this happens so they pick up new code.
+const CACHE = "tuner-v3";
 const ASSETS = ["/", "/index.html", "/style.css", "/tuner.js", "/manifest.json", "/about.html", "/privacy.html", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
-  self.skipWaiting();
+  // Don't auto-skipWaiting — let the user trigger the reload via the toast.
+});
+
+// Allow page to force the new SW to take over when the user clicks the toast.
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {

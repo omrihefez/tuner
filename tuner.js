@@ -255,6 +255,19 @@ function detectPitchYIN(buf, sampleRate) {
 // === Loop ===
 function tick() {
   if (!state.analyser) return;
+  try {
+    tickInner();
+  } catch (err) {
+    diag("tick error: " + err.message);
+    // Don't loop on a broken state — surface the error and stop instead of burning CPU.
+    showMicError(`Tuner crashed: ${err.message}. Tap Start tuning to retry.`);
+    stop();
+    return;
+  }
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function tickInner() {
   const buf = new Float32Array(state.analyser.fftSize);
   state.analyser.getFloatTimeDomainData(buf);
   const raw = detectPitchYIN(buf, state.audioCtx.sampleRate);
@@ -304,8 +317,6 @@ function tick() {
       else $needle.classList.add("way-off");
     }
   }
-
-  state.rafId = requestAnimationFrame(tick);
 }
 
 // === Mic start ===
@@ -455,7 +466,71 @@ async function checkPermissionState() {
 }
 checkPermissionState();
 
-// Register service worker for PWA installability
+// === Browser feature detection ===
+// Fail loud and friendly on browsers that can't run the tuner.
+function checkBrowserSupport() {
+  const missing = [];
+  if (!window.AudioContext && !window.webkitAudioContext) missing.push("Web Audio API");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) missing.push("getUserMedia");
+  if (!window.Promise) missing.push("Promises");
+  if (!window.requestAnimationFrame) missing.push("requestAnimationFrame");
+  if (missing.length === 0) return true;
+
+  diag("unsupported browser — missing: " + missing.join(", "));
+  showMicError(
+    `This browser is missing ${missing.join(" + ")}. Use a recent Chrome, Edge, Firefox, or Samsung Internet — Safari 14+ also works.`
+  );
+  $startBtn.disabled = true;
+  return false;
+}
+checkBrowserSupport();
+
+// === Service worker with update prompt ===
+// When a new SW takes over (i.e., new app version is cached), show a toast so
+// the user can reload to pick up the new code instead of running stale JS.
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.register("/sw.js").then((reg) => {
+    if (!reg) return;
+    diag("service worker registered");
+    reg.addEventListener("updatefound", () => {
+      const newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener("statechange", () => {
+        if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+          showUpdateToast();
+        }
+      });
+    });
+  }).catch((err) => {
+    diag("service worker registration failed: " + err.message);
+  });
+
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
+
+function showUpdateToast() {
+  let toast = document.getElementById("update-toast");
+  if (toast) return;
+  toast = document.createElement("div");
+  toast.id = "update-toast";
+  toast.className = "update-toast";
+  const text = document.createElement("span");
+  text.textContent = "New version ready.";
+  const btn = document.createElement("button");
+  btn.textContent = "Reload";
+  btn.addEventListener("click", () => {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      const waiting = regs.find((r) => r.waiting);
+      if (waiting && waiting.waiting) waiting.waiting.postMessage({ type: "SKIP_WAITING" });
+      else window.location.reload();
+    });
+  });
+  toast.appendChild(text);
+  toast.appendChild(btn);
+  document.body.appendChild(toast);
 }
