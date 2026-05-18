@@ -290,10 +290,16 @@ header h1 {
   margin-top: 10px;
   font-size: 0.85rem;
   color: var(--accent);
+  line-height: 1.4;
 }
 
 .mic-status.error {
   color: var(--bad);
+  background: rgba(255, 122, 136, 0.08);
+  border: 1px solid rgba(255, 122, 136, 0.25);
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: left;
 }
 
 .hidden { display: none; }

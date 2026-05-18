@@ -190,7 +190,16 @@ async function start() {
 
     tick();
   } catch (err) {
-    $micStatus.textContent = `Mic error: ${err.message || err.name}`;
+    const name = err.name || "Error";
+    let msg = `Mic error: ${err.message || name}`;
+    if (name === "NotAllowedError" || /denied/i.test(err.message || "")) {
+      msg = "Mic permission denied. Tap the 🔒 lock icon in the URL bar → Permissions → Microphone → Allow, then reload. Or open this page in Incognito for a fresh prompt.";
+    } else if (name === "NotFoundError") {
+      msg = "No microphone found on this device.";
+    } else if (location.protocol !== "https:") {
+      msg = "Mic only works over HTTPS. Visit the site at https://tuner.omrihefez.com.";
+    }
+    $micStatus.textContent = msg;
     $micStatus.classList.remove("hidden");
     $micStatus.classList.add("error");
   }
