@@ -1,13 +1,16 @@
 {
-  "name": "Bass Tuner",
-  "short_name": "Bass Tuner",
+  "name": "Tuner — bass & guitar",
+  "short_name": "Tuner",
+  "description": "Free, open-source, ad-free chromatic tuner for bass and guitar. Adjustable reference frequency.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0e14",
   "theme_color": "#0b0e14",
   "orientation": "portrait",
+  "categories": ["music", "utilities"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

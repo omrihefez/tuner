@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0e14" />
+  <title>Privacy — Tuner</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main id="app" class="prose">
+    <a href="/" class="back">← Back to tuner</a>
+    <h1>Privacy</h1>
+    <p class="lede">Short version: this app sends nothing about you anywhere.</p>
+
+    <h2>Microphone access</h2>
+    <p>The app asks for microphone permission so it can detect the pitch of the string you're playing. The audio stream is processed entirely in your browser — none of it is sent to any server. The processing happens inside JavaScript running on your device. When you tap <strong>Stop tuning</strong> the microphone is released and the browser stops capturing audio.</p>
+
+    <h2>Tracking</h2>
+    <p>None. No analytics. No advertising. No cookies. No third-party scripts. The page loads only what it needs to run the tuner — HTML, CSS, JS, icons, manifest, service worker.</p>
+
+    <h2>Data we store</h2>
+    <p>Nothing on our side. Your browser may cache the page assets locally for offline use (service worker) and remember your microphone-permission decision (browser-level setting). That's it.</p>
+
+    <h2>Open source</h2>
+    <p>The full source is on GitHub at <a href="https://github.com/omrihefez/tuner">github.com/omrihefez/tuner</a>. Audit anything.</p>
+
+    <h2>Contact</h2>
+    <p>Questions: <a href="mailto:omrihe@gmail.com">omrihe@gmail.com</a></p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0e14" />
+  <title>About — Tuner</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main id="app" class="prose">
+    <a href="/" class="back">← Back to tuner</a>
+    <h1>About</h1>
+    <p class="lede">A free, open-source, ad-free chromatic tuner. Bass and guitar.</p>
+
+    <h2>Why this exists</h2>
+    <p>Mobile tuner apps are usually freemium — the actually useful features (alternative tunings, adjustable A₄ reference, no ads) sit behind a paywall. This app keeps them free for everyone.</p>
+
+    <h2>What it does</h2>
+    <ul>
+      <li><strong>Bass</strong> — 4 &amp; 5 string. Standard, Drop D, Drop C, ½ step down.</li>
+      <li><strong>Guitar</strong> — 6 &amp; 7 string. Standard, Drop D, DADGAD, Open G, ½ step down.</li>
+      <li><strong>Custom A₄</strong> — slider 415–466 Hz plus 1-tap presets 431 / 432 / 440 / 441 for alternative reference tunings (Radiohead's "No Surprises" is A₄=431, for example).</li>
+      <li><strong>Auto-detect</strong> — play any string, the tuner finds the closest target.</li>
+      <li><strong>Manual lock</strong> — tap a string button to pin the tuner to that target.</li>
+      <li><strong>Offline</strong> — installs as a PWA, works without network after first visit.</li>
+    </ul>
+
+    <h2>How it works</h2>
+    <p>The browser's microphone is captured via Web Audio API. Each frame, a 4096-sample window is analyzed using the <strong>YIN algorithm</strong> (de Cheveigné &amp; Kawahara, 2002): cumulative mean normalized difference function → absolute threshold → parabolic interpolation. A median-of-6 smoothing filter rejects octave jumps and noise. The needle shows cents off the nearest string in your selected tuning.</p>
+    <p>All processing is local. Nothing leaves your device.</p>
+
+    <h2>Open source</h2>
+    <p>Full source at <a href="https://github.com/omrihefez/tuner">github.com/omrihefez/tuner</a>. MIT license. Read, fork, audit, contribute.</p>
+
+    <h2>Privacy</h2>
+    <p><a href="/privacy.html">Privacy policy</a> — short version: we collect nothing.</p>
+
+    <h2>Built by</h2>
+    <p><a href="https://omrihefez.com">Omri Hefez</a> with Meni.</p>
+  </main>
+</body>
+</html>

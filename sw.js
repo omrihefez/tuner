@@ -1,6 +1,6 @@
 // Minimal service worker for PWA installability + offline shell.
-const CACHE = "bass-tuner-v1";
-const ASSETS = ["/", "/index.html", "/style.css", "/tuner.js", "/manifest.json"];
+const CACHE = "tuner-v2";
+const ASSETS = ["/", "/index.html", "/style.css", "/tuner.js", "/manifest.json", "/about.html", "/privacy.html", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));

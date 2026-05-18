@@ -2,17 +2,37 @@
 // Bass fundamentals run 30–130 Hz, so we sample at 22.05 kHz worth of resolution
 // and look for periods of ~170–1400 samples.
 
-const TUNINGS = {
-  // MIDI note numbers for each string (1st = lowest)
-  standard: { name: "Standard E A D G", notes: [28, 33, 38, 43] },        // E1 A1 D2 G2
-  dropD:    { name: "Drop D D A D G",  notes: [26, 33, 38, 43] },        // D1 A1 D2 G2
-  dropC:    { name: "Drop C C G C F",  notes: [24, 31, 36, 41] },        // C1 G1 C2 F2
-  halfStep: { name: "1/2 step down",   notes: [27, 32, 37, 42] },        // Eb1 Ab1 Db2 Gb2
+// MIDI note numbers, 1st entry = lowest string.
+// Bass: E1=28, A1=33, D2=38, G2=43, B0=23, D1=26
+// Guitar: E2=40, A2=45, D3=50, G3=55, B3=59, E4=64, B1=35
+const INSTRUMENTS = {
+  bass: {
+    name: "Bass",
+    tunings: {
+      standard:  { name: "Standard",      notes: [28, 33, 38, 43] },
+      dropD:     { name: "Drop D",        notes: [26, 33, 38, 43] },
+      dropC:     { name: "Drop C",        notes: [24, 31, 36, 41] },
+      halfStep:  { name: "½ step down",   notes: [27, 32, 37, 42] },
+      fiveString:{ name: "5-string",      notes: [23, 28, 33, 38, 43] },     // B0 E1 A1 D2 G2
+    },
+  },
+  guitar: {
+    name: "Guitar",
+    tunings: {
+      standard:  { name: "Standard",      notes: [40, 45, 50, 55, 59, 64] }, // E2 A2 D3 G3 B3 E4
+      dropD:     { name: "Drop D",        notes: [38, 45, 50, 55, 59, 64] }, // D2 A2 D3 G3 B3 E4
+      dadgad:    { name: "DADGAD",        notes: [38, 45, 50, 55, 57, 62] }, // D2 A2 D3 G3 A3 D4
+      openG:     { name: "Open G",        notes: [38, 43, 50, 55, 59, 62] }, // D2 G2 D3 G3 B3 D4
+      halfStep:  { name: "½ step down",   notes: [39, 44, 49, 54, 58, 63] }, // Eb2 Ab2 Db3 Gb3 Bb3 Eb4
+      sevenStr:  { name: "7-string",      notes: [35, 40, 45, 50, 55, 59, 64] }, // B1 + standard
+    },
+  },
 };
 const NOTE_NAMES = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
 
 const state = {
   aref: 440,
+  instrumentKey: "bass",
   tuningKey: "standard",
   selectedString: null,        // index, or null for auto-detect
   audioCtx: null,
@@ -23,6 +43,10 @@ const state = {
   history: [],
   historySize: 6,
 };
+
+function currentTuning() {
+  return INSTRUMENTS[state.instrumentKey].tunings[state.tuningKey];
+}
 
 // Median of last N detected pitches. Filters out spurious doubles/halves and noise.
 function medianPitch(samples) {
@@ -59,7 +83,7 @@ function noteLabel(midi) {
 
 // === Render UI ===
 function renderStrings() {
-  const t = TUNINGS[state.tuningKey];
+  const t = currentTuning();
   while ($strings.firstChild) $strings.removeChild($strings.firstChild);
   t.notes.forEach((midi, i) => {
     const f = midiToFreq(midi, state.aref);
@@ -88,15 +112,61 @@ function updateAutoIndicator() {
     el.textContent = "Auto-detect — play any string, the tuner picks the closest. Tap a string to lock manually.";
     el.classList.remove("manual");
   } else {
-    const midi = TUNINGS[state.tuningKey].notes[state.selectedString];
+    const midi = currentTuning().notes[state.selectedString];
     el.textContent = `Locked to ${noteLabel(midi)}. Tap the highlighted button again to release.`;
     el.classList.add("manual");
   }
 }
 
+function renderTuningButtons() {
+  const container = document.querySelector(".tuning-presets");
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+  const tunings = INSTRUMENTS[state.instrumentKey].tunings;
+  let first = true;
+  for (const [key, tuning] of Object.entries(tunings)) {
+    const btn = document.createElement("button");
+    btn.className = "tuning";
+    btn.dataset.tuning = key;
+    btn.textContent = tuning.name;
+    if (first) { btn.classList.add("active"); first = false; }
+    btn.addEventListener("click", () => {
+      state.tuningKey = key;
+      state.selectedString = null;
+      document.querySelectorAll(".tuning").forEach(b => b.classList.toggle("active", b === btn));
+      renderStrings();
+      updateAutoIndicator();
+    });
+    container.appendChild(btn);
+  }
+  state.tuningKey = Object.keys(tunings)[0];   // reset to first tuning of this instrument
+}
+
+function renderInstrumentButtons() {
+  const container = document.querySelector(".instrument-selector");
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+  for (const [key, inst] of Object.entries(INSTRUMENTS)) {
+    const btn = document.createElement("button");
+    btn.className = "instrument";
+    btn.dataset.instrument = key;
+    btn.textContent = inst.name;
+    if (key === state.instrumentKey) btn.classList.add("active");
+    btn.addEventListener("click", () => {
+      state.instrumentKey = key;
+      state.selectedString = null;
+      document.querySelectorAll(".instrument").forEach(b => b.classList.toggle("active", b === btn));
+      renderTuningButtons();
+      renderStrings();
+      updateAutoIndicator();
+    });
+    container.appendChild(btn);
+  }
+}
+
 // === Auto-detect closest string ===
 function closestString(freq) {
-  const t = TUNINGS[state.tuningKey];
+  const t = currentTuning();
   let best = 0, bestDist = Infinity;
   for (let i = 0; i < t.notes.length; i++) {
     const target = midiToFreq(t.notes[i], state.aref);
@@ -207,7 +277,7 @@ function tick() {
     const maxF = Math.max(...state.history);
     const spreadCents = 1200 * Math.log2(maxF / minF);
 
-    const t = TUNINGS[state.tuningKey];
+    const t = currentTuning();
     const idx = (state.selectedString !== null) ? state.selectedString : closestString(freq);
     const targetMidi = t.notes[idx];
     const targetFreq = midiToFreq(targetMidi, state.aref);
@@ -331,15 +401,8 @@ document.querySelectorAll(".preset").forEach(btn => {
   });
 });
 
-document.querySelectorAll(".tuning").forEach(btn => {
-  btn.addEventListener("click", () => {
-    state.tuningKey = btn.dataset.tuning;
-    state.selectedString = null;
-    document.querySelectorAll(".tuning").forEach(b => b.classList.toggle("active", b === btn));
-    renderStrings();
-    updateAutoIndicator();
-  });
-});
+// Note: tuning buttons are now rendered dynamically via renderTuningButtons()
+// because guitar and bass have different tuning sets. Initial render below.
 
 $startBtn.addEventListener("click", () => {
   if (state.audioCtx) stop();
@@ -361,6 +424,8 @@ diag("UA: " + (navigator.userAgent || "").slice(0, 110));
 diag("mediaDevices: " + (!!navigator.mediaDevices) + " getUserMedia: " + (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)));
 
 // Initial render
+renderInstrumentButtons();
+renderTuningButtons();
 renderStrings();
 updateAutoIndicator();
 

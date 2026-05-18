@@ -7,13 +7,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <link rel="manifest" href="/manifest.json" />
-  <title>Bass Tuner</title>
+  <title>Tuner — bass & guitar, ad-free</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <main id="app">
     <header>
-      <h1>Bass Tuner</h1>
+      <h1>Tuner</h1>
+      <div class="instrument-selector"></div>
       <div class="aref">
         <label for="aref-slider">A<sub>4</sub></label>
         <input id="aref-slider" type="range" min="415" max="466" step="0.5" value="440" />
@@ -28,12 +29,7 @@
     </header>
 
     <section class="tuning-section">
-      <div class="tuning-presets">
-        <button class="tuning active" data-tuning="standard">Standard</button>
-        <button class="tuning" data-tuning="dropD">Drop D</button>
-        <button class="tuning" data-tuning="dropC">Drop C</button>
-        <button class="tuning" data-tuning="halfStep">Half-step down</button>
-      </div>
+      <div class="tuning-presets"></div>
       <div id="strings" class="strings"></div>
       <div id="auto-indicator" class="auto-indicator">
         Auto-detect — play any string, the tuner picks the closest. Tap a string to lock manually.
@@ -66,6 +62,13 @@
 
     <footer>
       <span class="hint">Allow mic access · play one string at a time · A<sub>ref</sub> applies to all strings</span>
+      <nav class="footer-links">
+        <a href="/about.html">About</a>
+        <span class="sep">·</span>
+        <a href="/privacy.html">Privacy</a>
+        <span class="sep">·</span>
+        <a href="https://github.com/omrihefez/tuner" target="_blank" rel="noopener">Source</a>
+      </nav>
       <details class="diag">
         <summary>diagnostic log</summary>
         <pre id="diag-log"></pre>
