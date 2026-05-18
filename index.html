@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0b0e14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Bass Tuner</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main id="app">
+    <header>
+      <h1>Bass Tuner</h1>
+      <div class="aref">
+        <label for="aref-slider">A<sub>4</sub></label>
+        <input id="aref-slider" type="range" min="415" max="466" step="0.5" value="440" />
+        <span id="aref-value">440.0 Hz</span>
+        <div class="presets">
+          <button class="preset" data-aref="431">431</button>
+          <button class="preset" data-aref="432">432</button>
+          <button class="preset active" data-aref="440">440</button>
+          <button class="preset" data-aref="441">441</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="tuning-section">
+      <div class="tuning-presets">
+        <button class="tuning active" data-tuning="standard">Standard</button>
+        <button class="tuning" data-tuning="dropD">Drop D</button>
+        <button class="tuning" data-tuning="dropC">Drop C</button>
+        <button class="tuning" data-tuning="halfStep">Half-step down</button>
+      </div>
+      <div id="strings" class="strings"></div>
+    </section>
+
+    <section class="meter-section">
+      <div class="note-display">
+        <div id="note-name" class="note-name">–</div>
+        <div id="note-target" class="note-target">target — Hz</div>
+        <div id="note-current" class="note-current">heard — Hz</div>
+      </div>
+
+      <div class="needle-track" aria-label="cents off">
+        <div class="needle-scale">
+          <span>-50</span><span>-25</span><span>0</span><span>+25</span><span>+50</span>
+        </div>
+        <div class="needle-bar">
+          <div id="needle" class="needle"></div>
+          <div class="needle-zero"></div>
+        </div>
+        <div id="cents-display" class="cents">— cents</div>
+      </div>
+    </section>
+
+    <section class="mic-section">
+      <button id="start-btn" class="big-btn">Start tuning</button>
+      <div id="mic-status" class="mic-status hidden">Listening…</div>
+    </section>
+
+    <footer>
+      <span class="hint">Allow mic access · play one string at a time · A<sub>ref</sub> applies to all strings</span>
+    </footer>
+  </main>
+  <script type="module" src="/tuner.js"></script>
+</body>
+</html>
