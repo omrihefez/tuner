@@ -19,7 +19,17 @@ const state = {
   analyser: null,
   rafId: null,
   micStream: null,
+  // Smoothing window — median across last N readings rejects octave jumps and noise.
+  history: [],
+  historySize: 6,
 };
+
+// Median of last N detected pitches. Filters out spurious doubles/halves and noise.
+function medianPitch(samples) {
+  if (samples.length === 0) return -1;
+  const sorted = [...samples].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
+}
 
 // === DOM refs ===
 const $arefSlider = document.getElementById("aref-slider");
@@ -96,56 +106,80 @@ function closestString(freq) {
   return best;
 }
 
-// === Autocorrelation pitch detector (bass-focused) ===
-function detectPitch(buf, sampleRate) {
+// === YIN pitch detector (de Cheveigné & Kawahara 2002) ===
+// Standard algorithm used by every serious monophonic tuner. Handles harmonic
+// confusion (avoids octave-up errors on bass G/D where harmonics outweigh
+// fundamentals) via cumulative-mean normalized difference + absolute threshold.
+//
+// Steps follow the YIN paper:
+//   2. Difference function           d(τ) = Σ (x[i] - x[i+τ])²
+//   3. Cumulative mean normalize     d'(τ) = d(τ) / ((1/τ) Σ_{j=1..τ} d(j))
+//   4. Absolute threshold            smallest τ where d'(τ) < THRESHOLD and d'(τ+1) > d'(τ)
+//   5. Parabolic interpolation       refine τ to sub-sample accuracy
+
+const YIN_THRESHOLD = 0.10;     // paper recommends 0.10–0.15; lower is stricter
+const MIN_FREQ = 30;            // below E1 (41 Hz) with margin
+const MAX_FREQ = 500;           // above G2 (98 Hz) with headroom for harmonics
+
+function detectPitchYIN(buf, sampleRate) {
   const SIZE = buf.length;
-  // RMS — if signal too quiet, return -1
+  if (SIZE < 2) return -1;
+
+  // Signal gate: too quiet → no detection
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return -1;
+  if (rms < 0.005) return -1;
 
-  // Trim silent ends
-  let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-  for (let i = 0; i < SIZE/2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-  for (let i = 1; i < SIZE/2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-  const trimmed = buf.subarray(r1, r2);
+  const tauMin = Math.max(2, Math.floor(sampleRate / MAX_FREQ));
+  const tauMax = Math.min(Math.floor(SIZE / 2), Math.floor(sampleRate / MIN_FREQ));
 
-  // Period search range: 30–500 Hz (covers all bass strings + harmonics)
-  const minPeriod = Math.floor(sampleRate / 500);
-  const maxPeriod = Math.floor(sampleRate / 30);
-
-  // Autocorrelation
-  let bestPeriod = -1;
-  let bestCorr = 0;
-  const N = trimmed.length;
-  for (let lag = minPeriod; lag < Math.min(maxPeriod, N / 2); lag++) {
+  // Step 2: difference function
+  const diff = new Float32Array(tauMax + 1);
+  for (let tau = tauMin; tau <= tauMax; tau++) {
     let sum = 0;
-    for (let i = 0; i < N - lag; i++) sum += trimmed[i] * trimmed[i + lag];
-    sum /= (N - lag);
-    if (sum > bestCorr) {
-      bestCorr = sum;
-      bestPeriod = lag;
+    for (let i = 0; i < SIZE - tauMax; i++) {
+      const d = buf[i] - buf[i + tau];
+      sum += d * d;
     }
+    diff[tau] = sum;
   }
 
-  if (bestPeriod === -1 || bestCorr < 0.01) return -1;
+  // Step 3: cumulative mean normalized difference
+  const cmnd = new Float32Array(tauMax + 1);
+  cmnd[0] = 1;
+  let running = 0;
+  for (let tau = 1; tau <= tauMax; tau++) {
+    running += diff[tau];
+    cmnd[tau] = (tau < tauMin || running === 0) ? 1 : diff[tau] * tau / running;
+  }
 
-  // Parabolic interpolation around the peak for sub-sample accuracy
-  if (bestPeriod > 1 && bestPeriod < N - 1) {
-    const acAt = (lag) => {
-      let s = 0;
-      for (let i = 0; i < N - lag; i++) s += trimmed[i] * trimmed[i + lag];
-      return s / (N - lag);
-    };
-    const y1 = acAt(bestPeriod - 1), y2 = bestCorr, y3 = acAt(bestPeriod + 1);
-    const denom = 2 * (2 * y2 - y1 - y3);
+  // Step 4: absolute threshold. Walk from tauMin, find first dip below threshold,
+  // then descend to its local minimum (the actual best τ).
+  let tau = -1;
+  for (let t = tauMin; t < tauMax; t++) {
+    if (cmnd[t] < YIN_THRESHOLD) {
+      // descend to local min
+      while (t + 1 < tauMax && cmnd[t + 1] < cmnd[t]) t++;
+      tau = t;
+      break;
+    }
+  }
+  if (tau === -1) return -1;     // no period below threshold = unvoiced/noise
+
+  // Step 5: parabolic interpolation around tau for sub-sample precision
+  let betterTau = tau;
+  if (tau > tauMin && tau < tauMax - 1) {
+    const s0 = cmnd[tau - 1], s1 = cmnd[tau], s2 = cmnd[tau + 1];
+    const denom = 2 * (2 * s1 - s0 - s2);
     if (Math.abs(denom) > 1e-10) {
-      const shift = (y3 - y1) / denom;
-      return sampleRate / (bestPeriod + shift);
+      betterTau = tau + (s2 - s0) / denom;
     }
   }
-  return sampleRate / bestPeriod;
+
+  const freq = sampleRate / betterTau;
+  if (freq < MIN_FREQ || freq > MAX_FREQ) return -1;
+  return freq;
 }
 
 // === Loop ===
@@ -153,10 +187,26 @@ function tick() {
   if (!state.analyser) return;
   const buf = new Float32Array(state.analyser.fftSize);
   state.analyser.getFloatTimeDomainData(buf);
-  const freq = detectPitch(buf, state.audioCtx.sampleRate);
+  const raw = detectPitchYIN(buf, state.audioCtx.sampleRate);
 
-  if (freq > 30 && freq < 600) {
-    // Pick string (or use selected)
+  // Maintain rolling history. Use -1 (no detection) to clear history so the
+  // display stops moving when the player stops playing.
+  if (raw < 0) {
+    state.history = [];
+  } else {
+    state.history.push(raw);
+    if (state.history.length > state.historySize) state.history.shift();
+  }
+
+  // Need a few stable readings before showing anything.
+  if (state.history.length >= 3) {
+    const freq = medianPitch(state.history);
+    // Stability check: discard if spread across recent history is too wide
+    // (>30 cents) — usually means we caught an attack transient.
+    const minF = Math.min(...state.history);
+    const maxF = Math.max(...state.history);
+    const spreadCents = 1200 * Math.log2(maxF / minF);
+
     const t = TUNINGS[state.tuningKey];
     const idx = (state.selectedString !== null) ? state.selectedString : closestString(freq);
     const targetMidi = t.notes[idx];
@@ -169,16 +219,20 @@ function tick() {
     $noteCurrent.textContent = `heard ${freq.toFixed(2)} Hz`;
     $cents.textContent = `${cents > 0 ? "+" : ""}${cents.toFixed(1)} cents`;
 
-    // needle position: -50..+50 cents maps to 0..100% left
     const clamped = Math.max(-50, Math.min(50, cents));
     const leftPct = 50 + clamped;
     $needle.style.left = `${leftPct}%`;
 
     $needle.className = "needle";
-    const abs = Math.abs(cents);
-    if (abs < 5) $needle.classList.add("in-tune");
-    else if (abs < 15) $needle.classList.add(cents < 0 ? "flat" : "sharp");
-    else $needle.classList.add("way-off");
+    if (spreadCents > 30) {
+      // unstable reading — don't claim "in tune"
+      $needle.classList.add("way-off");
+    } else {
+      const abs = Math.abs(cents);
+      if (abs < 5) $needle.classList.add("in-tune");
+      else if (abs < 15) $needle.classList.add(cents < 0 ? "flat" : "sharp");
+      else $needle.classList.add("way-off");
+    }
   }
 
   state.rafId = requestAnimationFrame(tick);
@@ -244,6 +298,7 @@ function stop() {
   if (state.audioCtx) state.audioCtx.close();
   state.audioCtx = null;
   state.analyser = null;
+  state.history = [];
   $startBtn.textContent = "Start tuning";
   $startBtn.classList.remove("listening");
   $micStatus.classList.add("hidden");
