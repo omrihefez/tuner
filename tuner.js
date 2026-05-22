@@ -41,10 +41,11 @@ const state = {
   micStream: null,
   // Smoothing window — median across last N readings rejects octave jumps and noise.
   history: [],
-  historySize: 8,
+  historySize: 6,
   smoothedFreq: null,   // EMA of detected pitch — calms the readout so it settles
   needleLeft: 50,       // current needle position %, eased toward target each frame
   lastDetectTs: 0,      // throttle YIN independent of the 60fps animation
+  lastGoodTs: 0,        // timestamp of last successful detection — drives the note-hold
 };
 
 function currentTuning() {
@@ -192,8 +193,11 @@ function closestString(freq) {
 
 const YIN_THRESHOLD = 0.12;       // paper recommends 0.10–0.15; lower is stricter
 const DETECT_INTERVAL_MS = 45;    // run YIN ~22×/s; the rAF loop eases the needle every frame
-const FREQ_EMA = 0.25;            // display smoothing: lower = calmer, higher = snappier
+const FREQ_EMA = 0.30;            // display smoothing: lower = calmer, higher = snappier
 const NOTE_JUMP_CENTS = 80;       // beyond this jump, snap instead of glide (you changed strings)
+const SIGNAL_HOLD_MS = 600;       // keep showing the last pitch through sustain/decay gaps;
+                                  // only blank after this much continuous silence (continuity, like a hardware tuner)
+const CLOSE_CENTS = 3;            // within this, round to 0.0 / "in tune" — close enough
 
 // Search range derived from the CURRENT tuning: a few semitones below the lowest
 // string and above the highest. Capping the top below the highest string's harmonics
@@ -217,7 +221,7 @@ function detectPitchYIN(buf, sampleRate, minFreq, maxFreq) {
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.005) return -1;
+  if (rms < 0.003) return -1;   // lower floor → keeps detecting quiet sustain/decay
 
   const tauMin = Math.max(2, Math.floor(sampleRate / maxFreq));
   const tauMax = Math.min(Math.floor(SIZE / 2), Math.floor(sampleRate / minFreq));
@@ -297,11 +301,16 @@ function tickInner() {
     const { minFreq, maxFreq } = freqRange();
     const raw = detectPitchYIN(buf, state.audioCtx.sampleRate, minFreq, maxFreq);
 
-    // -1 (no detection) clears history so the display settles when you stop playing.
     if (raw < 0) {
-      state.history = [];
-      state.smoothedFreq = null;
+      // Don't blank on the first miss — bass notes dip in and out as they sustain/
+      // decay. Hold the last reading for SIGNAL_HOLD_MS so the display stays
+      // continuous (like a hardware tuner), then idle once it's truly silent.
+      if (now - state.lastGoodTs > SIGNAL_HOLD_MS) {
+        state.history = [];
+        state.smoothedFreq = null;
+      }
     } else {
+      state.lastGoodTs = now;
       state.history.push(raw);
       if (state.history.length > state.historySize) state.history.shift();
     }
@@ -333,7 +342,10 @@ function tickInner() {
     const idx = (state.selectedString !== null) ? state.selectedString : closestString(freq);
     const targetMidi = t.notes[idx];
     const targetFreq = midiToFreq(targetMidi, state.aref);
-    const cents = (freqToMidi(freq, state.aref) - targetMidi) * 100;
+    const rawCents = (freqToMidi(freq, state.aref) - targetMidi) * 100;
+    // Round to dead-on when very close — stops the last-digit flicker around 0
+    // and gives a clean "in tune" the moment you're close enough.
+    const cents = Math.abs(rawCents) < CLOSE_CENTS ? 0 : rawCents;
 
     $noteName.textContent = noteLabel(targetMidi);
     $noteTarget.textContent = `target ${targetFreq.toFixed(2)} Hz`;
@@ -424,6 +436,7 @@ function stop() {
   state.smoothedFreq = null;
   state.needleLeft = 50;
   state.lastDetectTs = 0;
+  state.lastGoodTs = 0;
   $startBtn.textContent = "Start tuning";
   $startBtn.classList.remove("listening");
   $micStatus.classList.add("hidden");
