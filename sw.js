@@ -1,7 +1,7 @@
 // Service worker — offline shell + version-controlled cache.
 // Bumping CACHE invalidates the old cache; the update-prompt in tuner.js shows
 // the user a "Reload" toast when this happens so they pick up new code.
-const CACHE = "tuner-v3";
+const CACHE = "tuner-v4";
 const ASSETS = ["/", "/index.html", "/style.css", "/tuner.js", "/manifest.json", "/about.html", "/privacy.html", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {

@@ -41,7 +41,10 @@ const state = {
   micStream: null,
   // Smoothing window — median across last N readings rejects octave jumps and noise.
   history: [],
-  historySize: 6,
+  historySize: 8,
+  smoothedFreq: null,   // EMA of detected pitch — calms the readout so it settles
+  needleLeft: 50,       // current needle position %, eased toward target each frame
+  lastDetectTs: 0,      // throttle YIN independent of the 60fps animation
 };
 
 function currentTuning() {
@@ -187,11 +190,26 @@ function closestString(freq) {
 //   4. Absolute threshold            smallest τ where d'(τ) < THRESHOLD and d'(τ+1) > d'(τ)
 //   5. Parabolic interpolation       refine τ to sub-sample accuracy
 
-const YIN_THRESHOLD = 0.10;     // paper recommends 0.10–0.15; lower is stricter
-const MIN_FREQ = 30;            // below E1 (41 Hz) with margin
-const MAX_FREQ = 500;           // above G2 (98 Hz) with headroom for harmonics
+const YIN_THRESHOLD = 0.12;       // paper recommends 0.10–0.15; lower is stricter
+const DETECT_INTERVAL_MS = 45;    // run YIN ~22×/s; the rAF loop eases the needle every frame
+const FREQ_EMA = 0.25;            // display smoothing: lower = calmer, higher = snappier
+const NOTE_JUMP_CENTS = 80;       // beyond this jump, snap instead of glide (you changed strings)
 
-function detectPitchYIN(buf, sampleRate) {
+// Search range derived from the CURRENT tuning: a few semitones below the lowest
+// string and above the highest. Capping the top below the highest string's harmonics
+// is what stops the bass D/G strings from locking onto their 2nd harmonic — the
+// "higher strings won't tune / needle runs left-right" bug. Adapts to tuning + A-ref.
+// e.g. bass standard → ~[34,131] Hz, so G2's 2nd harmonic (196 Hz) is excluded.
+function freqRange() {
+  const notes = currentTuning().notes;
+  const lo = Math.min(...notes), hi = Math.max(...notes);
+  return {
+    minFreq: Math.max(25, midiToFreq(lo - 3, state.aref)),
+    maxFreq: midiToFreq(hi + 5, state.aref),
+  };
+}
+
+function detectPitchYIN(buf, sampleRate, minFreq, maxFreq) {
   const SIZE = buf.length;
   if (SIZE < 2) return -1;
 
@@ -201,8 +219,8 @@ function detectPitchYIN(buf, sampleRate) {
   rms = Math.sqrt(rms / SIZE);
   if (rms < 0.005) return -1;
 
-  const tauMin = Math.max(2, Math.floor(sampleRate / MAX_FREQ));
-  const tauMax = Math.min(Math.floor(SIZE / 2), Math.floor(sampleRate / MIN_FREQ));
+  const tauMin = Math.max(2, Math.floor(sampleRate / maxFreq));
+  const tauMax = Math.min(Math.floor(SIZE / 2), Math.floor(sampleRate / minFreq));
 
   // Step 2: difference function
   const diff = new Float32Array(tauMax + 1);
@@ -248,7 +266,7 @@ function detectPitchYIN(buf, sampleRate) {
   }
 
   const freq = sampleRate / betterTau;
-  if (freq < MIN_FREQ || freq > MAX_FREQ) return -1;
+  if (freq < minFreq || freq > maxFreq) return -1;
   return freq;
 }
 
@@ -268,55 +286,78 @@ function tick() {
 }
 
 function tickInner() {
-  const buf = new Float32Array(state.analyser.fftSize);
-  state.analyser.getFloatTimeDomainData(buf);
-  const raw = detectPitchYIN(buf, state.audioCtx.sampleRate);
+  const now = performance.now();
 
-  // Maintain rolling history. Use -1 (no detection) to clear history so the
-  // display stops moving when the player stops playing.
-  if (raw < 0) {
-    state.history = [];
-  } else {
-    state.history.push(raw);
-    if (state.history.length > state.historySize) state.history.shift();
+  // Run the heavier YIN detection on a throttle, decoupled from the 60fps animation.
+  // This both cuts CPU and stops the readout twitching on every single frame.
+  if (now - state.lastDetectTs >= DETECT_INTERVAL_MS) {
+    state.lastDetectTs = now;
+    const buf = new Float32Array(state.analyser.fftSize);
+    state.analyser.getFloatTimeDomainData(buf);
+    const { minFreq, maxFreq } = freqRange();
+    const raw = detectPitchYIN(buf, state.audioCtx.sampleRate, minFreq, maxFreq);
+
+    // -1 (no detection) clears history so the display settles when you stop playing.
+    if (raw < 0) {
+      state.history = [];
+      state.smoothedFreq = null;
+    } else {
+      state.history.push(raw);
+      if (state.history.length > state.historySize) state.history.shift();
+    }
   }
 
-  // Need a few stable readings before showing anything.
+  let targetLeft = 50;          // needle target this frame (centre = idle)
+  let needleClass = "needle";
+
+  // Need a few stable readings before showing a pitch.
   if (state.history.length >= 3) {
-    const freq = medianPitch(state.history);
-    // Stability check: discard if spread across recent history is too wide
-    // (>30 cents) — usually means we caught an attack transient.
+    const med = medianPitch(state.history);
+    // Spread across recent history — wide spread = attack transient / unstable.
     const minF = Math.min(...state.history);
     const maxF = Math.max(...state.history);
     const spreadCents = 1200 * Math.log2(maxF / minF);
+
+    // EMA the displayed pitch so it glides to rest; snap on a big jump (new string).
+    if (state.smoothedFreq === null) {
+      state.smoothedFreq = med;
+    } else {
+      const jumpCents = Math.abs(1200 * Math.log2(med / state.smoothedFreq));
+      state.smoothedFreq = (jumpCents > NOTE_JUMP_CENTS)
+        ? med
+        : state.smoothedFreq + FREQ_EMA * (med - state.smoothedFreq);
+    }
+    const freq = state.smoothedFreq;
 
     const t = currentTuning();
     const idx = (state.selectedString !== null) ? state.selectedString : closestString(freq);
     const targetMidi = t.notes[idx];
     const targetFreq = midiToFreq(targetMidi, state.aref);
-    const detectedMidi = freqToMidi(freq, state.aref);
-    const cents = (detectedMidi - targetMidi) * 100;
+    const cents = (freqToMidi(freq, state.aref) - targetMidi) * 100;
 
     $noteName.textContent = noteLabel(targetMidi);
     $noteTarget.textContent = `target ${targetFreq.toFixed(2)} Hz`;
     $noteCurrent.textContent = `heard ${freq.toFixed(2)} Hz`;
     $cents.textContent = `${cents > 0 ? "+" : ""}${cents.toFixed(1)} cents`;
 
-    const clamped = Math.max(-50, Math.min(50, cents));
-    const leftPct = 50 + clamped;
-    $needle.style.left = `${leftPct}%`;
-
-    $needle.className = "needle";
-    if (spreadCents > 30) {
-      // unstable reading — don't claim "in tune"
-      $needle.classList.add("way-off");
+    targetLeft = 50 + Math.max(-50, Math.min(50, cents));
+    if (spreadCents > 35) {
+      needleClass = "needle way-off";   // still settling — don't claim a verdict
     } else {
       const abs = Math.abs(cents);
-      if (abs < 5) $needle.classList.add("in-tune");
-      else if (abs < 15) $needle.classList.add(cents < 0 ? "flat" : "sharp");
-      else $needle.classList.add("way-off");
+      if (abs < 5) needleClass = "needle in-tune";
+      else if (abs < 15) needleClass = "needle " + (cents < 0 ? "flat" : "sharp");
+      else needleClass = "needle way-off";
     }
+  } else {
+    $cents.textContent = "— cents";   // idle: recentre the readout
   }
+
+  // Ease the needle toward its target every animation frame — smooth, calm motion
+  // instead of snapping to each raw reading.
+  state.needleLeft += (targetLeft - state.needleLeft) * 0.25;
+  $needle.style.left = `${state.needleLeft}%`;
+  $needle.className = needleClass;
 }
 
 // === Mic start ===
@@ -340,7 +381,7 @@ function start() {
       state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const source = state.audioCtx.createMediaStreamSource(stream);
       state.analyser = state.audioCtx.createAnalyser();
-      state.analyser.fftSize = 4096;
+      state.analyser.fftSize = 8192;   // ~170ms window — more periods per read = cleaner low-freq fundamental
       state.analyser.smoothingTimeConstant = 0;
       source.connect(state.analyser);
 
@@ -380,6 +421,9 @@ function stop() {
   state.audioCtx = null;
   state.analyser = null;
   state.history = [];
+  state.smoothedFreq = null;
+  state.needleLeft = 50;
+  state.lastDetectTs = 0;
   $startBtn.textContent = "Start tuning";
   $startBtn.classList.remove("listening");
   $micStatus.classList.add("hidden");
