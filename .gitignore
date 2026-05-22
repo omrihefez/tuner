@@ -1,1 +1,15 @@
 .vercel
+
+# Secrets — never commit (this is a PUBLIC repo)
+.env
+.env.*
+**/.env
+**/.env.*
+*.pem
+*.key
+secrets/
+**/secrets/
+
+# Cruft
+.DS_Store
+node_modules/
