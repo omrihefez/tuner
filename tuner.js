@@ -12,6 +12,7 @@ const INSTRUMENTS = {
       standard:  { name: "Standard",      notes: [28, 33, 38, 43] },
       dropD:     { name: "Drop D",        notes: [26, 33, 38, 43] },
       dropC:     { name: "Drop C",        notes: [24, 31, 36, 41] },
+      dropCSharp:{ name: "Drop C#",       notes: [25, 32, 37, 42] },         // C#1 G#1 C#2 F#2 (e.g. SOAD B.Y.O.B)
       halfStep:  { name: "½ step down",   notes: [27, 32, 37, 42] },
       fiveString:{ name: "5-string",      notes: [23, 28, 33, 38, 43] },     // B0 E1 A1 D2 G2
     },
