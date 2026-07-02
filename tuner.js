@@ -128,23 +128,27 @@ function renderTuningButtons() {
   if (!container) return;
   while (container.firstChild) container.removeChild(container.firstChild);
   const tunings = INSTRUMENTS[state.instrumentKey].tunings;
-  let first = true;
+  // Keep the current tuning if it's valid for this instrument (so a restored /
+  // persisted choice survives); otherwise fall back to the first one.
+  if (!Object.prototype.hasOwnProperty.call(tunings, state.tuningKey)) {
+    state.tuningKey = Object.keys(tunings)[0];
+  }
   for (const [key, tuning] of Object.entries(tunings)) {
     const btn = document.createElement("button");
     btn.className = "tuning";
     btn.dataset.tuning = key;
     btn.textContent = tuning.name;
-    if (first) { btn.classList.add("active"); first = false; }
+    if (key === state.tuningKey) btn.classList.add("active");
     btn.addEventListener("click", () => {
       state.tuningKey = key;
       state.selectedString = null;
       document.querySelectorAll(".tuning").forEach(b => b.classList.toggle("active", b === btn));
       renderStrings();
       updateAutoIndicator();
+      saveSettings();
     });
     container.appendChild(btn);
   }
-  state.tuningKey = Object.keys(tunings)[0];   // reset to first tuning of this instrument
 }
 
 function renderInstrumentButtons() {
@@ -160,10 +164,13 @@ function renderInstrumentButtons() {
     btn.addEventListener("click", () => {
       state.instrumentKey = key;
       state.selectedString = null;
+      // Switching instrument resets to that instrument's first tuning.
+      state.tuningKey = Object.keys(INSTRUMENTS[key].tunings)[0];
       document.querySelectorAll(".instrument").forEach(b => b.classList.toggle("active", b === btn));
       renderTuningButtons();
       renderStrings();
       updateAutoIndicator();
+      saveSettings();
     });
     container.appendChild(btn);
   }
@@ -458,6 +465,7 @@ $arefSlider.addEventListener("input", () => {
     btn.classList.toggle("active", parseFloat(btn.dataset.aref) === state.aref);
   });
   renderStrings();
+  saveSettings();
 });
 
 document.querySelectorAll(".preset").forEach(btn => {
@@ -467,6 +475,7 @@ document.querySelectorAll(".preset").forEach(btn => {
     $arefValue.textContent = `${state.aref.toFixed(1)} Hz`;
     document.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", b === btn));
     renderStrings();
+    saveSettings();
   });
 });
 
@@ -492,7 +501,44 @@ diag("page loaded — protocol=" + location.protocol + " host=" + location.host)
 diag("UA: " + (navigator.userAgent || "").slice(0, 110));
 diag("mediaDevices: " + (!!navigator.mediaDevices) + " getUserMedia: " + (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)));
 
-// Initial render
+// === Settings persistence (localStorage) — reopen where you left off ===
+const SETTINGS_KEY = "tuner:settings:v1";
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      aref: state.aref,
+      instrumentKey: state.instrumentKey,
+      tuningKey: state.tuningKey,
+    }));
+  } catch (e) { /* storage blocked (private mode / quota) — non-fatal */ }
+}
+
+function loadSettings() {
+  let s;
+  try { s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); }
+  catch (e) { return; }
+  if (!s || typeof s !== "object") return;
+  // Instrument + tuning must still exist (guards against preset schema changes).
+  if (s.instrumentKey && INSTRUMENTS[s.instrumentKey]) {
+    state.instrumentKey = s.instrumentKey;
+    const tunings = INSTRUMENTS[s.instrumentKey].tunings;
+    if (s.tuningKey && tunings[s.tuningKey]) state.tuningKey = s.tuningKey;
+  }
+  // A4 only within the slider's range.
+  const aref = Number(s.aref);
+  if (Number.isFinite(aref) && aref >= 415 && aref <= 466) {
+    state.aref = aref;
+    if ($arefSlider) $arefSlider.value = String(aref);
+    if ($arefValue) $arefValue.textContent = `${aref.toFixed(1)} Hz`;
+    document.querySelectorAll(".preset").forEach(btn => {
+      btn.classList.toggle("active", parseFloat(btn.dataset.aref) === aref);
+    });
+  }
+}
+
+// Initial render — restore saved settings first so the UI paints in the right state.
+loadSettings();
 renderInstrumentButtons();
 renderTuningButtons();
 renderStrings();
