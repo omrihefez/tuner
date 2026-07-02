@@ -1,0 +1,5 @@
+prefix: bt
+claim_ttl_hours: 24
+blocked_nag_days: 14
+board_path: BOARD.md
+repos: {}
