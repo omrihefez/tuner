@@ -86,6 +86,29 @@ function noteLabel(midi) {
   return `${name}${octave}`;
 }
 
+// === Reference tone ===
+// Plays the target pitch for a locked string via a short sine-wave burst.
+// Reuses the mic AudioContext when the tuner is running; otherwise creates
+// a temporary one (valid because this is always called from a click handler).
+function playReferenceTone(midi) {
+  const freq = midiToFreq(midi, state.aref);
+  const ctx = state.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  const ownCtx = !state.audioCtx;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  const t = ctx.currentTime;
+  gain.gain.setValueAtTime(0.4, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+  osc.start(t);
+  osc.stop(t + 1.2);
+  if (ownCtx) osc.onended = () => ctx.close();
+  ctx.resume(); // no-op if already running
+}
+
 // === Render UI ===
 function renderStrings() {
   const t = currentTuning();
@@ -102,9 +125,15 @@ function renderStrings() {
     btn.appendChild(label);
     btn.appendChild(freqSpan);
     btn.addEventListener("click", () => {
-      state.selectedString = (state.selectedString === i) ? null : i;
+      if (state.selectedString === i) {
+        // Already locked — play tone, stay locked.
+        playReferenceTone(currentTuning().notes[i]);
+        return;
+      }
+      state.selectedString = i;
       renderStrings();
       updateAutoIndicator();
+      playReferenceTone(currentTuning().notes[i]);
     });
     $strings.appendChild(btn);
   });
@@ -113,13 +142,23 @@ function renderStrings() {
 function updateAutoIndicator() {
   const el = document.getElementById("auto-indicator");
   if (!el) return;
+  while (el.firstChild) el.removeChild(el.firstChild);
   if (state.selectedString === null) {
-    el.textContent = "Auto-detect — play any string, the tuner picks the closest. Tap a string to lock manually.";
+    el.appendChild(document.createTextNode("Auto-detect — play any string, the tuner picks the closest. Tap a string to lock manually."));
     el.classList.remove("manual");
   } else {
     const midi = currentTuning().notes[state.selectedString];
-    el.textContent = `Locked to ${noteLabel(midi)}. Tap the highlighted button again to release.`;
     el.classList.add("manual");
+    el.appendChild(document.createTextNode(`Locked to ${noteLabel(midi)} — tap to hear pitch · `));
+    const releaseBtn = document.createElement("button");
+    releaseBtn.className = "release-btn";
+    releaseBtn.textContent = "Auto";
+    releaseBtn.addEventListener("click", () => {
+      state.selectedString = null;
+      renderStrings();
+      updateAutoIndicator();
+    });
+    el.appendChild(releaseBtn);
   }
 }
 
