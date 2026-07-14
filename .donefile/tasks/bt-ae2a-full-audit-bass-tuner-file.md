@@ -3,7 +3,7 @@ id: bt-ae2a
 title: "Full audit: bass-tuner — file each finding as its own task (security, correctness, tests,
   UX, perf, deploy, deps)"
 status: open
-priority: p1
+priority: p0
 tags:
   - audit
 created: 2026-07-13
