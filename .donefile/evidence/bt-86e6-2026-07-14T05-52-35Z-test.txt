@@ -1,0 +1,178 @@
+$ npm test
+
+
+> bass-tuner@1.0.0 test
+> node --test test/*.test.js
+
+TAP version 13
+# Subtest: midiToFreq: concert A (A4, midi 69) is the reference A-ref
+ok 1 - midiToFreq: concert A (A4, midi 69) is the reference A-ref
+  ---
+  duration_ms: 2.0104
+  type: 'test'
+  ...
+# Subtest: midiToFreq: octaves double / halve the frequency
+ok 2 - midiToFreq: octaves double / halve the frequency
+  ---
+  duration_ms: 0.365458
+  type: 'test'
+  ...
+# Subtest: midiToFreq: standard string fundamentals @ A=440
+ok 3 - midiToFreq: standard string fundamentals @ A=440
+  ---
+  duration_ms: 0.434766
+  type: 'test'
+  ...
+# Subtest: midiToFreq: A-ref shift scales every note proportionally
+ok 4 - midiToFreq: A-ref shift scales every note proportionally
+  ---
+  duration_ms: 0.252856
+  type: 'test'
+  ...
+# Subtest: freqToMidi: reference and octaves land on exact integers
+ok 5 - freqToMidi: reference and octaves land on exact integers
+  ---
+  duration_ms: 0.254673
+  type: 'test'
+  ...
+# Subtest: freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+ok 6 - freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+  ---
+  duration_ms: 2.206176
+  type: 'test'
+  ...
+# Subtest: freqToMidi: a half step up is +1.0, a whole step is +2.0
+ok 7 - freqToMidi: a half step up is +1.0, a whole step is +2.0
+  ---
+  duration_ms: 0.342334
+  type: 'test'
+  ...
+# Subtest: cents: dead-on target reads 0 cents
+ok 8 - cents: dead-on target reads 0 cents
+  ---
+  duration_ms: 0.175737
+  type: 'test'
+  ...
+# Subtest: cents: one semitone sharp reads +100, one flat reads -100
+ok 9 - cents: one semitone sharp reads +100, one flat reads -100
+  ---
+  duration_ms: 0.421452
+  type: 'test'
+  ...
+# Subtest: cents: +50 cents is a quarter-tone above target
+ok 10 - cents: +50 cents is a quarter-tone above target
+  ---
+  duration_ms: 0.58705
+  type: 'test'
+  ...
+# Subtest: noteLabel: reference notes name correctly (scientific pitch notation)
+ok 11 - noteLabel: reference notes name correctly (scientific pitch notation)
+  ---
+  duration_ms: 0.373356
+  type: 'test'
+  ...
+# Subtest: noteLabel: sharps use the ♯ glyph
+ok 12 - noteLabel: sharps use the ♯ glyph
+  ---
+  duration_ms: 0.191039
+  type: 'test'
+  ...
+# Subtest: noteLabel: extreme MIDI range
+ok 13 - noteLabel: extreme MIDI range
+  ---
+  duration_ms: 0.180508
+  type: 'test'
+  ...
+# Subtest: noteLabel: rounds a fractional MIDI value to the nearest note
+ok 14 - noteLabel: rounds a fractional MIDI value to the nearest note
+  ---
+  duration_ms: 0.117462
+  type: 'test'
+  ...
+# Subtest: medianPitch: empty input returns the -1 sentinel
+ok 15 - medianPitch: empty input returns the -1 sentinel
+  ---
+  duration_ms: 0.159559
+  type: 'test'
+  ...
+# Subtest: medianPitch: single sample returns itself
+ok 16 - medianPitch: single sample returns itself
+  ---
+  duration_ms: 0.125968
+  type: 'test'
+  ...
+# Subtest: medianPitch: odd count returns the middle of the sorted values
+ok 17 - medianPitch: odd count returns the middle of the sorted values
+  ---
+  duration_ms: 0.195009
+  type: 'test'
+  ...
+# Subtest: medianPitch: even count returns the upper-middle sorted value
+ok 18 - medianPitch: even count returns the upper-middle sorted value
+  ---
+  duration_ms: 0.114036
+  type: 'test'
+  ...
+# Subtest: medianPitch: rejects a spurious octave-double outlier
+ok 19 - medianPitch: rejects a spurious octave-double outlier
+  ---
+  duration_ms: 0.101403
+  type: 'test'
+  ...
+# Subtest: closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+ok 20 - closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+  ---
+  duration_ms: 1.442681
+  type: 'test'
+  ...
+# Subtest: closestString: picks the nearer of two strings for an off-pitch input
+ok 21 - closestString: picks the nearer of two strings for an off-pitch input
+  ---
+  duration_ms: 0.248188
+  type: 'test'
+  ...
+# Subtest: closestString: guitar standard (E2..E4) maps the outer strings
+ok 22 - closestString: guitar standard (E2..E4) maps the outer strings
+  ---
+  duration_ms: 0.230818
+  type: 'test'
+  ...
+# Subtest: freqRange: brackets the strings and excludes the G string's 2nd harmonic
+ok 23 - freqRange: brackets the strings and excludes the G string's 2nd harmonic
+  ---
+  duration_ms: 0.239329
+  type: 'test'
+  ...
+# Subtest: freqRange: never opens the low edge below the 25 Hz floor
+ok 24 - freqRange: never opens the low edge below the 25 Hz floor
+  ---
+  duration_ms: 0.140782
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+ok 25 - detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+  ---
+  duration_ms: 161.668629
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+ok 26 - detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+  ---
+  duration_ms: 1.181951
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: rejects a too-short buffer
+ok 27 - detectPitchYIN: rejects a too-short buffer
+  ---
+  duration_ms: 0.205121
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 309.347378
