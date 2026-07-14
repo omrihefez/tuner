@@ -31,6 +31,20 @@ python3 -m http.server 8000
 # or localhost, so file:// won't work.
 ```
 
+## Tests
+
+The pitch math (`midiToFreq`, `freqToMidi`, `noteLabel`, cents, `closestString`,
+`freqRange`, `medianPitch`, and the YIN detector) has known-answer tests. They run
+the **real `tuner.js`** inside a `vm` sandbox with a stub DOM — no re-implementation,
+no build step, no dependencies (uses the Node ≥18 built-in test runner).
+
+```bash
+npm test        # == node --test test/*.test.js
+```
+
+- `test/harness.js` — evaluates `tuner.js` in a sandbox and hands back its pure functions.
+- `test/pitch-math.test.js` — the known-answer cases (equal-temperament values, etc.).
+
 ## Deploy
 
 Push to Vercel (or any static host). The `vercel.json` config is minimal: just a no-cache rule for the service worker.
