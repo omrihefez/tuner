@@ -438,10 +438,18 @@ function start() {
       diag("getUserMedia resolved — stream tracks: " + stream.getAudioTracks().length);
       try {
         state.micStream = stream;
-        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        // Bass fundamentals top out ~130 Hz, so 22.05 kHz is ample Nyquist headroom
+        // and halves the YIN diff-loop cost vs. native 44.1/48 kHz. The UA resamples
+        // the mic input to match; fall back to the device default if it rejects the option.
+        try {
+          state.audioCtx = new Ctx({ sampleRate: 22050 });
+        } catch (e) {
+          state.audioCtx = new Ctx();
+        }
         const source = state.audioCtx.createMediaStreamSource(stream);
         state.analyser = state.audioCtx.createAnalyser();
-        state.analyser.fftSize = 8192;   // ~170ms window — more periods per read = cleaner low-freq fundamental
+        state.analyser.fftSize = 8192;   // ~370ms window at 22.05kHz — more periods per read = cleaner low-freq fundamental
         state.analyser.smoothingTimeConstant = 0;
         source.connect(state.analyser);
       } catch (setupErr) {
