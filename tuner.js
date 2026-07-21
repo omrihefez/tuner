@@ -436,13 +436,24 @@ function start() {
   navigator.mediaDevices.getUserMedia({ audio: true })
     .then((stream) => {
       diag("getUserMedia resolved — stream tracks: " + stream.getAudioTracks().length);
-      state.micStream = stream;
-      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = state.audioCtx.createMediaStreamSource(stream);
-      state.analyser = state.audioCtx.createAnalyser();
-      state.analyser.fftSize = 8192;   // ~170ms window — more periods per read = cleaner low-freq fundamental
-      state.analyser.smoothingTimeConstant = 0;
-      source.connect(state.analyser);
+      try {
+        state.micStream = stream;
+        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = state.audioCtx.createMediaStreamSource(stream);
+        state.analyser = state.audioCtx.createAnalyser();
+        state.analyser.fftSize = 8192;   // ~170ms window — more periods per read = cleaner low-freq fundamental
+        state.analyser.smoothingTimeConstant = 0;
+        source.connect(state.analyser);
+      } catch (setupErr) {
+        // Setup failed after the mic was already granted — stop the live track so the OS
+        // recording indicator turns off, and clear state so the next Start doesn't leak a 2nd stream.
+        stream.getTracks().forEach(t => t.stop());
+        state.micStream = null;
+        if (state.audioCtx) state.audioCtx.close();
+        state.audioCtx = null;
+        state.analyser = null;
+        throw setupErr;
+      }
 
       $startBtn.textContent = "Stop";
       $startBtn.classList.add("listening");

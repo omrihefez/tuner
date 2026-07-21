@@ -47,7 +47,7 @@ function makeEl() {
   return el;
 }
 
-function buildSandbox() {
+function buildSandbox(overrides = {}) {
   const documentStub = {
     getElementById() { return makeEl(); },
     querySelector() { return makeEl(); },
@@ -62,7 +62,10 @@ function buildSandbox() {
 
   const navigatorStub = {
     userAgent: "node-test-harness",
-    mediaDevices: { getUserMedia() { return Promise.resolve({ getAudioTracks: () => [] }); } },
+    mediaDevices: {
+      getUserMedia: overrides.getUserMedia
+        || function getUserMedia() { return Promise.resolve({ getAudioTracks: () => [] }); },
+    },
     permissions: { query() { return Promise.resolve({ state: "prompt", addEventListener() {} }); } },
     serviceWorker: {
       register() { return Promise.resolve(null); },
@@ -73,7 +76,7 @@ function buildSandbox() {
 
   const windowStub = {
     addEventListener() {},
-    AudioContext: function AudioContext() {},
+    AudioContext: overrides.AudioContext || function AudioContext() {},
     webkitAudioContext: undefined,
     requestAnimationFrame() { return 0; },
     cancelAnimationFrame() {},
@@ -119,12 +122,14 @@ const EXPORT_NAMES = [
   "state",
   "INSTRUMENTS",
   "NOTE_NAMES",
+  "start",
+  "stop",
 ];
 
-function loadTuner() {
+function loadTuner(overrides) {
   const source = fs.readFileSync(TUNER_PATH, "utf8");
   const epilogue = `\n;globalThis.__exports = { ${EXPORT_NAMES.join(", ")} };\n`;
-  const sandbox = buildSandbox();
+  const sandbox = buildSandbox(overrides);
   vm.createContext(sandbox);
   vm.runInContext(source + epilogue, sandbox, { filename: "tuner.js" });
   return sandbox.__exports;
