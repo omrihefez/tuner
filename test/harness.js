@@ -119,6 +119,7 @@ const EXPORT_NAMES = [
   "detectPitchYIN",
   "freqRange",
   "currentTuning",
+  "shouldBuzz",
   "state",
   "INSTRUMENTS",
   "NOTE_NAMES",

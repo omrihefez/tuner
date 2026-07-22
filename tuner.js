@@ -47,10 +47,25 @@ const state = {
   needleLeft: 50,       // current needle position %, eased toward target each frame
   lastDetectTs: 0,      // throttle YIN independent of the 60fps animation
   lastGoodTs: 0,        // timestamp of last successful detection — drives the note-hold
+  wasInTune: false,     // edge-detects entering "in tune" so the haptic buzzes once, not every frame
 };
 
 function currentTuning() {
   return INSTRUMENTS[state.instrumentKey].tunings[state.tuningKey];
+}
+
+// Edge-detect entering "in tune" — true only on the transition, so a sustained
+// note buzzes once instead of every animation frame while it's held.
+function shouldBuzz(wasInTune, isInTune) {
+  return isInTune && !wasInTune;
+}
+
+// Fires the haptic pulse. Feature-detected: desktop/iOS Safari lack
+// navigator.vibrate, so this is a silent no-op there.
+function triggerHaptic() {
+  if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+    navigator.vibrate(HAPTIC_MS);
+  }
 }
 
 // Median of last N detected pitches. Filters out spurious doubles/halves and noise.
@@ -245,6 +260,7 @@ const NOTE_JUMP_CENTS = 80;       // beyond this jump, snap instead of glide (yo
 const SIGNAL_HOLD_MS = 600;       // keep showing the last pitch through sustain/decay gaps;
                                   // only blank after this much continuous silence (continuity, like a hardware tuner)
 const CLOSE_CENTS = 3;            // within this, round to 0.0 / "in tune" — close enough
+const HAPTIC_MS = 40;             // vibration pulse length when you land in tune
 
 // Search range derived from the CURRENT tuning: a few semitones below the lowest
 // string and above the highest. Capping the top below the highest string's harmonics
@@ -412,6 +428,10 @@ function tickInner() {
     $cents.textContent = "— cents";   // idle: recentre the readout
   }
 
+  const isInTune = needleClass === "needle in-tune";
+  if (shouldBuzz(state.wasInTune, isInTune)) triggerHaptic();
+  state.wasInTune = isInTune;
+
   // Ease the needle toward its target every animation frame — smooth, calm motion
   // instead of snapping to each raw reading.
   state.needleLeft += (targetLeft - state.needleLeft) * 0.25;
@@ -503,6 +523,7 @@ function stop() {
   state.needleLeft = 50;
   state.lastDetectTs = 0;
   state.lastGoodTs = 0;
+  state.wasInTune = false;
   $startBtn.textContent = "Start tuning";
   $startBtn.classList.remove("listening");
   $micStatus.classList.add("hidden");
