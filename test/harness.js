@@ -120,6 +120,8 @@ const EXPORT_NAMES = [
   "freqRange",
   "currentTuning",
   "shouldBuzz",
+  "buildAnnouncement",
+  "shouldAnnounce",
   "state",
   "INSTRUMENTS",
   "NOTE_NAMES",

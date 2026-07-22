@@ -48,6 +48,8 @@ const state = {
   lastDetectTs: 0,      // throttle YIN independent of the 60fps animation
   lastGoodTs: 0,        // timestamp of last successful detection — drives the note-hold
   wasInTune: false,     // edge-detects entering "in tune" so the haptic buzzes once, not every frame
+  lastAnnouncement: null, // last text pushed to the aria-live region — dedupes repeats
+  lastAnnounceTs: 0,       // throttles aria-live updates independent of the 60fps animation
 };
 
 function currentTuning() {
@@ -58,6 +60,26 @@ function currentTuning() {
 // note buzzes once instead of every animation frame while it's held.
 function shouldBuzz(wasInTune, isInTune) {
   return isInTune && !wasInTune;
+}
+
+// Builds the sentence announced to screen readers. Cents are rounded to
+// ANNOUNCE_CENTS_STEP so the live region reads "12 cents sharp" instead of
+// flickering through every fractional value the 60fps needle passes through.
+function buildAnnouncement(note, cents, isInTune) {
+  if (isInTune) return `${note}, in tune`;
+  const rounded = Math.round(cents / ANNOUNCE_CENTS_STEP) * ANNOUNCE_CENTS_STEP;
+  if (rounded === 0) return `${note}, in tune`;
+  return `${note}, ${Math.abs(rounded)} cents ${rounded < 0 ? "flat" : "sharp"}`;
+}
+
+// Gates aria-live updates: a screen reader speaks every text change, so pushing
+// one on every animation frame (like the visual readout does) is unusable
+// chatter. Skip no-op repeats and otherwise throttle to ANNOUNCE_INTERVAL_MS —
+// except entering "in tune", which jumps the queue like the haptic buzz does,
+// so the confirmation isn't stuck behind a stale throttle window.
+function shouldAnnounce(now, lastAnnounceTs, prevText, nextText, justEnteredTune) {
+  if (nextText === prevText) return false;
+  return justEnteredTune || (now - lastAnnounceTs >= ANNOUNCE_INTERVAL_MS);
 }
 
 // Fires the haptic pulse. Feature-detected: desktop/iOS Safari lack
@@ -84,6 +106,7 @@ const $noteTarget = document.getElementById("note-target");
 const $noteCurrent= document.getElementById("note-current");
 const $needle     = document.getElementById("needle");
 const $cents      = document.getElementById("cents-display");
+const $announcer  = document.getElementById("tuner-announcer");
 const $startBtn   = document.getElementById("start-btn");
 const $micStatus  = document.getElementById("mic-status");
 
@@ -261,6 +284,9 @@ const SIGNAL_HOLD_MS = 600;       // keep showing the last pitch through sustain
                                   // only blank after this much continuous silence (continuity, like a hardware tuner)
 const CLOSE_CENTS = 3;            // within this, round to 0.0 / "in tune" — close enough
 const HAPTIC_MS = 40;             // vibration pulse length when you land in tune
+const ANNOUNCE_INTERVAL_MS = 1200; // min gap between aria-live updates — the readout
+                                  // itself refreshes every rAF; a screen reader must not.
+const ANNOUNCE_CENTS_STEP = 5;    // round announced cents to this grid, same reason
 
 // Search range derived from the CURRENT tuning: a few semitones below the lowest
 // string and above the highest. Capping the top below the highest string's harmonics
@@ -381,6 +407,8 @@ function tickInner() {
 
   let targetLeft = 50;          // needle target this frame (centre = idle)
   let needleClass = "needle";
+  let announceNote = null;      // set below only while a pitch is actually being read
+  let announceCentsVal = 0;
 
   // Need a few stable readings before showing a pitch.
   if (state.history.length >= 3) {
@@ -424,13 +452,26 @@ function tickInner() {
       else if (abs < 15) needleClass = "needle " + (cents < 0 ? "flat" : "sharp");
       else needleClass = "needle way-off";
     }
+
+    announceNote = noteLabel(targetMidi);
+    announceCentsVal = cents;
   } else {
     $cents.textContent = "— cents";   // idle: recentre the readout
   }
 
   const isInTune = needleClass === "needle in-tune";
-  if (shouldBuzz(state.wasInTune, isInTune)) triggerHaptic();
+  const enteredTune = shouldBuzz(state.wasInTune, isInTune);
+  if (enteredTune) triggerHaptic();
   state.wasInTune = isInTune;
+
+  if (announceNote !== null) {
+    const announcement = buildAnnouncement(announceNote, announceCentsVal, isInTune);
+    if (shouldAnnounce(now, state.lastAnnounceTs, state.lastAnnouncement, announcement, enteredTune)) {
+      $announcer.textContent = announcement;
+      state.lastAnnouncement = announcement;
+      state.lastAnnounceTs = now;
+    }
+  }
 
   // Ease the needle toward its target every animation frame — smooth, calm motion
   // instead of snapping to each raw reading.
@@ -524,6 +565,8 @@ function stop() {
   state.lastDetectTs = 0;
   state.lastGoodTs = 0;
   state.wasInTune = false;
+  state.lastAnnouncement = null;
+  state.lastAnnounceTs = 0;
   $startBtn.textContent = "Start tuning";
   $startBtn.classList.remove("listening");
   $micStatus.classList.add("hidden");
@@ -531,6 +574,7 @@ function stop() {
   $noteTarget.textContent = "target — Hz";
   $noteCurrent.textContent = "heard — Hz";
   $cents.textContent = "— cents";
+  $announcer.textContent = "";
   $needle.style.left = "50%";
   $needle.className = "needle";
 }
