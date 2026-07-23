@@ -620,13 +620,23 @@ $startBtn.addEventListener("click", () => {
   else start();
 });
 
-// === Inline diagnostic log (visible at page bottom). Helps debug why mic prompt isn't appearing on a real device. ===
+// === Inline diagnostic log (visible at page bottom). Helps debug why mic prompt isn't appearing on a real
+// device. Off for normal users — enable with ?debug or localStorage["tuner:debug"]="1" when investigating
+// a mic-prompt report; it echoes navigator.userAgent, so it shouldn't run by default. ===
+const DIAG_ENABLED = /(^|[?&])debug(=|&|$)/.test(location.search || "") ||
+  localStorage.getItem("tuner:debug") === "1";
+
 function diag(msg) {
+  if (!DIAG_ENABLED) return;
   const el = document.getElementById("diag-log");
   if (!el) return;
   const ts = new Date().toISOString().slice(11, 23);
   el.textContent = (el.textContent || "") + `[${ts}] ${msg}\n`;
   el.scrollTop = el.scrollHeight;
+}
+if (DIAG_ENABLED) {
+  const panel = document.getElementById("diag-panel");
+  if (panel) panel.hidden = false;
 }
 window.addEventListener("error", (e) => diag("page error: " + e.message));
 window.addEventListener("unhandledrejection", (e) => diag("unhandled rejection: " + (e.reason && e.reason.message || e.reason)));
