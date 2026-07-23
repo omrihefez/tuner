@@ -3,8 +3,8 @@
 // very next load instead of waiting on a manual CACHE bump; other static
 // assets stay cache-first. The update-prompt in tuner.js still shows a
 // "Reload" toast when the SW script itself changes.
-const CACHE = "tuner-v9";
-const ASSETS = ["/", "/index.html", "/style.css", "/tuner.js", "/manifest.json", "/about.html", "/privacy.html", "/icon-192.png", "/icon-512.png"];
+const CACHE = "tuner-v10";
+const ASSETS = ["/", "/index.html", "/style.css", "/tuner.js", "/manifest.json", "/about.html", "/privacy.html", "/icon-192.png", "/icon-512.png", "/favicon.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
