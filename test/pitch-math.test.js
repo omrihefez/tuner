@@ -12,6 +12,7 @@ const T = loadTuner();
 const {
   midiToFreq, freqToMidi, noteLabel, closestString,
   medianPitch, detectPitchYIN, freqRange, currentTuning, state,
+  INSTRUMENTS,
 } = T;
 
 // Float comparison with an absolute tolerance.
@@ -204,6 +205,57 @@ test("freqRange: never opens the low edge below the 25 Hz floor", () => {
   const { minFreq } = freqRange();
   assert.ok(minFreq >= 25, `minFreq ${minFreq} must respect the 25 Hz floor`);
 });
+
+// -----------------------------------------------------------------------------
+// closestString / freqRange — every instrument+tuning preset, not just the two
+// spot-checked above. Walks the actual INSTRUMENTS table (copied out of the vm
+// realm first) so a newly added preset is covered automatically.
+// -----------------------------------------------------------------------------
+const ALL_PRESETS = [];
+for (const [instrumentKey, inst] of Object.entries(INSTRUMENTS)) {
+  for (const tuningKey of Object.keys(inst.tunings)) {
+    ALL_PRESETS.push({
+      instrumentKey,
+      tuningKey,
+      label: `${inst.name} / ${inst.tunings[tuningKey].name}`,
+      notes: Array.from(inst.tunings[tuningKey].notes),
+    });
+  }
+}
+
+// Sanity check on the fixture itself: bass has 6 tunings, guitar has 6 tunings.
+test("preset fixture: covers every instrument x tuning combination", () => {
+  assert.equal(ALL_PRESETS.length, 12, "expected 6 bass + 6 guitar presets");
+});
+
+for (const preset of ALL_PRESETS) {
+  test(`closestString: ${preset.label} maps every string's own fundamental back to itself`, () => {
+    setTuning(preset.instrumentKey, preset.tuningKey);
+    preset.notes.forEach((midi, i) => {
+      const freq = midiToFreq(midi, 440);
+      assert.equal(
+        closestString(freq), i,
+        `${preset.label}: string ${i} (midi ${midi}, ${freq.toFixed(2)} Hz) should resolve to itself`,
+      );
+    });
+  });
+
+  test(`freqRange: ${preset.label} window brackets every string and respects the 25 Hz floor`, () => {
+    setTuning(preset.instrumentKey, preset.tuningKey);
+    const { minFreq, maxFreq } = freqRange();
+    assert.ok(minFreq >= 25, `${preset.label}: minFreq ${minFreq} must respect the 25 Hz floor`);
+    assert.ok(minFreq < maxFreq, `${preset.label}: minFreq ${minFreq} must be below maxFreq ${maxFreq}`);
+    const lo = Math.min(...preset.notes), hi = Math.max(...preset.notes);
+    assert.ok(
+      minFreq <= midiToFreq(lo, 440),
+      `${preset.label}: minFreq ${minFreq} should be at or below the lowest string (${midiToFreq(lo, 440).toFixed(2)} Hz)`,
+    );
+    assert.ok(
+      maxFreq >= midiToFreq(hi, 440),
+      `${preset.label}: maxFreq ${maxFreq} should be at or above the highest string (${midiToFreq(hi, 440).toFixed(2)} Hz)`,
+    );
+  });
+}
 
 // -----------------------------------------------------------------------------
 // detectPitchYIN — end-to-end on a synthesised tone (integration known-answer)
