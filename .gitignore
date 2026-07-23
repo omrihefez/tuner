@@ -13,3 +13,4 @@ secrets/
 # Cruft
 .DS_Store
 node_modules/
+.worktrees/
