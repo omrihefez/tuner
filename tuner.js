@@ -50,6 +50,9 @@ const state = {
   wasInTune: false,     // edge-detects entering "in tune" so the haptic buzzes once, not every frame
   lastAnnouncement: null, // last text pushed to the aria-live region — dedupes repeats
   lastAnnounceTs: 0,       // throttles aria-live updates independent of the 60fps animation
+  refToneGateUntil: 0,    // performance.now() timestamp — pitch detection is skipped
+                           // until this passes, so the played reference tone (which
+                           // leaks into the live mic acoustically) can't jerk the needle
 };
 
 function currentTuning() {
@@ -128,6 +131,8 @@ function noteLabel(midi) {
 // Plays the target pitch for a locked string via a short sine-wave burst.
 // Reuses the mic AudioContext when the tuner is running; otherwise creates
 // a temporary one (valid because this is always called from a click handler).
+const REF_TONE_DURATION_S = 1.2;
+
 function playReferenceTone(midi) {
   const freq = midiToFreq(midi, state.aref);
   const ctx = state.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -140,11 +145,15 @@ function playReferenceTone(midi) {
   gain.connect(ctx.destination);
   const t = ctx.currentTime;
   gain.gain.setValueAtTime(0.4, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + REF_TONE_DURATION_S);
   osc.start(t);
-  osc.stop(t + 1.2);
+  osc.stop(t + REF_TONE_DURATION_S);
   if (ownCtx) osc.onended = () => ctx.close();
   ctx.resume(); // no-op if already running
+  // The tone plays out of the speakers and acoustically leaks back into the live
+  // mic, so gate pitch detection while it plays — otherwise the needle jerks to
+  // the reference pitch instead of showing the string.
+  state.refToneGateUntil = performance.now() + REF_TONE_DURATION_S * 1000;
 }
 
 // === Render UI ===
@@ -383,7 +392,7 @@ function tickInner() {
 
   // Run the heavier YIN detection on a throttle, decoupled from the 60fps animation.
   // This both cuts CPU and stops the readout twitching on every single frame.
-  if (now - state.lastDetectTs >= DETECT_INTERVAL_MS) {
+  if (now - state.lastDetectTs >= DETECT_INTERVAL_MS && now >= state.refToneGateUntil) {
     state.lastDetectTs = now;
     const buf = new Float32Array(state.analyser.fftSize);
     state.analyser.getFloatTimeDomainData(buf);
@@ -567,6 +576,7 @@ function stop() {
   state.wasInTune = false;
   state.lastAnnouncement = null;
   state.lastAnnounceTs = 0;
+  state.refToneGateUntil = 0;
   $startBtn.textContent = "Start tuning";
   $startBtn.classList.remove("listening");
   $micStatus.classList.add("hidden");

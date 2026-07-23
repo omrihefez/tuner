@@ -97,7 +97,7 @@ function buildSandbox(overrides = {}) {
     navigator: navigatorStub,
     location: locationStub,
     localStorage: localStorageStub,
-    performance: { now() { return 0; } },
+    performance: { now: overrides.now || function now() { return 0; } },
     requestAnimationFrame() { return 0; },
     cancelAnimationFrame() {},
     console,
@@ -127,6 +127,9 @@ const EXPORT_NAMES = [
   "NOTE_NAMES",
   "start",
   "stop",
+  "tick",
+  "tickInner",
+  "playReferenceTone",
 ];
 
 function loadTuner(overrides) {
