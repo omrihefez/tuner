@@ -1,0 +1,490 @@
+$ npm test
+
+
+> bass-tuner@1.0.0 test
+> node --test test/*.test.js
+
+TAP version 13
+# Subtest: buildAnnouncement: in tune reads a clean confirmation
+ok 1 - buildAnnouncement: in tune reads a clean confirmation
+  ---
+  duration_ms: 1.709443
+  type: 'test'
+  ...
+# Subtest: buildAnnouncement: flat direction is named, magnitude rounded to the grid
+ok 2 - buildAnnouncement: flat direction is named, magnitude rounded to the grid
+  ---
+  duration_ms: 0.275997
+  type: 'test'
+  ...
+# Subtest: buildAnnouncement: sharp direction is named, magnitude rounded to the grid
+ok 3 - buildAnnouncement: sharp direction is named, magnitude rounded to the grid
+  ---
+  duration_ms: 0.186574
+  type: 'test'
+  ...
+# Subtest: buildAnnouncement: rounds to zero collapses to the in-tune sentence
+ok 4 - buildAnnouncement: rounds to zero collapses to the in-tune sentence
+  ---
+  duration_ms: 0.189305
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: silent when the text hasn't changed (no per-frame repeats)
+ok 5 - shouldAnnounce: silent when the text hasn't changed (no per-frame repeats)
+  ---
+  duration_ms: 0.246452
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: silent on a changed text within the throttle window
+ok 6 - shouldAnnounce: silent on a changed text within the throttle window
+  ---
+  duration_ms: 0.167961
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: fires on a changed text once the throttle window has elapsed
+ok 7 - shouldAnnounce: fires on a changed text once the throttle window has elapsed
+  ---
+  duration_ms: 0.362283
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: entering tune jumps the throttle queue immediately
+ok 8 - shouldAnnounce: entering tune jumps the throttle queue immediately
+  ---
+  duration_ms: 0.227032
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: fires on the rising edge (out of tune -> in tune)
+ok 9 - shouldBuzz: fires on the rising edge (out of tune -> in tune)
+  ---
+  duration_ms: 1.571221
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent while already in tune (no per-frame spam)
+ok 10 - shouldBuzz: stays silent while already in tune (no per-frame spam)
+  ---
+  duration_ms: 0.287737
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent leaving tune (falling edge)
+ok 11 - shouldBuzz: stays silent leaving tune (falling edge)
+  ---
+  duration_ms: 0.207575
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent while consistently out of tune
+ok 12 - shouldBuzz: stays silent while consistently out of tune
+  ---
+  duration_ms: 0.25217
+  type: 'test'
+  ...
+# Subtest: start(): AudioContext throwing after getUserMedia resolves stops the mic track and clears state
+ok 13 - start(): AudioContext throwing after getUserMedia resolves stops the mic track and clears state
+  ---
+  duration_ms: 33.608576
+  type: 'test'
+  ...
+# Subtest: start(): a source/analyser failure after AudioContext succeeds also stops the track and closes the context
+ok 14 - start(): a source/analyser failure after AudioContext succeeds also stops the track and closes the context
+  ---
+  duration_ms: 22.844433
+  type: 'test'
+  ...
+# Subtest: start(): the happy path is unaffected — stream and analyser stay wired up
+ok 15 - start(): the happy path is unaffected — stream and analyser stay wired up
+  ---
+  duration_ms: 24.054827
+  type: 'test'
+  ...
+# Subtest: midiToFreq: concert A (A4, midi 69) is the reference A-ref
+ok 16 - midiToFreq: concert A (A4, midi 69) is the reference A-ref
+  ---
+  duration_ms: 5.132686
+  type: 'test'
+  ...
+# Subtest: midiToFreq: octaves double / halve the frequency
+ok 17 - midiToFreq: octaves double / halve the frequency
+  ---
+  duration_ms: 0.458779
+  type: 'test'
+  ...
+# Subtest: midiToFreq: standard string fundamentals @ A=440
+ok 18 - midiToFreq: standard string fundamentals @ A=440
+  ---
+  duration_ms: 0.506772
+  type: 'test'
+  ...
+# Subtest: midiToFreq: A-ref shift scales every note proportionally
+ok 19 - midiToFreq: A-ref shift scales every note proportionally
+  ---
+  duration_ms: 0.264172
+  type: 'test'
+  ...
+# Subtest: freqToMidi: reference and octaves land on exact integers
+ok 20 - freqToMidi: reference and octaves land on exact integers
+  ---
+  duration_ms: 0.261471
+  type: 'test'
+  ...
+# Subtest: freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+ok 21 - freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+  ---
+  duration_ms: 0.731039
+  type: 'test'
+  ...
+# Subtest: freqToMidi: a half step up is +1.0, a whole step is +2.0
+ok 22 - freqToMidi: a half step up is +1.0, a whole step is +2.0
+  ---
+  duration_ms: 0.269971
+  type: 'test'
+  ...
+# Subtest: cents: dead-on target reads 0 cents
+ok 23 - cents: dead-on target reads 0 cents
+  ---
+  duration_ms: 0.240631
+  type: 'test'
+  ...
+# Subtest: cents: one semitone sharp reads +100, one flat reads -100
+ok 24 - cents: one semitone sharp reads +100, one flat reads -100
+  ---
+  duration_ms: 0.475411
+  type: 'test'
+  ...
+# Subtest: cents: +50 cents is a quarter-tone above target
+ok 25 - cents: +50 cents is a quarter-tone above target
+  ---
+  duration_ms: 0.582963
+  type: 'test'
+  ...
+# Subtest: noteLabel: reference notes name correctly (scientific pitch notation)
+ok 26 - noteLabel: reference notes name correctly (scientific pitch notation)
+  ---
+  duration_ms: 0.297368
+  type: 'test'
+  ...
+# Subtest: noteLabel: sharps use the ♯ glyph
+ok 27 - noteLabel: sharps use the ♯ glyph
+  ---
+  duration_ms: 0.178852
+  type: 'test'
+  ...
+# Subtest: noteLabel: extreme MIDI range
+ok 28 - noteLabel: extreme MIDI range
+  ---
+  duration_ms: 0.182779
+  type: 'test'
+  ...
+# Subtest: noteLabel: rounds a fractional MIDI value to the nearest note
+ok 29 - noteLabel: rounds a fractional MIDI value to the nearest note
+  ---
+  duration_ms: 0.126477
+  type: 'test'
+  ...
+# Subtest: medianPitch: empty input returns the -1 sentinel
+ok 30 - medianPitch: empty input returns the -1 sentinel
+  ---
+  duration_ms: 0.144201
+  type: 'test'
+  ...
+# Subtest: medianPitch: single sample returns itself
+ok 31 - medianPitch: single sample returns itself
+  ---
+  duration_ms: 0.123622
+  type: 'test'
+  ...
+# Subtest: medianPitch: odd count returns the middle of the sorted values
+ok 32 - medianPitch: odd count returns the middle of the sorted values
+  ---
+  duration_ms: 0.150768
+  type: 'test'
+  ...
+# Subtest: medianPitch: even count returns the upper-middle sorted value
+ok 33 - medianPitch: even count returns the upper-middle sorted value
+  ---
+  duration_ms: 0.137189
+  type: 'test'
+  ...
+# Subtest: medianPitch: rejects a spurious octave-double outlier
+ok 34 - medianPitch: rejects a spurious octave-double outlier
+  ---
+  duration_ms: 0.151038
+  type: 'test'
+  ...
+# Subtest: closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+ok 35 - closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+  ---
+  duration_ms: 1.229661
+  type: 'test'
+  ...
+# Subtest: closestString: picks the nearer of two strings for an off-pitch input
+ok 36 - closestString: picks the nearer of two strings for an off-pitch input
+  ---
+  duration_ms: 0.140454
+  type: 'test'
+  ...
+# Subtest: closestString: guitar standard (E2..E4) maps the outer strings
+ok 37 - closestString: guitar standard (E2..E4) maps the outer strings
+  ---
+  duration_ms: 0.178905
+  type: 'test'
+  ...
+# Subtest: freqRange: brackets the strings and excludes the G string's 2nd harmonic
+ok 38 - freqRange: brackets the strings and excludes the G string's 2nd harmonic
+  ---
+  duration_ms: 0.276801
+  type: 'test'
+  ...
+# Subtest: freqRange: never opens the low edge below the 25 Hz floor
+ok 39 - freqRange: never opens the low edge below the 25 Hz floor
+  ---
+  duration_ms: 0.143654
+  type: 'test'
+  ...
+# Subtest: preset fixture: covers every instrument x tuning combination
+ok 40 - preset fixture: covers every instrument x tuning combination
+  ---
+  duration_ms: 0.108826
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Standard maps every string's own fundamental back to itself
+ok 41 - closestString: Bass / Standard maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.468034
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Standard window brackets every string and respects the 25 Hz floor
+ok 42 - freqRange: Bass / Standard window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.292824
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Drop D maps every string's own fundamental back to itself
+ok 43 - closestString: Bass / Drop D maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.186518
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Drop D window brackets every string and respects the 25 Hz floor
+ok 44 - freqRange: Bass / Drop D window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.132957
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Drop C maps every string's own fundamental back to itself
+ok 45 - closestString: Bass / Drop C maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.208206
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Drop C window brackets every string and respects the 25 Hz floor
+ok 46 - freqRange: Bass / Drop C window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.128363
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Drop C\# maps every string's own fundamental back to itself
+ok 47 - closestString: Bass / Drop C\# maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.138215
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Drop C\# window brackets every string and respects the 25 Hz floor
+ok 48 - freqRange: Bass / Drop C\# window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.117284
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / ½ step down maps every string's own fundamental back to itself
+ok 49 - closestString: Bass / ½ step down maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.220062
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / ½ step down window brackets every string and respects the 25 Hz floor
+ok 50 - freqRange: Bass / ½ step down window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.428986
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / 5-string maps every string's own fundamental back to itself
+ok 51 - closestString: Bass / 5-string maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.231258
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / 5-string window brackets every string and respects the 25 Hz floor
+ok 52 - freqRange: Bass / 5-string window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.196698
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / Standard maps every string's own fundamental back to itself
+ok 53 - closestString: Guitar / Standard maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.212668
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / Standard window brackets every string and respects the 25 Hz floor
+ok 54 - freqRange: Guitar / Standard window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.152022
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / Drop D maps every string's own fundamental back to itself
+ok 55 - closestString: Guitar / Drop D maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.234896
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / Drop D window brackets every string and respects the 25 Hz floor
+ok 56 - freqRange: Guitar / Drop D window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.196751
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / DADGAD maps every string's own fundamental back to itself
+ok 57 - closestString: Guitar / DADGAD maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.290126
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / DADGAD window brackets every string and respects the 25 Hz floor
+ok 58 - freqRange: Guitar / DADGAD window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.56168
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / Open G maps every string's own fundamental back to itself
+ok 59 - closestString: Guitar / Open G maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.281187
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / Open G window brackets every string and respects the 25 Hz floor
+ok 60 - freqRange: Guitar / Open G window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.153833
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / ½ step down maps every string's own fundamental back to itself
+ok 61 - closestString: Guitar / ½ step down maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.259007
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / ½ step down window brackets every string and respects the 25 Hz floor
+ok 62 - freqRange: Guitar / ½ step down window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.725884
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / 7-string maps every string's own fundamental back to itself
+ok 63 - closestString: Guitar / 7-string maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.301076
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / 7-string window brackets every string and respects the 25 Hz floor
+ok 64 - freqRange: Guitar / 7-string window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.145193
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+ok 65 - detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+  ---
+  duration_ms: 154.980522
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+ok 66 - detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+  ---
+  duration_ms: 1.295658
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: rejects a too-short buffer
+ok 67 - detectPitchYIN: rejects a too-short buffer
+  ---
+  duration_ms: 0.380224
+  type: 'test'
+  ...
+# Subtest: tickInner(): pitch detection is gated while the reference tone is playing
+ok 68 - tickInner(): pitch detection is gated while the reference tone is playing
+  ---
+  duration_ms: 32.309656
+  type: 'test'
+  ...
+# Subtest: playReferenceTone(): does not touch the gate for callers where the tuner isn't running
+ok 69 - playReferenceTone(): does not touch the gate for callers where the tuner isn't running
+  ---
+  duration_ms: 4.54224
+  type: 'test'
+  ...
+# Subtest: start(): requests a 22050 Hz AudioContext to match the stated 22.05kHz design
+ok 70 - start(): requests a 22050 Hz AudioContext to match the stated 22.05kHz design
+  ---
+  duration_ms: 30.961341
+  type: 'test'
+  ...
+# Subtest: start(): falls back to the device-default AudioContext if the sampleRate option is rejected
+ok 71 - start(): falls back to the device-default AudioContext if the sampleRate option is rejected
+  ---
+  duration_ms: 24.053011
+  type: 'test'
+  ...
+# Subtest: navigation request: network is tried before cache, and wins when online
+ok 72 - navigation request: network is tried before cache, and wins when online
+  ---
+  duration_ms: 5.360264
+  type: 'test'
+  ...
+# Subtest: .js request: network-first, same as navigation
+ok 73 - .js request: network-first, same as navigation
+  ---
+  duration_ms: 2.016168
+  type: 'test'
+  ...
+# Subtest: .html request (non-navigation, e.g. prefetch): also network-first
+ok 74 - .html request (non-navigation, e.g. prefetch): also network-first
+  ---
+  duration_ms: 3.900404
+  type: 'test'
+  ...
+# Subtest: navigation request offline: falls back to the cached page
+ok 75 - navigation request offline: falls back to the cached page
+  ---
+  duration_ms: 1.82426
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache hit short-circuits, network is never touched
+ok 76 - non-shell asset (css): cache hit short-circuits, network is never touched
+  ---
+  duration_ms: 1.534877
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache miss falls back to network and populates the cache
+ok 77 - non-shell asset (css): cache miss falls back to network and populates the cache
+  ---
+  duration_ms: 1.567347
+  type: 'test'
+  ...
+# Subtest: non-GET requests are ignored (no respondWith call)
+ok 78 - non-GET requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.156984
+  type: 'test'
+  ...
+# Subtest: cross-origin requests are ignored (no respondWith call)
+ok 79 - cross-origin requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.33511
+  type: 'test'
+  ...
+1..79
+# tests 79
+# suites 0
+# pass 79
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 522.510389
