@@ -16,7 +16,7 @@ Live at **[tuner.omrihefez.com](https://tuner.omrihefez.com)**.
 
 ## How it works
 
-The mic captures audio via the Web Audio API. Each frame, a 4096-sample window is fed to a YIN pitch detector (de Cheveigné & Kawahara, 2002): cumulative mean normalized difference function → absolute threshold → parabolic interpolation. Detected frequencies pass through a median-of-6 smoothing filter to reject octave jumps. The needle shows cents off the nearest string in the current tuning, scaled relative to your A₄ reference.
+The mic captures audio via the Web Audio API, resampled to 22.05kHz. Each frame, an 8192-sample window (~370ms) is fed to a YIN pitch detector (de Cheveigné & Kawahara, 2002): cumulative mean normalized difference function → absolute threshold → parabolic interpolation. Detected frequencies pass through a median-of-6 smoothing filter to reject octave jumps. The needle shows cents off the nearest string in the current tuning, scaled relative to your A₄ reference.
 
 All of this happens client-side. The server only ships static HTML/CSS/JS.
 

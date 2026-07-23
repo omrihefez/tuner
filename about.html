@@ -27,7 +27,7 @@
     </ul>
 
     <h2>How it works</h2>
-    <p>The browser's microphone is captured via Web Audio API. Each frame, a 4096-sample window is analyzed using the <strong>YIN algorithm</strong> (de Cheveigné &amp; Kawahara, 2002): cumulative mean normalized difference function → absolute threshold → parabolic interpolation. A median-of-6 smoothing filter rejects octave jumps and noise. The needle shows cents off the nearest string in your selected tuning.</p>
+    <p>The browser's microphone is captured via Web Audio API, resampled to 22.05kHz. Each frame, an 8192-sample window (~370ms) is analyzed using the <strong>YIN algorithm</strong> (de Cheveigné &amp; Kawahara, 2002): cumulative mean normalized difference function → absolute threshold → parabolic interpolation. A median-of-6 smoothing filter rejects octave jumps and noise. The needle shows cents off the nearest string in your selected tuning.</p>
     <p>All processing is local. Nothing leaves your device.</p>
 
     <h2>Open source</h2>
