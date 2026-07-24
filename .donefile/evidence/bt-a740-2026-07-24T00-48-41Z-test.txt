@@ -1,0 +1,11 @@
+$ bash scripts/audit-domains.sh
+
+OK     albumclub.omrihefez.com -> 200 
+OK     bass.omrihefez.com -> 200 
+OK     compose.omrihefez.com -> 200 
+OK     kidai.omrihefez.com -> 200 
+OK     meni.omrihefez.com -> 307 (location: /login)
+OK     planner.omrihefez.com -> 401 
+OK     tik.omrihefez.com -> 307 (location: /login?callbackUrl=%2F)
+OK     trips.omrihefez.com -> 307 (location: /login?redirect_url=https%3A%2F%2Ftrips.omrihefez.com%2F)
+OK     tuner.omrihefez.com -> 200 
