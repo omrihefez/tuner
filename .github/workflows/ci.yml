@@ -1,10 +1,21 @@
 name: CI
 
+# paths-ignore: the capacity engine's bookkeeping commits (`engine: ...`,
+# `board: ...`) only ever touch .donefile/** and BOARD.md, no code — same
+# unfiltered exposure that caused an account-wide Actions outage from the
+# fleet's own push volume (th-419e), fixed the same way on meniapp/
+# capacity-engine already (ma-ce6e).
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - ".donefile/**"
+      - "BOARD.md"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - ".donefile/**"
+      - "BOARD.md"
 
 jobs:
   static-checks:
