@@ -1,0 +1,3 @@
+$ curl -sf 'https://api.vercel.com/v9/projects/prj_Se9EWsbcw9VUJKDVNuWh7tw65nPR?teamId=team_1JqV1IChqxsh933CUDYmVvGQ' -H "Authorization: Bearer $(node -e \"console.log(require('/home/omri/.local/share/com.vercel.cli/auth.json').token)\")" | grep -q '"type":"github"'
+
+/bin/sh: 1: Syntax error: "(" unexpected (expecting ")")
