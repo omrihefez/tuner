@@ -2,13 +2,19 @@
 id: bt-f81f
 title: filed directly as dn-4ab9 on the donefile board (p2, tags donefile/evidence) — no separate
   follow-up line needed here
-status: claimed
+status: blocked
 priority: p2
 created: 2026-07-25
-claim:
-  owner: capacity-engine
-  at: 2026-07-25T03:23:11Z
+blocked:
+  reason: Task title/body is empty of actual work — reads as filing metadata ('filed directly as
+    dn-4ab9 on the donefile board... no separate follow-up line needed here') rather than a
+    description of an outcome. No dn-4ab9 note/task found anywhere on disk to recover the real
+    content from. Unblock when Main either refiles this with the actual intended work, or drops it
+    as a filing-pipeline artifact.
+  since: 2026-07-25
 ---
 
 ## Log
 - 2026-07-25 claimed by capacity-engine
+- 2026-07-25 claim by capacity-engine parked (blocked)
+- 2026-07-25 blocked: Task title/body is empty of actual work — reads as filing metadata ('filed directly as dn-4ab9 on the donefile board... no separate follow-up line needed here') rather than a description of an outcome. No dn-4ab9 note/task found anywhere on disk to recover the real content from. Unblock when Main either refiles this with the actual intended work, or drops it as a filing-pipeline artifact.
