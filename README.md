@@ -47,7 +47,7 @@ npm test        # == node --test test/*.test.js
 
 ## Deploy
 
-Push to Vercel (or any static host). The `vercel.json` config is minimal: just a no-cache rule for the service worker.
+The Vercel project is connected to this GitHub repo — pushes to `main` deploy to production automatically. The `vercel.json` config is minimal: just a no-cache rule for the service worker.
 
 ## License
 
