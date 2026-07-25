@@ -1,0 +1,3 @@
+$ bash scripts/check-fallback-cert.sh
+
+OK     composer.omrihefez.com -> 404 (clean fallback 404, cert valid)
