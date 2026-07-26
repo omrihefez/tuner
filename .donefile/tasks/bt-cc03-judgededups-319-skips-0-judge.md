@@ -3,7 +3,7 @@ id: bt-cc03
 title: judge_dedup's "319 skips, 0 judge calls, $0, zero false positives" baseline (bt-c0a9/bt-e0c3)
   is VOID — it was measured while the judge could not authenticate at all; re-measure and rewrite
   config.json's _judge_dedup_note and _bt_e0c3_decision_note
-status: claimed
+status: done
 priority: p2
 tags:
   - capacity-engine
@@ -11,9 +11,21 @@ tags:
   - tooling
 created: 2026-07-25
 repo: capacity-engine
-claim:
-  owner: capacity-engine
-  at: 2026-07-26T09:16:46Z
+done:
+  at: 2026-07-26T09:28:36Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: d64af79
+    repo: capacity-engine
+    verified: 2026-07-26T09:28:36Z
+  - type: test
+    cmd: node /home/omri/projects/capacity-engine/engine.mjs judge-probe
+    exit: 0
+    at: 2026-07-26T09:28:26Z
+    log: evidence/bt-cc03-2026-07-26T09-28-26Z-test.txt
+    sha256: 4ff16ec34db7b457901c9ba4c851caecc958dc08eaa16cbd36c5e70741272309
+    bytes: 185
 ---
 
 Why the old numbers are void (state this in the rewritten notes — the reasoning matters more than the new figures):
@@ -31,3 +43,4 @@ Related: bt-5b65 asked this same question against the same void data. Anything t
 
 ## Log
 - 2026-07-26 claimed by capacity-engine
+- 2026-07-26 done by capacity-engine/worker — commit d64af79 (capacity-engine), test `node /home/omri/projects/capacity-engine/engine.mjs judge-probe` exit 0 (log: evidence/bt-cc03-2026-07-26T09-28-26Z-test.txt)
