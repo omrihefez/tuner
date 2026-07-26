@@ -1,9 +1,9 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [{ "type": "host", "value": "tuner.omrihefez.com" }],
-      "destination": "https://bass.omrihefez.com/:path*",
+      "destination": "https://bass.omrihefez.com/$1",
       "permanent": true
     }
   ],
