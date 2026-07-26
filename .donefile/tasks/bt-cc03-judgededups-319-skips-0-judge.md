@@ -3,7 +3,7 @@ id: bt-cc03
 title: judge_dedup's "319 skips, 0 judge calls, $0, zero false positives" baseline (bt-c0a9/bt-e0c3)
   is VOID — it was measured while the judge could not authenticate at all; re-measure and rewrite
   config.json's _judge_dedup_note and _bt_e0c3_decision_note
-status: open
+status: claimed
 priority: p2
 tags:
   - capacity-engine
@@ -11,6 +11,9 @@ tags:
   - tooling
 created: 2026-07-25
 repo: capacity-engine
+claim:
+  owner: capacity-engine
+  at: 2026-07-26T09:16:46Z
 ---
 
 Why the old numbers are void (state this in the rewritten notes — the reasoning matters more than the new figures):
@@ -25,3 +28,6 @@ Do:
 3. Sanity-check the judge is alive before trusting any new number: `node engine.mjs judge-probe` (exits non-zero if auth is broken).
 
 Related: bt-5b65 asked this same question against the same void data. Anything that fails open needs an explicit liveness probe — that is the general lesson.
+
+## Log
+- 2026-07-26 claimed by capacity-engine
