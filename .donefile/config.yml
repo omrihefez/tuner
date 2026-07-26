@@ -4,3 +4,8 @@ blocked_nag_days: 14
 board_path: BOARD.md
 repos:
   capacity-engine: /home/omri/projects/capacity-engine
+# dn-68d7 (2026-07-26): this checkout is shared by concurrent hub workers -
+# refuse non-bookkeeping commits made directly in the MAIN worktree; work in
+# an isolated worktree instead (Claude Code: EnterWorktree; manually: git
+# worktree add). Escape hatch: DONEFILE_ALLOW_MAIN_COMMIT=1 git commit ...
+worktree_guard: true
