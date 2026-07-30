@@ -5,6 +5,14 @@
 # is enough to always catch the renewal window with margin to spare.
 # Idempotent: re-running replaces the managed block instead of duplicating it.
 #
+# Runs through scripts/run-monitor.sh (bt-a942), not a bare `>> log 2>&1`
+# redirect -- the raw log at $HOME/.cache/bass-tuner-cert-renewal.log was
+# never read by anything, so every FATAL path (expired Cloudflare token,
+# `vercel certs ls` format change, TXT propagation timeout, ...) failed
+# invisibly; that's exactly how the wildcard cert expired silently for over
+# a month. run-monitor.sh still writes that same log AND, on any non-zero
+# exit, a dated ~/inbox file so the morning brief surfaces the failure.
+#
 # Usage: install-cert-renewal-cron.sh [--dry-run]
 set -euo pipefail
 
@@ -15,12 +23,12 @@ DRY_RUN=0
 # location -- this installer must produce the same crontab line regardless of
 # whether it's run from the main checkout or a throwaway task worktree.
 SCRIPT="/home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh"
-LOG_FILE="$HOME/.cache/bass-tuner-cert-renewal.log"
+RUNNER="/home/omri/projects/bass-tuner/scripts/run-monitor.sh"
 
 BEGIN_MARK="# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 
-CRON_LINE="17 6 * * 1 $SCRIPT >> $LOG_FILE 2>&1"
+CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 
