@@ -24,7 +24,13 @@ set -uo pipefail
 CN='*.omrihefez.com'
 ZONE_ID=e8f56b4957a31cc5e80940cd45470440
 RECORD_NAME=_acme-challenge.omrihefez.com
-RENEW_THRESHOLD_DAYS=30
+
+# bt-cd2d: weekly cron + this threshold gives a worst-case gap of only
+# ~3 days over Vercel's own ~21d-ish auto-renew window (skip at 31d left,
+# next weekly check 7d later at 24d left) -- one missed cron run and that
+# gap is gone. 45d gives ~18d of worst-case margin, and survives a single
+# missed weekly run (45-14=31d, still well clear of 21d).
+RENEW_THRESHOLD_DAYS=45
 FORCE=0
 [[ "${1:-}" == "--force" ]] && FORCE=1
 
