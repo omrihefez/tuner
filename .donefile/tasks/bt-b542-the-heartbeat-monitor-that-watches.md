@@ -2,12 +2,15 @@
 id: bt-b542
 title: The heartbeat monitor that watches the other monitors has never existed — cron calls
   check-monitor-heartbeats.sh daily, exit 127
-status: open
+status: claimed
 priority: p2
 tags:
   - ops
   - monitoring
 created: 2026-07-31
+claim:
+  owner: capacity-engine
+  at: 2026-07-31T06:47:26Z
 ---
 
 `crontab -l` has run since the monitoring crons were installed:
@@ -28,3 +31,6 @@ Either is fine. What is not fine is leaving a scheduled job that fails daily and
 IF YOU BUILD IT (A): the heartbeat checker itself must be able to fail visibly, or you have rebuilt the same problem one level up — verify by deliberately staling one monitor's log and confirming you get the alert, and by pointing it at a nonexistent monitor and confirming it says so. A watchdog that has never been observed barking is not a watchdog.
 
 Same family as the four silent controls found across this system on 2026-07-31 (fit-check.py passing on a zero-height measurement, two app dials writing to config keys nothing reads, CI never starting a job, and meni-hub-backup-offsite reporting success while replicating nothing). Memory: feedback_silent_controls_need_liveness_probes.
+
+## Log
+- 2026-07-31 claimed by capacity-engine
