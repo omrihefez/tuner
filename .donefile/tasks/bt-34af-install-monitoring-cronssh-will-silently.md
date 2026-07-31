@@ -2,12 +2,15 @@
 id: bt-34af
 title: install-monitoring-crons.sh will silently DELETE the heartbeat cron bt-b542 depends on — its
   managed block omits the entry it now wipes
-status: open
+status: claimed
 priority: p1
 tags:
   - ops
   - monitoring
 created: 2026-07-31
+claim:
+  owner: capacity-engine
+  at: 2026-07-31T06:58:03Z
 ---
 
 bt-b542 wrote scripts/check-monitor-heartbeats.sh and it is scheduled in the live crontab at line 37. But that line sits INSIDE the block install-monitoring-crons.sh manages:
@@ -37,3 +40,6 @@ Do that against the CURRENT installer first and watch the count go to 0 — that
 WHILE YOU ARE HERE: the same class of question applies to line 38's `grep -vF` cleanup of legacy fallback-cert/domain-audit lines. Check whether any other monitor is scheduled outside the tracked installer and would be wiped the same way.
 
 Related: bt-b542 (the script), and the abandoned worktree cleanup follow-up. Found by Main verifying bt-b542, 2026-07-31.
+
+## Log
+- 2026-07-31 claimed by capacity-engine
