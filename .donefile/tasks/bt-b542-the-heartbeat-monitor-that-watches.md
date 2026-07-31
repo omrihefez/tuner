@@ -2,15 +2,26 @@
 id: bt-b542
 title: The heartbeat monitor that watches the other monitors has never existed — cron calls
   check-monitor-heartbeats.sh daily, exit 127
-status: claimed
+status: done
 priority: p2
 tags:
   - ops
   - monitoring
 created: 2026-07-31
-claim:
-  owner: capacity-engine
-  at: 2026-07-31T06:47:26Z
+done:
+  at: 2026-07-31T06:53:47Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: b8b9a7fd2e9a2692c42347b7c3194697dbbd0b92
+    verified: 2026-07-31T06:53:47Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-07-31T06:53:46Z
+    log: evidence/bt-b542-2026-07-31T06-53-46Z-test.txt
+    sha256: 8f5e7b34ad3d3bbf98855528decf12a258a8d6296bd8307f02bcee979c06d3f5
+    bytes: 552
 ---
 
 `crontab -l` has run since the monitoring crons were installed:
@@ -34,3 +45,4 @@ Same family as the four silent controls found across this system on 2026-07-31 (
 
 ## Log
 - 2026-07-31 claimed by capacity-engine
+- 2026-07-31 done by capacity-engine/worker — commit b8b9a7fd2e9a, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-b542-2026-07-31T06-53-46Z-test.txt)
