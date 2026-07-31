@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Self-test for bt-a942: proves the fallback-cert / domain-audit /
-# cert-renewal monitors are (a) actually scheduled and (b) actually alert to
-# ~/inbox on failure -- not just that the scripts exist.
+# Self-test for bt-a942 (extended by bt-b542): proves the fallback-cert /
+# domain-audit / cert-renewal / heartbeat monitors are (a) actually scheduled
+# and (b) actually alert to ~/inbox on failure -- not just that the scripts
+# exist.
 #
 # For (b), each underlying script is forced to fail via a harmless sabotage
 # (bad target host, or an unreadable HOME so the secrets file can't be
@@ -67,9 +68,66 @@ mkdir -p "$TMP/fakehome"
 check cert-renewal-selftest "renew-wildcard-cert.sh (forced failure)" \
   env HOME="$TMP/fakehome" "$REPO/scripts/renew-wildcard-cert.sh"
 
-# --- 4. all three are actually on the crontab, not just present on disk ---
+# --- 4. check-monitor-heartbeats.sh (bt-b542): stale / missing / unknown
+#        monitors are reported, and running it through the real run-monitor.sh
+#        wrapper with a fully sandboxed HOME produces the same "-selftest"
+#        inbox alert as every other monitor above -- proving the monitor of
+#        monitors fails as visibly as anything it watches. The sandboxed HOME
+#        also has no ~/meni/bin/meni-notify, so the script's own direct
+#        meni-notify call harmlessly no-ops here instead of firing a real
+#        alert to the app on every re-run.
+mkdir -p "$TMP/hbhome/.cache" "$TMP/hbhome/inbox"
+cat > "$TMP/hbhome/.cache/bass-tuner-fallback-cert.log" <<EOF
+=== fallback-cert $(date -d '10 days ago' -Is) ===
+OK     composer.omrihefez.com -> 404
+exit 0
+EOF
+cat > "$TMP/hbhome/.cache/bass-tuner-domain-audit.log" <<EOF
+=== domain-audit $(date -Is) ===
+OK     bass.omrihefez.com -> 200
+exit 0
+EOF
+# cert-renewal: no log at all -- simulates "never ran"
+
+hb_out="$(env HOME="$TMP/hbhome" "$REPO/scripts/check-monitor-heartbeats.sh" fallback-cert domain-audit cert-renewal 2>&1)"
+hb_code=$?
+if [[ "$hb_code" -eq 0 ]]; then
+  echo "FAIL   check-monitor-heartbeats.sh: exited 0 with a stale and a missing monitor present"
+  FAIL=1
+elif ! grep -q "STALE.*fallback-cert" <<<"$hb_out" || ! grep -q "STALE.*cert-renewal" <<<"$hb_out" || ! grep -q "OK.*domain-audit" <<<"$hb_out"; then
+  echo "FAIL   check-monitor-heartbeats.sh: unexpected output for stale/missing/fresh mix:"
+  echo "$hb_out" | sed 's/^/         /'
+  FAIL=1
+else
+  echo "OK     check-monitor-heartbeats.sh: flags stale fallback-cert + missing cert-renewal, leaves fresh domain-audit alone"
+fi
+
+unk_out="$(env HOME="$TMP/hbhome" "$REPO/scripts/check-monitor-heartbeats.sh" nonexistent-bt-b542-selftest 2>&1)"
+unk_code=$?
+if [[ "$unk_code" -eq 0 ]] || ! grep -q "UNKNOWN" <<<"$unk_out"; then
+  echo "FAIL   check-monitor-heartbeats.sh: unknown monitor name not reported (got: $unk_out)"
+  FAIL=1
+else
+  echo "OK     check-monitor-heartbeats.sh: unknown monitor name reported, not silently skipped"
+fi
+
+hb_inbox="$TMP/hbhome/inbox/bass-tuner-heartbeat-selftest-${DATE}.md"
+rm -f "$hb_inbox"
+env HOME="$TMP/hbhome" "$RUNNER" heartbeat-selftest "$REPO/scripts/check-monitor-heartbeats.sh" fallback-cert >/dev/null 2>&1
+rm_code=$?
+if [[ "$rm_code" -eq 0 ]]; then
+  echo "FAIL   check-monitor-heartbeats.sh via run-monitor.sh: exited 0, expected non-zero"
+  FAIL=1
+elif [[ ! -f "$hb_inbox" ]]; then
+  echo "FAIL   check-monitor-heartbeats.sh via run-monitor.sh: exited $rm_code but no $hb_inbox written"
+  FAIL=1
+else
+  echo "OK     check-monitor-heartbeats.sh via run-monitor.sh: exit $rm_code -> $hb_inbox"
+fi
+
+# --- 5. all four are actually on the crontab, not just present on disk ---
 CRON="$(crontab -l 2>/dev/null || true)"
-for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh"; do
+for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh"; do
   if echo "$CRON" | grep -q "$pat"; then
     echo "OK     $pat is scheduled in crontab"
   else
