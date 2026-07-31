@@ -136,4 +136,36 @@ for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" 
   fi
 done
 
+# --- 6. the tracked installer would REINSTALL every monitor it manages
+#        (bt-34af). install-monitoring-crons.sh replaces its managed block
+#        wholesale from its own $CRON_LINES, so an entry that is live between
+#        the markers but missing from that variable is deleted on the next
+#        run -- and a monitor that never runs looks exactly like a monitor
+#        whose every check passed. The heartbeat entry was in precisely that
+#        state: scheduled live, absent from the installer.
+#
+#        This reads the installer's own --dry-run output, NOT the live crontab
+#        that step 5 checks, so the drift is caught while it is still only a
+#        latent bug -- step 5 can only notice after a run has already wiped
+#        the entry. --dry-run also exercises the installer's drop guard, which
+#        exits non-zero rather than quietly unscheduling anything.
+INSTALLER="$REPO/scripts/install-monitoring-crons.sh"
+dry_out="$("$INSTALLER" --dry-run 2>&1)"
+dry_code=$?
+if [[ "$dry_code" -ne 0 ]]; then
+  echo "FAIL   install-monitoring-crons.sh --dry-run exited $dry_code (drop guard tripped?):"
+  echo "$dry_out" | sed 's/^/         /'
+  FAIL=1
+else
+  dry_block="$(printf '%s\n' "$dry_out" | sed -n '/# BEGIN bass-tuner-monitoring/,/# END bass-tuner-monitoring/p')"
+  for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-monitor-heartbeats.sh"; do
+    if grep -qF "$pat" <<<"$dry_block"; then
+      echo "OK     $pat is in install-monitoring-crons.sh's managed block"
+    else
+      echo "FAIL   $pat is NOT in install-monitoring-crons.sh's managed block -- the next installer run would unschedule it"
+      FAIL=1
+    fi
+  done
+fi
+
 exit "$FAIL"
