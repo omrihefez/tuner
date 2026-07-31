@@ -2,15 +2,26 @@
 id: bt-34af
 title: install-monitoring-crons.sh will silently DELETE the heartbeat cron bt-b542 depends on — its
   managed block omits the entry it now wipes
-status: claimed
+status: done
 priority: p1
 tags:
   - ops
   - monitoring
 created: 2026-07-31
-claim:
-  owner: capacity-engine
-  at: 2026-07-31T06:58:03Z
+done:
+  at: 2026-07-31T07:04:46Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: cb830db
+    verified: 2026-07-31T07:04:46Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-07-31T07:04:45Z
+    log: evidence/bt-34af-2026-07-31T07-04-45Z-test.txt
+    sha256: e3cb3e166040ec91e0992d755917d719462e47fcd52139dabf29d665c7892a43
+    bytes: 1198
 ---
 
 bt-b542 wrote scripts/check-monitor-heartbeats.sh and it is scheduled in the live crontab at line 37. But that line sits INSIDE the block install-monitoring-crons.sh manages:
@@ -43,3 +54,4 @@ Related: bt-b542 (the script), and the abandoned worktree cleanup follow-up. Fou
 
 ## Log
 - 2026-07-31 claimed by capacity-engine
+- 2026-07-31 done by capacity-engine/worker — commit cb830db, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-34af-2026-07-31T07-04-45Z-test.txt)
