@@ -1,2 +1,0 @@
-$ bash -n scripts/renew-wildcard-cert.sh
-
