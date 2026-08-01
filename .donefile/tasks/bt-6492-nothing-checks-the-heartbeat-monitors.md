@@ -2,15 +2,26 @@
 id: bt-6492
 title: Nothing checks the heartbeat monitor's own liveness — check-monitor-heartbeats.sh watches the
   other three monitors but not itself, and it runs from the very cron block it watches
-status: claimed
+status: done
 priority: p2
 tags:
   - ops
   - monitoring
 created: 2026-07-31
-claim:
-  owner: capacity-engine
-  at: 2026-08-01T07:46:43Z
+done:
+  at: 2026-08-01T07:53:36Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 9f2aa1f
+    verified: 2026-08-01T07:53:36Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-08-01T07:53:35Z
+    log: evidence/bt-6492-2026-08-01T07-53-35Z-test.txt
+    sha256: cc4c056b17598d3188e504ed006a0e6ee6bd0643c4effa3d5fbbac52a46a057a
+    bytes: 1560
 ---
 
 check-monitor-heartbeats.sh (bt-b542) declares MAX_AGE_HOURS for fallback-cert, domain-audit and cert-renewal — every monitor except itself. It is scheduled at 07:00 from the same managed crontab block it watches (scripts/install-monitoring-crons.sh, see bt-34af).
@@ -25,3 +36,4 @@ Raised to p2 by Main, 2026-07-31, reviewing bt-34af.
 
 ## Log
 - 2026-08-01 claimed by capacity-engine
+- 2026-08-01 done by capacity-engine/worker — commit 9f2aa1f, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-6492-2026-08-01T07-53-35Z-test.txt)
