@@ -26,6 +26,8 @@
 #              (i.e. you are deliberately unscheduling one)
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 DRY_RUN=0
 FORCE=0
 for arg in "$@"; do
@@ -57,6 +59,16 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
 0 7 * * * $RUNNER heartbeat $HEARTBEAT"
+
+# crontab log-dir lint (ma-0540): these lines run through run-monitor.sh,
+# which does its own `mkdir -p ... && { ... } >> "$LOG"` INSIDE the already-
+# running process (not a cron-level `>>` redirect), so ma-5896 doesn't apply
+# to them today -- this is a regression guard against a future line that
+# bypasses the wrapper and redirects directly.
+if ! printf '%s\n' "$CRON_LINES" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; then
+  echo "[install-monitoring-crons] refusing to install: rendered lines failed the log-dir lint (see above)." >&2
+  exit 1
+fi
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 

@@ -16,6 +16,8 @@
 # Usage: install-cert-renewal-cron.sh [--dry-run]
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 DRY_RUN=0
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=1
 
@@ -29,6 +31,16 @@ BEGIN_MARK="# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
 END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 
 CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
+
+# crontab log-dir lint (ma-0540): this line runs through run-monitor.sh,
+# which does its own `mkdir -p ... && { ... } >> "$LOG"` INSIDE the already-
+# running process (not a cron-level `>>` redirect), so ma-5896 doesn't apply
+# to it today -- this is a regression guard against a future line that
+# bypasses the wrapper and redirects directly.
+if ! printf '%s\n' "$CRON_LINE" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; then
+  echo "[install-cert-renewal-cron] refusing to install: rendered line failed the log-dir lint (see above)." >&2
+  exit 1
+fi
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 
