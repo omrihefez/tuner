@@ -2,15 +2,26 @@
 id: bt-b38f
 title: install-cert-renewal-cron.sh's cleanup strips ANY crontab line naming renew-wildcard-cert.sh,
   not just its own block
-status: claimed
+status: done
 priority: p2
 tags:
   - ops
   - safety
 created: 2026-08-01
-claim:
-  owner: capacity-engine
-  at: 2026-08-01T10:12:01Z
+done:
+  at: 2026-08-01T10:17:51Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: ba7ccce
+    verified: 2026-08-01T10:17:51Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-08-01T10:17:49Z
+    log: evidence/bt-b38f-2026-08-01T10-17-49Z-test.txt
+    sha256: 56955d63e089b0817a8b0a3d6d1878e9d4ad5ce3a7dd50a6359537a6382514ec
+    bytes: 1747
 ---
 
 Flagged by the bt-3f5a worker and deliberately left unfixed as out of scope. Recording it as real work so it does not live only inside a closed task's body.
@@ -23,3 +34,4 @@ FIX: scope the cleanup to the managed block, the way install-monitoring-crons.sh
 
 ## Log
 - 2026-08-01 claimed by capacity-engine
+- 2026-08-01 done by capacity-engine/worker — commit ba7ccce, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-b38f-2026-08-01T10-17-49Z-test.txt)
