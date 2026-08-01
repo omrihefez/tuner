@@ -2,12 +2,15 @@
 id: bt-6492
 title: Nothing checks the heartbeat monitor's own liveness — check-monitor-heartbeats.sh watches the
   other three monitors but not itself, and it runs from the very cron block it watches
-status: open
+status: claimed
 priority: p2
 tags:
   - ops
   - monitoring
 created: 2026-07-31
+claim:
+  owner: capacity-engine
+  at: 2026-08-01T07:46:43Z
 ---
 
 check-monitor-heartbeats.sh (bt-b542) declares MAX_AGE_HOURS for fallback-cert, domain-audit and cert-renewal — every monitor except itself. It is scheduled at 07:00 from the same managed crontab block it watches (scripts/install-monitoring-crons.sh, see bt-34af).
@@ -19,3 +22,6 @@ The check must come from OUTSIDE bass-tuner's cron. Something already running on
 DONE WHEN: something NOT scheduled by scripts/install-monitoring-crons.sh alerts when the last run marker in ~/.cache/bass-tuner-heartbeat.log is older than roughly 30h (07:00 daily + slack). VERIFY by pointing it at a stale and then an absent log and observing the alert both times.
 
 Raised to p2 by Main, 2026-07-31, reviewing bt-34af.
+
+## Log
+- 2026-08-01 claimed by capacity-engine
