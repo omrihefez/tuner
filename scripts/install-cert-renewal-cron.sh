@@ -13,27 +13,37 @@
 # a month. run-monitor.sh still writes that same log AND, on any non-zero
 # exit, a dated ~/inbox file so the morning brief surfaces the failure.
 #
-# This block is rewritten WHOLESALE from $CRON_LINE below, so $CRON_LINE is
+# This block is rewritten WHOLESALE from $CRON_LINES below, so $CRON_LINES is
 # the single source of truth for everything between the markers: an entry
 # that is live inside them but missing here is deleted on the next run
 # (same defect class as install-monitoring-crons.sh before bt-34af). The
 # DROPPED guard below makes that failure loud instead of silent.
 #
-# Usage: install-cert-renewal-cron.sh [--dry-run] [--force]
-#   --dry-run  print the resulting crontab instead of installing it
-#   --force    install even if the guard reports a monitor would be dropped
-#              (i.e. you are deliberately unscheduling one)
+# $CRON_LINES also carries this block's own drift check (ma-09c1): rather
+# than a second tracked data file (which could itself drift from this
+# script), scripts/check-crontab-drift.sh gets its "expected content" by
+# running this installer with --print-line, so there is exactly one source
+# of truth for the block, this file.
+#
+# Usage: install-cert-renewal-cron.sh [--dry-run] [--force] [--print-line]
+#   --dry-run    print the resulting crontab instead of installing it
+#   --force      install even if the guard reports a monitor would be dropped
+#                (i.e. you are deliberately unscheduling one)
+#   --print-line print the rendered block content, install nothing (used by
+#                scripts/check-crontab-drift.sh as its source of truth)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 DRY_RUN=0
 FORCE=0
+PRINT_LINE=0
 for arg in "$@"; do
   case "$arg" in
-    --dry-run) DRY_RUN=1 ;;
-    --force)   FORCE=1 ;;
-    *) echo "usage: install-cert-renewal-cron.sh [--dry-run] [--force]" >&2; exit 2 ;;
+    --dry-run)    DRY_RUN=1 ;;
+    --force)      FORCE=1 ;;
+    --print-line) PRINT_LINE=1 ;;
+    *) echo "usage: install-cert-renewal-cron.sh [--dry-run] [--force] [--print-line]" >&2; exit 2 ;;
   esac
 done
 
@@ -48,15 +58,42 @@ END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 
 CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
 
-# crontab log-dir lint (ma-0540): this line runs through run-monitor.sh,
-# which does its own `mkdir -p ... && { ... } >> "$LOG"` INSIDE the already-
-# running process (not a cron-level `>>` redirect), so ma-5896 doesn't apply
-# to it today -- this is a regression guard against a future line that
-# bypasses the wrapper and redirects directly.
-if ! printf '%s\n' "$CRON_LINE" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; then
-  echo "[install-cert-renewal-cron] refusing to install: rendered line failed the log-dir lint (see above)." >&2
+# crontab drift check (ma-09c1) — hourly: warns via meni-notify if the live
+# wildcard-cert-renewal block has drifted from this installer. Lives inside
+# the very block it guards, same convention as meniapp/deploy/crontab.meniapp.
+# Hardcoded to the canonical checkout, same rationale as SCRIPT/RUNNER above.
+DRIFT_CHECK="/home/omri/projects/bass-tuner/scripts/check-crontab-drift.sh"
+DRIFT_STATE_DIR="/home/omri/.local/share/meni-hub/bass-tuner-crontab-drift"
+DRIFT_LINE="47 * * * * mkdir -p $DRIFT_STATE_DIR && $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
+
+CRON_LINES="$CRON_LINE
+$DRIFT_LINE"
+
+if [ "$PRINT_LINE" = "1" ]; then
+  printf '%s\n' "$CRON_LINES"
+  exit 0
+fi
+
+# crontab log-dir lint (ma-0540): the cert-renewal line runs through
+# run-monitor.sh, which does its own `mkdir -p ... && { ... } >> "$LOG"`
+# INSIDE the already-running process (not a cron-level `>>` redirect), so
+# ma-5896 doesn't apply to it today -- this is a regression guard against a
+# future line that bypasses the wrapper and redirects directly. The drift
+# check line above is a real cron-level redirect and IS subject to ma-5896,
+# hence its own `mkdir -p ... &&` prefix.
+if ! printf '%s\n' "$CRON_LINES" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; then
+  echo "[install-cert-renewal-cron] refusing to install: rendered lines failed the log-dir lint (see above)." >&2
   exit 1
 fi
+
+# Shared crontab lock (ma-09c1): every installer across the fleet that reads
+# the whole user crontab, edits it, and writes it back takes this same lock,
+# so two installers running concurrently on this box serialize instead of
+# one clobbering the other's freshly-written block.
+CRONTAB_LOCK="$HOME/.local/share/meni-hub/crontab-install.lock"
+mkdir -p "$(dirname "$CRONTAB_LOCK")"
+exec 200>"$CRONTAB_LOCK"
+flock -x 200
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 
@@ -70,23 +107,25 @@ monitor_names() {
 }
 
 # Guard (bt-3f5a, same defect class as bt-34af): refuse to silently
-# unschedule a monitor. The block is replaced wholesale from $CRON_LINE, so
-# anything live inside the markers but missing from $CRON_LINE just
+# unschedule a monitor. The block is replaced wholesale from $CRON_LINES, so
+# anything live inside the markers but missing from $CRON_LINES just
 # disappears -- and a monitor that never runs looks exactly like a monitor
 # that passes. Compared by monitor NAME rather than whole line, so an
-# ordinary schedule change is not flagged but an entry vanishing is.
+# ordinary schedule change is not flagged but an entry vanishing is. The
+# drift-check line never registers as a "monitor" here (it isn't a
+# run-monitor.sh invocation), so it never trips or is protected by this guard.
 OLD_BLOCK="$(printf '%s\n' "$CURRENT_CRON" | sed -n "\\|^$BEGIN_MARK\$|,\\|^$END_MARK\$|p")"
 DROPPED="$(comm -23 \
   <(printf '%s\n' "$OLD_BLOCK"  | monitor_names) \
-  <(printf '%s\n' "$CRON_LINE"  | monitor_names))"
+  <(printf '%s\n' "$CRON_LINES" | monitor_names))"
 
 if [ -n "$DROPPED" ]; then
   {
     echo "[install-cert-renewal-cron] these monitors are scheduled in the live managed"
-    echo "  block but absent from this script's \$CRON_LINE, so installing would"
+    echo "  block but absent from this script's \$CRON_LINES, so installing would"
     echo "  silently unschedule them:"
     printf '%s\n' "$DROPPED" | sed 's/^/      /'
-    echo "  Add them to \$CRON_LINE -- this file is the source of truth for the whole"
+    echo "  Add them to \$CRON_LINES -- this file is the source of truth for the whole"
     echo "  block -- or re-run with --force if you really mean to unschedule them."
   } >&2
   if [ "$FORCE" != "1" ]; then
@@ -103,7 +142,7 @@ STRIPPED_CRON="$(printf '%s\n' "$CURRENT_CRON" | sed "\\|^$BEGIN_MARK\$|,\\|^$EN
 # hand-written or differently-scheduled renewal someone added deliberately.
 STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vF "run-monitor.sh cert-renewal " || true)"
 
-NEW_CRON="$(printf '%s\n%s\n%s\n%s\n' "$STRIPPED_CRON" "$BEGIN_MARK" "$CRON_LINE" "$END_MARK")"
+NEW_CRON="$(printf '%s\n%s\n%s\n%s\n' "$STRIPPED_CRON" "$BEGIN_MARK" "$CRON_LINES" "$END_MARK")"
 
 if [ "$DRY_RUN" = "1" ]; then
   echo "[install-cert-renewal-cron] dry-run: crontab would become:" >&2

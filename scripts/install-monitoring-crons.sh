@@ -70,6 +70,17 @@ if ! printf '%s\n' "$CRON_LINES" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -;
   exit 1
 fi
 
+# Shared crontab lock (ma-09c1): every installer across the fleet that reads
+# the whole user crontab, edits it, and writes it back — this one and its
+# sibling install-cert-renewal-cron.sh in particular, since both run in this
+# same repo — takes this same lock, so two installers running concurrently
+# on this box serialize instead of one clobbering the other's freshly-written
+# block. See meniapp/scripts/check-crontab-drift.sh's header.
+CRONTAB_LOCK="$HOME/.local/share/meni-hub/crontab-install.lock"
+mkdir -p "$(dirname "$CRONTAB_LOCK")"
+exec 200>"$CRONTAB_LOCK"
+flock -x 200
+
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 
 # Monitor names (run-monitor.sh's first argument) on stdin's cron lines.

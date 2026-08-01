@@ -283,6 +283,72 @@ else
   echo "OK     install-cert-renewal-cron.sh: unmanaged renew-wildcard-cert.sh line survives the installer"
 fi
 
+# --- 6d. ma-09c1: install-cert-renewal-cron.sh now also carries its own
+#         drift check (check-crontab-drift.sh) inside the same managed block,
+#         sourced from the installer's own --print-line output rather than a
+#         second tracked file. Prove the wiring end to end with a fully
+#         sandboxed crontab/HOME (never touches the real crontab or sends a
+#         real alert): clean when the "live" block matches --print-line
+#         verbatim, drifted (and exit non-zero) when it doesn't.
+DRIFT_CHECK="$REPO/scripts/check-crontab-drift.sh"
+DRIFT_TMP="$(mktemp -d)"
+DRIFT_FAKE_HOME="$DRIFT_TMP/home"
+mkdir -p "$DRIFT_FAKE_HOME/meni/bin"
+cat > "$DRIFT_FAKE_HOME/meni/bin/meni-notify" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >>"$NOTIFY_CALLS"
+exit 0
+EOF
+chmod +x "$DRIFT_FAKE_HOME/meni/bin/meni-notify"
+DRIFT_NOTIFY_CALLS="$DRIFT_TMP/notify.calls"
+
+DRIFT_CRONTAB_STUB="$DRIFT_TMP/crontab-stub.sh"
+write_drift_live() {
+  # $1 = body to wrap in the wildcard-cert-renewal markers
+  {
+    echo '#!/usr/bin/env bash'
+    echo "cat <<'DRIFTCRONEOF'"
+    echo "# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
+    printf '%s\n' "$1"
+    echo "# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
+    echo "DRIFTCRONEOF"
+  } > "$DRIFT_CRONTAB_STUB"
+  chmod +x "$DRIFT_CRONTAB_STUB"
+}
+
+CURRENT_PRINT_LINE="$("$CERT_INSTALLER" --print-line)"
+
+write_drift_live "$CURRENT_PRINT_LINE"
+: >"$DRIFT_NOTIFY_CALLS"
+clean_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" "$DRIFT_CHECK" 2>&1)"
+clean_code=$?
+if [[ "$clean_code" -ne 0 ]]; then
+  echo "FAIL   check-crontab-drift.sh: exited $clean_code against a live block matching --print-line verbatim:"
+  echo "$clean_out" | sed 's/^/         /'
+  FAIL=1
+elif [[ -s "$DRIFT_NOTIFY_CALLS" ]]; then
+  echo "FAIL   check-crontab-drift.sh: meni-notify fired on a clean match ($(cat "$DRIFT_NOTIFY_CALLS"))"
+  FAIL=1
+else
+  echo "OK     check-crontab-drift.sh: clean when the live block matches install-cert-renewal-cron.sh --print-line"
+fi
+
+write_drift_live "$(sed 's/17 6/99 6/' <<<"$CURRENT_PRINT_LINE")"
+: >"$DRIFT_NOTIFY_CALLS"
+drift_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" "$DRIFT_CHECK" 2>&1)"
+drift_code=$?
+if [[ "$drift_code" -eq 0 ]]; then
+  echo "FAIL   check-crontab-drift.sh: exited 0 against a deliberately drifted live block"
+  FAIL=1
+elif ! grep -q "wildcard-cert-renewal crontab drift" "$DRIFT_NOTIFY_CALLS"; then
+  echo "FAIL   check-crontab-drift.sh: didn't notify on drift ($(cat "$DRIFT_NOTIFY_CALLS" 2>/dev/null))"
+  FAIL=1
+else
+  echo "OK     check-crontab-drift.sh: detects drift and notifies, naming wildcard-cert-renewal"
+fi
+
+rm -rf "$DRIFT_TMP"
+
 # --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
 #        heartbeats.sh's OWN liveness) reports absent/stale/fresh correctly,
 #        and is installed on a scheduler that is NOT bass-tuner's cron -- the
