@@ -2,12 +2,15 @@
 id: bt-3f5a
 title: install-cert-renewal-cron.sh rewrites its managed block wholesale with no drop guard — same
   defect class as bt-34af, currently consistent so no live bug
-status: open
+status: claimed
 priority: p3
 tags:
   - ops
   - monitoring
 created: 2026-07-31
+claim:
+  owner: capacity-engine
+  at: 2026-08-01T10:01:12Z
 ---
 
 scripts/install-cert-renewal-cron.sh replaces everything between its BEGIN/END markers wholesale from $CRON_LINE, exactly as install-monitoring-crons.sh did before bt-34af. Any entry live inside those markers but absent from $CRON_LINE is deleted on the next run, silently — and an unscheduled monitor is indistinguishable from a passing one.
@@ -19,3 +22,6 @@ Note install-cert-renewal-cron.sh also strips any line containing 'renew-wildcar
 FIX: port the drop guard from install-monitoring-crons.sh (commit cb830db) — the monitor_names() helper, the comm -23 DROPPED comparison, and the --force escape hatch. It compares by monitor NAME rather than whole line, so an ordinary schedule change does not trip it and get --force'd into meaninglessness.
 
 DONE WHEN: removing the cert-renewal entry from $CRON_LINE and running --dry-run exits non-zero naming 'cert-renewal', with the live crontab untouched. VERIFY with that negative control, not by reading the code.
+
+## Log
+- 2026-08-01 claimed by capacity-engine
