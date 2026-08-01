@@ -131,6 +131,24 @@ test("non-shell asset (css): cache miss falls back to network and populates the 
   assert.deepEqual(cachePutCalls, ["https://test.local/style.css"]);
 });
 
+test("non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting", async () => {
+  const { listeners } = loadSW({
+    fetchImpl: () => Promise.reject(new Error("offline")),
+    cacheMatchImpl: (url) => (url.endsWith("/index.html") ? okResponse("cached-index") : undefined),
+  });
+
+  const { called, responsePromise } = dispatchFetch(listeners, {
+    method: "GET",
+    url: "https://test.local/new-icon.png",
+    mode: "same-origin",
+  });
+  assert.equal(called, true);
+
+  await assert.doesNotReject(responsePromise, "an uncached asset with a failing network must resolve, not reject respondWith");
+  const resp = await responsePromise;
+  assert.equal(resp.body, "cached-index", "falls back to the offline shell, mirroring the app-shell branch");
+});
+
 // -----------------------------------------------------------------------------
 // Requests the fetch handler must ignore entirely
 // -----------------------------------------------------------------------------
