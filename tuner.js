@@ -544,7 +544,7 @@ function start() {
       diag("getUserMedia rejected: " + name + " — " + (err.message || ""));
       let msg = `Mic error: ${err.message || name}`;
       if (name === "NotAllowedError" || /denied/i.test(err.message || "")) {
-        msg = "Mic permission denied. Open Chrome ⋮ menu → Settings → Site settings → Microphone → tuner.omrihefez.com → Allow, then reload. Or try https://bass.omrihefez.com for a fresh prompt.";
+        msg = "Mic permission denied. Open Chrome ⋮ menu → Settings → Site settings → Microphone → bass.omrihefez.com → Allow, then reload.";
       } else if (name === "NotFoundError") {
         msg = "No microphone found on this device.";
       } else if (location.protocol !== "https:") {
@@ -699,7 +699,7 @@ async function checkPermissionState() {
   try {
     const result = await navigator.permissions.query({ name: "microphone" });
     if (result.state === "denied") {
-      $micStatus.textContent = "Microphone is blocked for this site. Open the kebab menu (⋮) → Settings → Site settings → Microphone → tuner.omrihefez.com → Allow. Or visit https://bass.omrihefez.com for a fresh prompt.";
+      $micStatus.textContent = "Microphone is blocked for this site. Open the kebab menu (⋮) → Settings → Site settings → Microphone → bass.omrihefez.com → Allow, then reload.";
       $micStatus.classList.remove("hidden");
       $micStatus.classList.add("error");
     }
