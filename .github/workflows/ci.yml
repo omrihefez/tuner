@@ -17,6 +17,11 @@ on:
       - ".donefile/**"
       - "BOARD.md"
 
+# Least-privilege default: none of these jobs writes to the repo, comments on
+# PRs, or touches packages/releases (ma-70b2 / iac-1dda).
+permissions:
+  contents: read
+
 jobs:
   static-checks:
     name: Static checks
