@@ -74,10 +74,28 @@ function extractAssets(source) {
   }
 }
 
+function extractNetworkFirstExtensions(source) {
+  if (source == null) return [];
+  const fnMatch = source.match(/function\s+isAppShell\s*\([^)]*\)\s*{([\s\S]*?)\n}/);
+  if (!fnMatch) return [];
+  const body = fnMatch[1];
+  const exts = [];
+  const re = /\.endsWith\(\s*["']([^"']+)["']\s*\)/g;
+  let m;
+  while ((m = re.exec(body))) exts.push(m[1]);
+  return exts;
+}
+
+// sw.js's own isAppShell() serves these network-first (see its header comment),
+// so a CACHE bump doesn't matter for them — track them here (from sw.js's
+// isAppShell, not hardcoded) so this check and sw.js can't drift apart.
+const networkFirstExtensions = extractNetworkFirstExtensions(swAfter);
+
 const trackedAssets = new Set(
   extractAssets(swAfter)
     .map((a) => (a === "/" ? "index.html" : a.replace(/^\//, "")))
     .filter(Boolean)
+    .filter((a) => !networkFirstExtensions.some((ext) => a.endsWith(ext)))
 );
 
 const changedFiles = sh(`git diff --name-only ${baseRef} HEAD`)
