@@ -1,0 +1,15 @@
+[Unit]
+Description=bass-tuner heartbeat-monitor liveness watchdog (bt-6492)
+
+[Timer]
+# Every 6h -- the 30h staleness threshold plus slack only needs to be caught
+# "within about a day" (same bar as the monitors it watches), and this is a
+# completely separate scheduler (systemd, not cron) so a crond-level failure
+# or a bass-tuner crontab edit can never take this down with it.
+OnBootSec=10min
+OnUnitActiveSec=6h
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

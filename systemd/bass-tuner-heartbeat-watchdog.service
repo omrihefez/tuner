@@ -1,0 +1,12 @@
+[Unit]
+Description=bass-tuner heartbeat-monitor liveness watchdog (bt-6492)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Hardcoded to the canonical checkout, not derived from the unit's own
+# location -- same rationale as install-monitoring-crons.sh: this must run
+# the same script regardless of which worktree happened to install it.
+ExecStart=/home/omri/projects/bass-tuner/scripts/check-heartbeat-liveness.sh
+Nice=10

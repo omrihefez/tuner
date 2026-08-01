@@ -168,4 +168,76 @@ else
   done
 fi
 
+# --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
+#        heartbeats.sh's OWN liveness) reports absent/stale/fresh correctly,
+#        and is installed on a scheduler that is NOT bass-tuner's cron -- the
+#        whole point being that a crontab-level failure (crond stopped, the
+#        managed block rewritten, run-monitor.sh losing its exec bit) can
+#        never also take this check down, the way it could if it lived
+#        inside check-monitor-heartbeats.sh or its cron entry.
+HB_LIVENESS="$REPO/scripts/check-heartbeat-liveness.sh"
+HBTMP="$(mktemp -d)"
+mkdir -p "$HBTMP/home/.cache"
+
+absent_out="$(env HOME="$HBTMP/home" MAX_AGE_HOURS=30 "$HB_LIVENESS" 2>&1)"
+absent_code=$?
+if [[ "$absent_code" -eq 0 ]] || ! grep -q "STALE.*NEVER logged" <<<"$absent_out"; then
+  echo "FAIL   check-heartbeat-liveness.sh: absent log not reported (got exit $absent_code: $absent_out)"
+  FAIL=1
+else
+  echo "OK     check-heartbeat-liveness.sh: absent log reported"
+fi
+
+cat > "$HBTMP/home/.cache/bass-tuner-heartbeat.log" <<EOF
+=== heartbeat $(date -d '40 hours ago' -Is) ===
+OK       fallback-cert last ran 0h ago (limit 30h)
+exit 0
+EOF
+stale_out="$(env HOME="$HBTMP/home" MAX_AGE_HOURS=30 "$HB_LIVENESS" 2>&1)"
+stale_code=$?
+if [[ "$stale_code" -eq 0 ]] || ! grep -q "STALE.*40h ago" <<<"$stale_out"; then
+  echo "FAIL   check-heartbeat-liveness.sh: stale (40h) log not reported (got exit $stale_code: $stale_out)"
+  FAIL=1
+else
+  echo "OK     check-heartbeat-liveness.sh: stale (40h > 30h limit) log reported"
+fi
+
+cat > "$HBTMP/home/.cache/bass-tuner-heartbeat.log" <<EOF
+=== heartbeat $(date -d '1 hour ago' -Is) ===
+OK       fallback-cert last ran 0h ago (limit 30h)
+exit 0
+EOF
+fresh_out="$(env HOME="$HBTMP/home" MAX_AGE_HOURS=30 "$HB_LIVENESS" 2>&1)"
+fresh_code=$?
+if [[ "$fresh_code" -ne 0 ]] || ! grep -q "^OK" <<<"$fresh_out"; then
+  echo "FAIL   check-heartbeat-liveness.sh: fresh (1h) log wrongly flagged (got exit $fresh_code: $fresh_out)"
+  FAIL=1
+else
+  echo "OK     check-heartbeat-liveness.sh: fresh (1h < 30h limit) log passes"
+fi
+
+rm -rf "$HBTMP"
+
+# The watchdog must never be crontab-scheduled -- it exists precisely because
+# that scheduler can silently fail, so if it ever gets added there this
+# regresses back to the original bug.
+if crontab -l 2>/dev/null | grep -q "check-heartbeat-liveness.sh"; then
+  echo "FAIL   check-heartbeat-liveness.sh must NOT be scheduled via crontab (defeats the whole point)"
+  FAIL=1
+else
+  echo "OK     check-heartbeat-liveness.sh is not crontab-scheduled"
+fi
+
+if command -v systemctl >/dev/null 2>&1; then
+  if systemctl --user is-enabled bass-tuner-heartbeat-watchdog.timer >/dev/null 2>&1 \
+     && systemctl --user is-active bass-tuner-heartbeat-watchdog.timer >/dev/null 2>&1; then
+    echo "OK     bass-tuner-heartbeat-watchdog.timer is installed, enabled and active (systemd --user, not cron)"
+  else
+    echo "FAIL   bass-tuner-heartbeat-watchdog.timer is not enabled+active -- run scripts/install-heartbeat-watchdog.sh"
+    FAIL=1
+  fi
+else
+  echo "SKIP   systemctl not available in this environment -- cannot verify the timer is installed"
+fi
+
 exit "$FAIL"
