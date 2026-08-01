@@ -97,7 +97,11 @@ if [ -n "$DROPPED" ]; then
 fi
 
 STRIPPED_CRON="$(printf '%s\n' "$CURRENT_CRON" | sed "\\|^$BEGIN_MARK\$|,\\|^$END_MARK\$|d")"
-STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vF "$(basename "$SCRIPT")" || true)"
+# Scoped to this monitor's run-monitor.sh invocation (bt-b38f), not the raw
+# script basename -- the basename matched (and deleted) ANY crontab line
+# mentioning renew-wildcard-cert.sh anywhere, managed or not, including a
+# hand-written or differently-scheduled renewal someone added deliberately.
+STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vF "run-monitor.sh cert-renewal " || true)"
 
 NEW_CRON="$(printf '%s\n%s\n%s\n%s\n' "$STRIPPED_CRON" "$BEGIN_MARK" "$CRON_LINE" "$END_MARK")"
 

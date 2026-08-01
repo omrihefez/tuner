@@ -214,6 +214,52 @@ else
   echo "OK     install-cert-renewal-cron.sh drop guard: refuses to drop cert-renewal, names it, crontab untouched"
 fi
 
+# --- 6c. bt-b38f: install-cert-renewal-cron.sh's cleanup used to grep -vF on
+#         the raw script basename, which struck ANY crontab line mentioning
+#         renew-wildcard-cert.sh anywhere -- not just its own managed block
+#         -- including a hand-written or differently-scheduled renewal
+#         someone added deliberately. Fixed to scope the match to this
+#         monitor's run-monitor.sh invocation, the way
+#         install-monitoring-crons.sh scopes its own cleanup.
+#
+#         Verified with a fake `crontab` shimmed onto PATH (never touches
+#         the real crontab) feeding a synthetic one that has an UNMANAGED
+#         renew-wildcard-cert.sh line alongside the managed block -- it must
+#         survive a --dry-run.
+FAKE_CRONTAB_BIN="$TMP/fakebin-bt-b38f"
+mkdir -p "$FAKE_CRONTAB_BIN"
+cat > "$FAKE_CRONTAB_BIN/crontab" <<'FAKECRONTABEOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-l" ]]; then
+  cat "$FAKE_CRONTAB_FILE"
+  exit 0
+fi
+cat > "${FAKE_CRONTAB_FILE}.installed"
+exit 0
+FAKECRONTABEOF
+chmod +x "$FAKE_CRONTAB_BIN/crontab"
+
+FAKE_CRONTAB_FILE="$TMP/fake-crontab-bt-b38f.txt"
+cat > "$FAKE_CRONTAB_FILE" <<'FAKECRONEOF'
+# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
+17 6 * * 1 /home/omri/projects/bass-tuner/scripts/run-monitor.sh cert-renewal /home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh
+# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
+0 3 * * * /home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh --hand-written-unmanaged-bt-b38f-selftest
+FAKECRONEOF
+
+unmanaged_out="$(PATH="$FAKE_CRONTAB_BIN:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$CERT_INSTALLER" --dry-run 2>&1)"
+unmanaged_code=$?
+if [[ "$unmanaged_code" -ne 0 ]]; then
+  echo "FAIL   install-cert-renewal-cron.sh: --dry-run exited $unmanaged_code against a crontab with an unmanaged renewal line:"
+  echo "$unmanaged_out" | sed 's/^/         /'
+  FAIL=1
+elif ! grep -q "hand-written-unmanaged-bt-b38f-selftest" <<<"$unmanaged_out"; then
+  echo "FAIL   install-cert-renewal-cron.sh: cleanup deleted an UNMANAGED renew-wildcard-cert.sh line outside its own block"
+  FAIL=1
+else
+  echo "OK     install-cert-renewal-cron.sh: unmanaged renew-wildcard-cert.sh line survives the installer"
+fi
+
 # --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
 #        heartbeats.sh's OWN liveness) reports absent/stale/fresh correctly,
 #        and is installed on a scheduler that is NOT bass-tuner's cron -- the
