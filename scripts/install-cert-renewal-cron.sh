@@ -13,13 +13,29 @@
 # a month. run-monitor.sh still writes that same log AND, on any non-zero
 # exit, a dated ~/inbox file so the morning brief surfaces the failure.
 #
-# Usage: install-cert-renewal-cron.sh [--dry-run]
+# This block is rewritten WHOLESALE from $CRON_LINE below, so $CRON_LINE is
+# the single source of truth for everything between the markers: an entry
+# that is live inside them but missing here is deleted on the next run
+# (same defect class as install-monitoring-crons.sh before bt-34af). The
+# DROPPED guard below makes that failure loud instead of silent.
+#
+# Usage: install-cert-renewal-cron.sh [--dry-run] [--force]
+#   --dry-run  print the resulting crontab instead of installing it
+#   --force    install even if the guard reports a monitor would be dropped
+#              (i.e. you are deliberately unscheduling one)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 DRY_RUN=0
-[ "${1:-}" = "--dry-run" ] && DRY_RUN=1
+FORCE=0
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN=1 ;;
+    --force)   FORCE=1 ;;
+    *) echo "usage: install-cert-renewal-cron.sh [--dry-run] [--force]" >&2; exit 2 ;;
+  esac
+done
 
 # Hardcoded to the canonical checkout, not derived from this script's own
 # location -- this installer must produce the same crontab line regardless of
@@ -43,6 +59,42 @@ if ! printf '%s\n' "$CRON_LINE" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; 
 fi
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
+
+# Monitor names (run-monitor.sh's first argument) on stdin's cron lines.
+# Comment lines are skipped so the BEGIN/END markers never register as entries.
+monitor_names() {
+  awk '!/^[[:space:]]*#/ {
+         for (i = 1; i < NF; i++)
+           if ($i ~ /run-monitor\.sh$/) { print $(i + 1); break }
+       }' | sed '/^$/d' | sort -u
+}
+
+# Guard (bt-3f5a, same defect class as bt-34af): refuse to silently
+# unschedule a monitor. The block is replaced wholesale from $CRON_LINE, so
+# anything live inside the markers but missing from $CRON_LINE just
+# disappears -- and a monitor that never runs looks exactly like a monitor
+# that passes. Compared by monitor NAME rather than whole line, so an
+# ordinary schedule change is not flagged but an entry vanishing is.
+OLD_BLOCK="$(printf '%s\n' "$CURRENT_CRON" | sed -n "\\|^$BEGIN_MARK\$|,\\|^$END_MARK\$|p")"
+DROPPED="$(comm -23 \
+  <(printf '%s\n' "$OLD_BLOCK"  | monitor_names) \
+  <(printf '%s\n' "$CRON_LINE"  | monitor_names))"
+
+if [ -n "$DROPPED" ]; then
+  {
+    echo "[install-cert-renewal-cron] these monitors are scheduled in the live managed"
+    echo "  block but absent from this script's \$CRON_LINE, so installing would"
+    echo "  silently unschedule them:"
+    printf '%s\n' "$DROPPED" | sed 's/^/      /'
+    echo "  Add them to \$CRON_LINE -- this file is the source of truth for the whole"
+    echo "  block -- or re-run with --force if you really mean to unschedule them."
+  } >&2
+  if [ "$FORCE" != "1" ]; then
+    echo "[install-cert-renewal-cron] refusing to install (no --force); crontab unchanged." >&2
+    exit 1
+  fi
+  echo "[install-cert-renewal-cron] --force given: unscheduling the above." >&2
+fi
 
 STRIPPED_CRON="$(printf '%s\n' "$CURRENT_CRON" | sed "\\|^$BEGIN_MARK\$|,\\|^$END_MARK\$|d")"
 STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vF "$(basename "$SCRIPT")" || true)"

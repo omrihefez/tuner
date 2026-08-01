@@ -168,6 +168,52 @@ else
   done
 fi
 
+# --- 6b. bt-3f5a: install-cert-renewal-cron.sh carries the same wholesale-
+#         rewrite defect class as install-monitoring-crons.sh did before
+#         bt-34af -- ported the same drop guard. First confirm the tracked
+#         installer's own --dry-run still schedules cert-renewal (mirrors
+#         step 6), then prove the guard actually fires: a sabotaged copy
+#         with $CRON_LINE's monitor name renamed must exit non-zero, name
+#         "cert-renewal", and leave the live crontab untouched -- that's the
+#         negative control, not just reading the code.
+CERT_INSTALLER="$REPO/scripts/install-cert-renewal-cron.sh"
+cert_dry_out="$("$CERT_INSTALLER" --dry-run 2>&1)"
+cert_dry_code=$?
+if [[ "$cert_dry_code" -ne 0 ]]; then
+  echo "FAIL   install-cert-renewal-cron.sh --dry-run exited $cert_dry_code (drop guard tripped?):"
+  echo "$cert_dry_out" | sed 's/^/         /'
+  FAIL=1
+else
+  cert_dry_block="$(printf '%s\n' "$cert_dry_out" | sed -n '/# BEGIN wildcard-cert-renewal/,/# END wildcard-cert-renewal/p')"
+  if grep -qF "renew-wildcard-cert.sh" <<<"$cert_dry_block"; then
+    echo "OK     renew-wildcard-cert.sh is in install-cert-renewal-cron.sh's managed block"
+  else
+    echo "FAIL   renew-wildcard-cert.sh is NOT in install-cert-renewal-cron.sh's managed block -- the next installer run would unschedule it"
+    FAIL=1
+  fi
+fi
+
+SABOTAGED="$TMP/install-cert-renewal-cron-sabotaged.sh"
+sed 's/cert-renewal \$SCRIPT"/cert-renewal-bt3f5a-selftest \$SCRIPT"/' "$CERT_INSTALLER" > "$SABOTAGED"
+chmod +x "$SABOTAGED"
+crontab_before="$(crontab -l 2>/dev/null || true)"
+sabotaged_out="$("$SABOTAGED" --dry-run 2>&1)"
+sabotaged_code=$?
+crontab_after="$(crontab -l 2>/dev/null || true)"
+if [[ "$sabotaged_code" -eq 0 ]]; then
+  echo "FAIL   install-cert-renewal-cron.sh drop guard: sabotaged run (renamed monitor) exited 0, expected non-zero"
+  FAIL=1
+elif ! grep -q "cert-renewal" <<<"$sabotaged_out"; then
+  echo "FAIL   install-cert-renewal-cron.sh drop guard: refused to install but didn't name cert-renewal:"
+  echo "$sabotaged_out" | sed 's/^/         /'
+  FAIL=1
+elif [[ "$crontab_before" != "$crontab_after" ]]; then
+  echo "FAIL   install-cert-renewal-cron.sh drop guard: live crontab changed during the negative control"
+  FAIL=1
+else
+  echo "OK     install-cert-renewal-cron.sh drop guard: refuses to drop cert-renewal, names it, crontab untouched"
+fi
+
 # --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
 #        heartbeats.sh's OWN liveness) reports absent/stale/fresh correctly,
 #        and is installed on a scheduler that is NOT bass-tuner's cron -- the
