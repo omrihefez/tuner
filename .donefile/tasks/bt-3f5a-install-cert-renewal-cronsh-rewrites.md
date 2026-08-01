@@ -2,15 +2,26 @@
 id: bt-3f5a
 title: install-cert-renewal-cron.sh rewrites its managed block wholesale with no drop guard — same
   defect class as bt-34af, currently consistent so no live bug
-status: claimed
+status: done
 priority: p3
 tags:
   - ops
   - monitoring
 created: 2026-07-31
-claim:
-  owner: capacity-engine
-  at: 2026-08-01T10:01:12Z
+done:
+  at: 2026-08-01T10:04:58Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 2c32281
+    verified: 2026-08-01T10:04:58Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-08-01T10:04:57Z
+    log: evidence/bt-3f5a-2026-08-01T10-04-57Z-test.txt
+    sha256: bb1680725f05dcb5de28c588b6b9575929f86e93520e7327e2e7d41672f30b70
+    bytes: 1560
 ---
 
 scripts/install-cert-renewal-cron.sh replaces everything between its BEGIN/END markers wholesale from $CRON_LINE, exactly as install-monitoring-crons.sh did before bt-34af. Any entry live inside those markers but absent from $CRON_LINE is deleted on the next run, silently — and an unscheduled monitor is indistinguishable from a passing one.
@@ -25,3 +36,4 @@ DONE WHEN: removing the cert-renewal entry from $CRON_LINE and running --dry-run
 
 ## Log
 - 2026-08-01 claimed by capacity-engine
+- 2026-08-01 done by capacity-engine/worker — commit 2c32281, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-3f5a-2026-08-01T10-04-57Z-test.txt)
