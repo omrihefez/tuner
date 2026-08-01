@@ -126,20 +126,32 @@ else
 fi
 
 # --- 5. all four are actually on the crontab, not just present on disk ---
-# bt-d30a: crontab -l can land mid a concurrent rewrite (another installer,
-# or a manual crontab -e, replacing the whole file while this reads it) and
-# come back missing an entry that's live a moment before and after. Re-read
-# once before trusting an absence, so a real missing-entry regression still
-# fails but a one-off race against a concurrent writer doesn't.
+# bt-d30a: this box runs several install-*-cron.sh installers (this repo's
+# own two, plus other projects') that each do a read-modify-write of the
+# WHOLE crontab (crontab -l | ... | crontab -), and this box routinely has
+# more than one worker session runnable at once -- so `crontab -l` here can
+# land mid another process's rewrite and read back a snapshot that's
+# genuinely missing an entry for a moment, even though it's live just before
+# and after. A single retry measured as insufficient (a live install can hold
+# the crontab in a rewritten-but-not-yet-restored state for more than 0.5s),
+# so poll for a few seconds before trusting an absence -- a real missing-
+# entry regression still fails once that whole window comes up empty.
 CRON="$(crontab -l 2>/dev/null || true)"
 for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh"; do
   if echo "$CRON" | grep -q "$pat"; then
     echo "OK     $pat is scheduled in crontab"
   else
-    sleep 0.5
-    CRON="$(crontab -l 2>/dev/null || true)"
-    if echo "$CRON" | grep -q "$pat"; then
-      echo "OK     $pat is scheduled in crontab (missing on first read, present on retry -- likely raced a concurrent crontab rewrite)"
+    found=0
+    for attempt in 1 2 3 4 5; do
+      sleep 0.5
+      CRON="$(crontab -l 2>/dev/null || true)"
+      if echo "$CRON" | grep -q "$pat"; then
+        found=1
+        break
+      fi
+    done
+    if [[ "$found" -eq 1 ]]; then
+      echo "OK     $pat is scheduled in crontab (missing on first read, present after $attempt retries -- likely raced a concurrent crontab rewrite)"
     else
       echo "FAIL   $pat missing from crontab"
       FAIL=1
