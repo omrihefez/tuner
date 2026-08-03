@@ -21,6 +21,14 @@
 # Intended to run from cron (see scripts/install-cert-renewal-cron.sh).
 set -uo pipefail
 
+# bt-a428: cron runs with a minimal PATH that doesn't include ~/.bun/bin,
+# where the vercel CLI actually lives (bun-installed global) -- without it
+# the scheduled run dies on `vercel: command not found` and the cert never
+# renews (same fix already applied to meniapp's deploy-app-if-changed.sh for
+# the same reason). node itself resolves fine under cron's default PATH
+# (/usr/bin/node), so only the bun bin dir needs adding here.
+export PATH="$HOME/.bun/bin:$PATH"
+
 CN='*.omrihefez.com'
 ZONE_ID=e8f56b4957a31cc5e80940cd45470440
 RECORD_NAME=_acme-challenge.omrihefez.com
