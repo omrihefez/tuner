@@ -16,7 +16,7 @@ repos:
 # clients are still served the old cached shell because sw.js's CACHE key
 # did not move. check-sw-cache-bump.js already catches the second failure
 # mode at COMMIT time; nothing checked it against what's actually live until
-# deploy/activation-probes/probe-live-sw-cache.sh, added alongside this gate.
+# deploy/activation-probes/probe-bt-5fb7.sh, added alongside this gate.
 #
 # Named here: every tag under which real user-facing app-surface work (the
 # static HTML/CSS/JS, manifest.json, sw.js, or vercel.json's headers/
@@ -47,6 +47,6 @@ activation:
 # local repo file (same bar as meniapp's deploy/activation-probes/README.md,
 # ma-f2db) - e.g. curl the live page/asset and assert on its content/headers,
 # or for a cached-asset change, diff sw.js's live CACHE version against the
-# source commit's (deploy/activation-probes/probe-live-sw-cache.sh). Probe
+# source commit's (deploy/activation-probes/probe-bt-5fb7.sh). Probe
 # convention + index: deploy/activation-probes/README.md.
 worktree_guard: true
