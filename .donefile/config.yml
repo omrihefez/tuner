@@ -4,8 +4,49 @@ blocked_nag_days: 14
 board_path: BOARD.md
 repos:
   capacity-engine: /home/omri/projects/capacity-engine
-# dn-68d7 (2026-07-26): this checkout is shared by concurrent hub workers -
-# refuse non-bookkeeping commits made directly in the MAIN worktree; work in
-# an isolated worktree instead (Claude Code: EnterWorktree; manually: git
-# worktree add). Escape hatch: DONEFILE_ALLOW_MAIN_COMMIT=1 git commit ...
+# bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
+# .vercel project link, manifest.json, sw.js) whose CI already reasons about
+# the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
+# but activation.tags was empty, so `donefile done` on ANY bt task closed
+# straight to done on a bare commit, same done-is-not-deployed gap meniapp
+# gates via [hub, plugin, frontend] and meni-arch gates via [feature, design,
+# content, a11y, auth, security, deploy, deps, ops]. That matters more here
+# than on most boards: a service-worker app has two distinct ways to be
+# committed-but-not-live - the deploy never happened, or it happened and
+# clients are still served the old cached shell because sw.js's CACHE key
+# did not move. check-sw-cache-bump.js already catches the second failure
+# mode at COMMIT time; nothing checked it against what's actually live until
+# deploy/activation-probes/probe-live-sw-cache.sh, added alongside this gate.
+#
+# Named here: every tag under which real user-facing app-surface work (the
+# static HTML/CSS/JS, manifest.json, sw.js, or vercel.json's headers/
+# redirects that Vercel actually serves) ships - audited against every task
+# this board has closed so far. Tags NOT listed (ops, monitoring, tls, ci,
+# tooling, donefile, docs, tests, safety, audit, infra, config,
+# capacity-engine, from-brief, flaky-test, dedup, decision, coverage,
+# cleanup, hygiene, process) are repo/process/cron-script bookkeeping with no
+# Vercel-served output. Per meniapp's ma-dffe rule, a task under one of THOSE
+# tags that turns out to touch the deployed surface anyway still isn't
+# silently exempt - it closes via `--waive "<reason>"` rather than a faked
+# --live probe, same as a gated task with no runtime surface does. `vercel`
+# is listed even though roughly half its historical uses are TLS/DNS/
+# project-wiring tasks with no served-content change (bt-03ea, bt-2b10,
+# bt-78e6) - those close the same way, via --waive, rather than splitting
+# the tag in two.
+activation:
+  tags: [pwa, ux, correctness, security, deploy, feature, perf, a11y, vercel]
+# Activation command: none to run by hand - this Vercel project IS
+# git-integrated (unlike meni-arch, whose ar-fe07 note documents its project
+# as NOT git-integrated), so a push to origin/main auto-deploys to production
+# within ~1-2 min. Confirm with `vercel ls bass-tuner` (Age column) or
+# `vercel inspect bass.omrihefez.com`. There's no separate preview/promote
+# step like meni-arch's two-step flow: production is what a pushed commit
+# becomes.
+#
+# Live probe: hit the real served site, never a re-read of the diff or the
+# local repo file (same bar as meniapp's deploy/activation-probes/README.md,
+# ma-f2db) - e.g. curl the live page/asset and assert on its content/headers,
+# or for a cached-asset change, diff sw.js's live CACHE version against the
+# source commit's (deploy/activation-probes/probe-live-sw-cache.sh). Probe
+# convention + index: deploy/activation-probes/README.md.
 worktree_guard: true
