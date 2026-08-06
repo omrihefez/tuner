@@ -11,14 +11,27 @@
 # renewal needs no human in the loop.
 #
 # Usage:
-#   scripts/renew-wildcard-cert.sh          # only acts if the cert is within
-#                                            # RENEW_THRESHOLD_DAYS of expiry
-#   scripts/renew-wildcard-cert.sh --force  # renew right now regardless of
-#                                            # current expiry (used to prove
-#                                            # the flow end-to-end, and as an
-#                                            # escape hatch if it ever expires)
+#   scripts/renew-wildcard-cert.sh                        # only acts if the
+#                                            # cert is within RENEW_THRESHOLD_DAYS
+#                                            # of expiry
+#   scripts/renew-wildcard-cert.sh --force                # print what a forced
+#                                            # renewal would do and exit --
+#                                            # touches nothing (bt-4923)
+#   scripts/renew-wildcard-cert.sh --force --i-mean-it     # actually renew
+#                                            # right now regardless of current
+#                                            # expiry (used to prove the flow
+#                                            # end-to-end, and as an escape
+#                                            # hatch if it ever expires)
 #
-# Intended to run from cron (see scripts/install-cert-renewal-cron.sh).
+# bt-4923: --force alone used to perform live ACME issuance and Cloudflare DNS
+# writes immediately, with no confirmation -- a debugging session passed
+# --force just to test a PATH fix and silently issued a real cert, then left
+# an orphaned _acme-challenge TXT record when a second run was killed
+# mid-flight. --force now only prints what it would do; --i-mean-it is the
+# explicit opt-in required to actually touch Cloudflare/Vercel.
+#
+# Intended to run from cron (see scripts/install-cert-renewal-cron.sh), which
+# never passes --force -- cron always goes through the threshold check above.
 set -uo pipefail
 
 # bt-a428: cron runs with a minimal PATH that doesn't include ~/.bun/bin,
@@ -40,9 +53,28 @@ RECORD_NAME=_acme-challenge.omrihefez.com
 # missed weekly run (45-14=31d, still well clear of 21d).
 RENEW_THRESHOLD_DAYS=45
 FORCE=0
-[[ "${1:-}" == "--force" ]] && FORCE=1
+CONFIRMED=0
+for arg in "$@"; do
+  case "$arg" in
+    --force) FORCE=1 ;;
+    --i-mean-it) CONFIRMED=1 ;;
+  esac
+done
 
 log() { echo "[$(date -u +%FT%TZ)] $*"; }
+
+# bt-4923: --force alone is a dry-run description, not an action -- it must
+# require --i-mean-it too, so that a debugging/testing invocation using
+# --force to reach later code (e.g. to test a PATH fix) can't accidentally
+# perform a live ACME issuance or Cloudflare DNS write. Checked before the
+# secrets file is even read, so an unconfirmed --force touches nothing.
+if [[ "$FORCE" -eq 1 && "$CONFIRMED" -ne 1 ]]; then
+  log "--force passed without --i-mean-it: this would renew $CN right now" \
+    "regardless of current expiry -- deleting/creating live $RECORD_NAME TXT" \
+    "records via the Cloudflare API and calling 'vercel certs issue $CN'."
+  log "Not touching Cloudflare or Vercel. Re-run with: --force --i-mean-it"
+  exit 0
+fi
 
 if [[ ! -r "$HOME/meni/secrets/.env" ]]; then
   log "FATAL: $HOME/meni/secrets/.env not readable, can't get CLOUDFLARE_API_TOKEN"
@@ -85,7 +117,7 @@ if [[ "$FORCE" -ne 1 ]]; then
     log "$CN has ${days_left}d left (<= ${RENEW_THRESHOLD_DAYS}d threshold), renewing"
   fi
 else
-  log "--force passed, renewing $CN now regardless of current expiry"
+  log "--force --i-mean-it passed, renewing $CN now regardless of current expiry"
 fi
 
 log "requesting ACME DNS-01 challenge from Vercel for $CN"
