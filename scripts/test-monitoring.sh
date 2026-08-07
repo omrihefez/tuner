@@ -62,7 +62,8 @@ check domain-audit-selftest "audit-domains.sh (forced failure)" \
   "$TMP/audit-domains-fail.sh"
 
 # --- 3. renew-wildcard-cert.sh, run with HOME pointed at an empty dir so its
-#        own first FATAL check (unreadable ~/meni/secrets/.env) fires before
+#        own first FATAL check (unreadable ~/.meni/auth.env, so no Infisical
+#        login is possible) fires before
 #        it ever touches Cloudflare or Vercel ---
 mkdir -p "$TMP/fakehome"
 check cert-renewal-selftest "renew-wildcard-cert.sh (forced failure)" \

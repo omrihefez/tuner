@@ -6,8 +6,8 @@
 # the _acme-challenge TXT record itself -- the wildcard cert silently expired
 # once already. This script closes that gap: it drives `vercel certs issue`
 # through the DNS-01 challenge itself, writing the TXT record via the
-# Cloudflare API (token already provisioned for the omrihefez.com domain
-# migration, see ~/meni/DOMAIN.md / ~/meni/secrets/.env), so the whole
+# Cloudflare API (token from Infisical prod `CLOUDFLARE_API_TOKEN`, see
+# ~/meni/DOMAIN.md and the vault-fetch block below), so the whole
 # renewal needs no human in the loop.
 #
 # Usage:
@@ -76,16 +76,41 @@ if [[ "$FORCE" -eq 1 && "$CONFIRMED" -ne 1 ]]; then
   exit 0
 fi
 
-if [[ ! -r "$HOME/meni/secrets/.env" ]]; then
-  log "FATAL: $HOME/meni/secrets/.env not readable, can't get CLOUDFLARE_API_TOKEN"
+# The token comes from Infisical prod (secret CLOUDFLARE_API_TOKEN), fetched via
+# the meni-runtime machine identity in ~/.meni/auth.env -- same pattern as
+# iac/scripts/lib/with-cloudflare-sa.sh.
+#
+# There is deliberately NO fallback to a file on disk. This used to source
+# ~/meni/secrets/.env, and that plaintext copy went stale and dead without
+# anyone noticing, because a fallback keeps the script "working" off whatever
+# is on disk and hides the drift. If the vault is unreachable, this must fail
+# loudly rather than reach for a local copy.
+if [[ ! -r "$HOME/.meni/auth.env" ]]; then
+  log "FATAL: $HOME/.meni/auth.env not readable, can't authenticate to Infisical"
   exit 1
 fi
-set -a
 # shellcheck disable=SC1091
-source "$HOME/meni/secrets/.env"
-set +a
+source "$HOME/.meni/auth.env"
+
+_infisical_token=$(curl -sf -m 30 -X POST \
+  https://app.infisical.com/api/v1/auth/universal-auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"clientId\":\"$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID\",\"clientSecret\":\"$INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET\"}" \
+  | python3 -c "import json,sys; print(json.load(sys.stdin)['accessToken'])") || true
+unset INFISICAL_UNIVERSAL_AUTH_CLIENT_ID INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET
+if [[ -z "${_infisical_token:-}" ]]; then
+  log "FATAL: Infisical login failed, can't get CLOUDFLARE_API_TOKEN"
+  exit 1
+fi
+
+export CLOUDFLARE_API_TOKEN
+CLOUDFLARE_API_TOKEN=$(curl -sf -m 30 \
+  "https://app.infisical.com/api/v3/secrets/raw/CLOUDFLARE_API_TOKEN?workspaceId=$INFISICAL_PROJECT_ID&environment=prod&secretPath=/" \
+  -H "Authorization: Bearer $_infisical_token" \
+  | python3 -c "import json,sys; print(json.load(sys.stdin)['secret']['secretValue'])") || true
+unset _infisical_token
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
-  log "FATAL: CLOUDFLARE_API_TOKEN not set after sourcing secrets"
+  log "FATAL: CLOUDFLARE_API_TOKEN not readable from Infisical prod"
   exit 1
 fi
 
