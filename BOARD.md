@@ -6,7 +6,7 @@
 
 ## Blocked
 
-- `bt-b34a` **Decide whether to flip judge_gates:true in capacity-engine — OMRI'S CALL, do not flip to generate data** — Omri's call — subjective config decision. Main (2026-07-25): must be decided against real measurements, not the void bt-c0a9/bt-e0c3 baseline; do not flip it to generate the data. (since 2026-07-25)
+- `bt-b34a` **Decide whether to flip judge_gates:true in capacity-engine — OMRI'S CALL, do not flip to generate data** — Omri's call — subjective config decision (flip judge_gates:true in capacity-engine or explicitly keep it false), per Main's 2026-07-25 ruling: must be judged against real measurements, not the void bt-c0a9/bt-e0c3 baseline, and must NOT be flipped just to generate that data. Unblock predicate: a decision record committed at .donefile/evidence/bt-b34a-decision.md (either outcome — flip it, or explicitly keep it off — counts as decided). (since 2026-07-25)
 
 ## Open
 
