@@ -2,12 +2,15 @@
 id: bt-ed7f
 title: renew-wildcard-cert.sh (weekly cron) mutates real Cloudflare DNS + issues prod TLS cert from
   a live, dirty-able checkout — same execute-from-checkout hole as ce-0bda
-status: open
+status: claimed
 priority: p2
 tags:
   - reliability
   - infra
 created: 2026-08-09
+claim:
+  owner: capacity-engine
+  at: 2026-08-10T23:32:44Z
 ---
 
 Audited from ce-e338 (capacity-engine board).
@@ -19,3 +22,6 @@ This is the same architecture ce-0bda fixed for capacity-engine's dispatcher tic
 SUGGESTED FIX: pin/verify against a git-archive export of HEAD before running the mutating (DNS + cert-issue) branch, or at minimum add a 'refuse to run if the bass-tuner checkout has uncommitted non-bookkeeping changes' guard — cheap, additive, same shape as the fix this worker landed in second-brain (see second-brain@a299a79 prune-fleet-worktrees.sh for a worked example).
 
 DONE WHEN: the DNS+cert-issue mutation path either runs from a pinned/verified export of HEAD, or refuses to run when the bass-tuner checkout is dirty in a non-bookkeeping way.
+
+## Log
+- 2026-08-11 claimed by capacity-engine
