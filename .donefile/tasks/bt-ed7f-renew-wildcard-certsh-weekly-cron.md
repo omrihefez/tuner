@@ -2,15 +2,12 @@
 id: bt-ed7f
 title: renew-wildcard-cert.sh (weekly cron) mutates real Cloudflare DNS + issues prod TLS cert from
   a live, dirty-able checkout — same execute-from-checkout hole as ce-0bda
-status: claimed
+status: open
 priority: p2
 tags:
   - reliability
   - infra
 created: 2026-08-09
-claim:
-  owner: capacity-engine
-  at: 2026-08-10T23:32:44Z
 ---
 
 Audited from ce-e338 (capacity-engine board).
@@ -25,3 +22,4 @@ DONE WHEN: the DNS+cert-issue mutation path either runs from a pinned/verified e
 
 ## Log
 - 2026-08-11 claimed by capacity-engine
+- 2026-08-11 released by capacity-engine
