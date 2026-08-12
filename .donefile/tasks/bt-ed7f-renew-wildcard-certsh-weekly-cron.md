@@ -2,15 +2,29 @@
 id: bt-ed7f
 title: renew-wildcard-cert.sh (weekly cron) mutates real Cloudflare DNS + issues prod TLS cert from
   a live, dirty-able checkout — same execute-from-checkout hole as ce-0bda
-status: claimed
+status: done
 priority: p2
 tags:
   - reliability
   - infra
 created: 2026-08-09
-claim:
-  owner: capacity-engine
-  at: 2026-08-12T14:21:37Z
+done:
+  at: 2026-08-12T14:26:23Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: eff77ab
+    verified: 2026-08-12T14:26:23Z
+  - type: test
+    cmd: bash -c 'cd /home/omri/projects/bass-tuner; tmp=$(mktemp -d); git clone -q . "$tmp"; echo dirty
+      >> "$tmp/README.md"; out=$(HOME="$tmp/fake-home" bash "$tmp/scripts/renew-wildcard-cert.sh"
+      2>&1); rc=$?; rm -rf "$tmp"; [ "$rc" -eq 1 ] && echo "$out" | grep -q "uncommitted
+      non-bookkeeping changes"'
+    exit: 0
+    at: 2026-08-12T14:26:23Z
+    log: evidence/bt-ed7f-2026-08-12T14-26-23Z-test.txt
+    sha256: 2e10ef985134c51862cabc9efea11a20672cb28002eff26d39a003b925b372a5
+    bytes: 300
 ---
 
 Audited from ce-e338 (capacity-engine board).
@@ -27,3 +41,4 @@ DONE WHEN: the DNS+cert-issue mutation path either runs from a pinned/verified e
 - 2026-08-11 claimed by capacity-engine
 - 2026-08-11 released by capacity-engine
 - 2026-08-12 claimed by capacity-engine
+- 2026-08-12 done by capacity-engine/worker — commit eff77ab, test `bash -c 'cd /home/omri/projects/bass-tuner; tmp=$(mktemp -d); git clone -q . "$tmp"; echo dirty >> "$tmp/README.md"; out=$(HOME="$tmp/fake-home" bash "$tmp/scripts/renew-wildcard-cert.sh" 2>&1); rc=$?; rm -rf "$tmp"; [ "$rc" -eq 1 ] && echo "$out" | grep -q "uncommitted non-bookkeeping changes"'` exit 0 (log: evidence/bt-ed7f-2026-08-12T14-26-23Z-test.txt)
