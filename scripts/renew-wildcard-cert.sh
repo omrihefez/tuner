@@ -76,6 +76,24 @@ if [[ "$FORCE" -eq 1 && "$CONFIRMED" -ne 1 ]]; then
   exit 0
 fi
 
+# bt-ed7f: refuse to run from a dirty checkout. cron execs whatever this FILE
+# currently contains on disk, not what's committed -- so an uncommitted edit
+# sitting in this checkout (someone mid-editing the script) would run for
+# real on the next weekly tick: real Cloudflare DNS writes and a real ACME
+# cert issuance, driven by whatever half-finished logic happened to be on
+# disk. Same hole ce-0bda fixed for capacity-engine's dispatcher tick, same
+# guard shape as second-brain's prune-fleet-worktrees.sh (ce-e338). Checked
+# before secrets are even read, so a dirty checkout touches nothing --
+# including on the --force --i-mean-it path, which reaches this same check.
+SELF_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dirty="$(git -C "$SELF_REPO_ROOT" status --porcelain -- . ':(exclude).donefile' ':(exclude)BOARD.md' 2>/dev/null)"
+if [[ -n "$dirty" ]]; then
+  log "FATAL: $SELF_REPO_ROOT has uncommitted non-bookkeeping changes -- refusing to run" \
+    "(this script execs whatever is on disk, not what's committed; someone is mid-edit)."
+  printf '%s\n' "$dirty" | sed 's/^/  /' >&2
+  exit 1
+fi
+
 # The token comes from Infisical prod (secret CLOUDFLARE_API_TOKEN), fetched via
 # the meni-runtime machine identity in ~/.meni/auth.env -- same pattern as
 # iac/scripts/lib/with-cloudflare-sa.sh.
