@@ -2,7 +2,7 @@
 id: bt-6f67
 title: bt-b34a is a false gate — ce-5e79 already decided judge_gates and ce-39cd supplied the
   80-task live data its unblock predicate demanded
-status: open
+status: claimed
 priority: p2
 tags:
   - gates
@@ -10,6 +10,9 @@ tags:
   - audit
   - cross-board
 created: 2026-08-12
+claim:
+  owner: capacity-engine
+  at: 2026-08-13T15:06:01Z
 ---
 
 bt-b34a has been blocked 19 days on a decision that was already made, twice,
@@ -79,3 +82,6 @@ degrade path) is a separate defect and is not what this block is about.
 
 
 cross-board: names a file under 'capacity-engine' at /home/omri/projects/capacity-engine — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-08-13 claimed by capacity-engine
