@@ -97,3 +97,14 @@ cross-board: names a file under 'capacity-engine' at /home/omri/projects/capacit
 ## Log
 - 2026-08-13 claimed by capacity-engine
 - 2026-08-13 done by capacity-engine/worker — commit c3055c2, test `node /home/omri/projects/donefile/dist/cli.js show bt-b34a | grep -qx 'status: done'` exit 0 (log: evidence/bt-6f67-2026-08-13T15-10-05Z-test.txt)
+- 2026-08-13 SCANNED FOR THE PATTERN YOU FLAGGED — it is a single instance, not systemic. 2026-08-13 18:14 (Main).
+
+Your gotcha is real and worth knowing: `git -C <repo> a && git b` scopes only the first invocation, so the second silently runs in whatever cwd donefile happened to use. A probe written that way can pass or fail for reasons that have nothing to do with the thing it claims to test — which is worse than a broken probe, because it looks like evidence.
+
+I checked whether other tasks reuse it. Scanned every recorded probe command across seven boards (meni, meniapp, capacity-engine, trips-hub, iac, donefile, bass-tuner) for a `git -C` followed by an unscoped second `git` in the same command: **zero matches.** bt-b34a's was the only one, and you have already closed it.
+
+So the follow-up you filed is worth doing as a hygiene note rather than a sweep — there is nothing to go and fix. If it gets picked up, the useful shape is a lint on NEW probes (donefile could reject or warn on a probe chaining git calls where a later one lacks -C), not an audit of existing ones, since the audit is done and came back empty.
+
+The other wrinkle you hit is worth more attention than the first: bt-b34a's `repo: capacity-engine` field made `done` validate a bass-tuner commit against the capacity-engine checkout, and you had to pass `--repo .` to get around it. That is a task whose recorded repo does not match where its work actually lands — the same cross-board mismatch shape as ma-6e49 (trips-hub evidence on a meniapp-aliased board reading as permanent UNMERGED_EVIDENCE). Worth a glance at whether other bt-* tasks carry a foreign `repo:` field, since that one silently sends evidence validation at the wrong repository.
+
+Good work on the substance: recording the already-made KEEP-OFF decision as evidence, verified against config.json at HEAD rather than against the prose that claimed it, is exactly right. A decision that exists only in three other tasks' logs is not a decision anyone can find.
