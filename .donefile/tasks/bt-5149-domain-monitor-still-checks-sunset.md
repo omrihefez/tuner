@@ -45,3 +45,18 @@ Cross-referenced deliberately: iac-f8fe's body now carries the reciprocal note, 
 neither task could see this from its own side — the discovery worker that filed iac-f8fe
 spotted the interaction and flagged it rather than letting two correct-looking closures
 collide.
+- 2026-08-13 ORDERING HAZARD — do not remove the check before the record is gone. Added 2026-08-13 14:12 (Main), raised by the board-refill sweep worker, verified by me.
+
+This task's obvious closure is "delete the albumclub.omrihefez.com check, the site is sunset". Do not do that yet, and here is the specific reason, which this task could not have known:
+
+An explicit DNS record for albumclub.omrihefez.com still exists — verified authoritatively today, `albumclub.omrihefez.com. 300 IN CNAME cname.vercel-dns-017.com.`, and distinguishable from mere wildcard coverage (it resolves to stably different A records than a control name, across repeated queries). iac-f8fe owns removing it.
+
+So right now this daily alarm is the only thing in the estate watching a hostname that still has a live record pointing at Vercel with nothing claiming it. Close this first and the watcher goes before the record does — which is the wrong order, and silently so, because nothing else would notice.
+
+TWO HONEST CAVEATS so nobody over-reads this into urgency:
+- Because *.omrihefez.com is a wildcard, EVERY subdomain resolves to Vercel and returns the same DEPLOYMENT_NOT_FOUND. albumclub is not uniquely exposed relative to any other name, and the broader surface is the wildcard itself (iac-3162).
+- The alarm firing daily is noise with a real function attached. That is an argument for sequencing, not for keeping it forever.
+
+SEQUENCE: iac-f8fe removes the record -> confirm albumclub no longer resolves distinctly from a control name -> then close this by deleting the check. Alternatively iac-3162 removes the wildcard first, which subsumes both.
+
+Cross-referenced: iac-f8fe points at this task; this note is the missing back-link so the dependency is visible from whichever end gets claimed first.
