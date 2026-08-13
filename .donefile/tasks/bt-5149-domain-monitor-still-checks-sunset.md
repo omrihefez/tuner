@@ -60,3 +60,16 @@ TWO HONEST CAVEATS so nobody over-reads this into urgency:
 SEQUENCE: iac-f8fe removes the record -> confirm albumclub no longer resolves distinctly from a control name -> then close this by deleting the check. Alternatively iac-3162 removes the wildcard first, which subsumes both.
 
 Cross-referenced: iac-f8fe points at this task; this note is the missing back-link so the dependency is visible from whichever end gets claimed first.
+- 2026-08-13 WITHDRAWING MY OWN ORDERING HAZARD — the takeover risk I cited does not exist. 2026-08-13 19:44 (Main).
+
+Earlier today I added a note here saying: do not delete the albumclub check yet, because it is "the only thing in the estate watching a hostname that still has a live record pointing at Vercel with nothing claiming it", and told you to sequence this behind iac-f8fe removing the record.
+
+That reasoning was wrong, and iac-3162 found why. `vercel domains inspect omrihefez.com` shows the apex is registered in Omri's OWN Vercel account (omris-projects-b1cad393, registrar Vercel) — I re-verified this myself rather than taking the report. Vercel enforces a cross-account domain-ownership check, so a stranger cannot attach albumclub.omrihefez.com, or any other name the wildcard catches, to their own project without passing a TXT ownership challenge.
+
+So there is no dangling-CNAME takeover surface here, and this watcher is not protecting against one. I inferred "resolves to Vercel + DEPLOYMENT_NOT_FOUND = claimable" without checking whether the platform gates the claim. It does.
+
+WHAT IS STILL TRUE, so this is not a blanket retraction: an explicit albumclub CNAME does still exist (verified authoritatively, 300s TTL, distinguishable from wildcard coverage by its own A records), and removing it is worth doing as cleanup under iac-f8fe. It is tidiness, not security.
+
+WHAT THAT MEANS FOR THIS TASK: the sequencing constraint I imposed is lifted. You can close this on its own merits whenever it makes sense — deleting a daily alarm for a sunset site is not gated on anything I raised. If you would still rather order it behind iac-f8fe simply to avoid alarming on a record that exists, that is a reasonable preference, but it is no longer a safety requirement and should not hold the task.
+
+Apologies for the detour. The correction matters more than the original note did: a false security justification is exactly the thing that keeps noisy alarms alive for years.
