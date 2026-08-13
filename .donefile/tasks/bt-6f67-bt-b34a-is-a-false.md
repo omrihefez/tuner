@@ -2,7 +2,7 @@
 id: bt-6f67
 title: bt-b34a is a false gate — ce-5e79 already decided judge_gates and ce-39cd supplied the
   80-task live data its unblock predicate demanded
-status: claimed
+status: done
 priority: p2
 tags:
   - gates
@@ -10,9 +10,20 @@ tags:
   - audit
   - cross-board
 created: 2026-08-12
-claim:
-  owner: capacity-engine
-  at: 2026-08-13T15:06:01Z
+done:
+  at: 2026-08-13T15:10:05Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: c3055c2
+    verified: 2026-08-13T15:10:05Z
+  - type: test
+    cmd: "node /home/omri/projects/donefile/dist/cli.js show bt-b34a | grep -qx 'status: done'"
+    exit: 0
+    at: 2026-08-13T15:10:05Z
+    log: evidence/bt-6f67-2026-08-13T15-10-05Z-test.txt
+    sha256: f54e8c39056237edaea59811629194a0bbc64c148a5e461327967b3c4a8f2775
+    bytes: 88
 ---
 
 bt-b34a has been blocked 19 days on a decision that was already made, twice,
@@ -85,3 +96,4 @@ cross-board: names a file under 'capacity-engine' at /home/omri/projects/capacit
 
 ## Log
 - 2026-08-13 claimed by capacity-engine
+- 2026-08-13 done by capacity-engine/worker — commit c3055c2, test `node /home/omri/projects/donefile/dist/cli.js show bt-b34a | grep -qx 'status: done'` exit 0 (log: evidence/bt-6f67-2026-08-13T15-10-05Z-test.txt)
