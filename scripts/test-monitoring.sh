@@ -350,6 +350,61 @@ fi
 
 rm -rf "$DRIFT_TMP"
 
+# --- 6e. bt-d428: install-monitoring-crons.sh's legacy cleanup pass carried
+#         the same defect shape bt-b38f fixed in install-cert-renewal-cron.sh
+#         -- narrower (scoped to "run-monitor.sh <name> " instead of a raw
+#         script basename) but still a SUBSTRING match, so it struck any
+#         crontab line merely mentioning a monitor name anywhere, including a
+#         hand-added, differently-scheduled one outside its own managed
+#         block. Fixed to match the FULL line against $CRON_LINES verbatim
+#         (grep -vFxf) instead of a fragment of it.
+#
+#         Verified with a fake `crontab` shimmed onto PATH (never touches the
+#         real crontab) feeding a synthetic one that has, outside the managed
+#         block: (a) an unmanaged fallback-cert line on a different schedule
+#         -- must survive; (b) an exact stray duplicate of a managed line --
+#         still gets deduped, so the legacy pass keeps doing its actual job.
+FAKE_CRONTAB_BIN_D428="$TMP/fakebin-bt-d428"
+mkdir -p "$FAKE_CRONTAB_BIN_D428"
+cat > "$FAKE_CRONTAB_BIN_D428/crontab" <<'FAKECRONTABEOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-l" ]]; then
+  cat "$FAKE_CRONTAB_FILE"
+  exit 0
+fi
+cat > "${FAKE_CRONTAB_FILE}.installed"
+exit 0
+FAKECRONTABEOF
+chmod +x "$FAKE_CRONTAB_BIN_D428/crontab"
+
+FAKE_CRONTAB_FILE="$TMP/fake-crontab-bt-d428.txt"
+cat > "$FAKE_CRONTAB_FILE" <<FAKECRONEOF
+# BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)
+5 6 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh
+10 6 * * * $RUNNER domain-audit $REPO/scripts/audit-domains.sh
+0 7 * * * $RUNNER heartbeat $REPO/scripts/check-monitor-heartbeats.sh
+# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)
+0 3 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh --hand-added-different-schedule-bt-d428-selftest
+5 6 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh
+FAKECRONEOF
+
+d428_out="$(PATH="$FAKE_CRONTAB_BIN_D428:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$INSTALLER" --dry-run 2>&1)"
+d428_code=$?
+if [[ "$d428_code" -ne 0 ]]; then
+  echo "FAIL   install-monitoring-crons.sh: --dry-run exited $d428_code against a crontab with an unmanaged fallback-cert line:"
+  echo "$d428_out" | sed 's/^/         /'
+  FAIL=1
+elif ! grep -q "hand-added-different-schedule-bt-d428-selftest" <<<"$d428_out"; then
+  echo "FAIL   install-monitoring-crons.sh: cleanup deleted an UNMANAGED, differently-scheduled fallback-cert line outside its own block"
+  FAIL=1
+elif [[ "$(grep -cF "5 6 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh" <<<"$d428_out")" -ne 1 ]]; then
+  echo "FAIL   install-monitoring-crons.sh: exact stray duplicate of a managed line was NOT deduped:"
+  echo "$d428_out" | sed 's/^/         /'
+  FAIL=1
+else
+  echo "OK     install-monitoring-crons.sh: unmanaged differently-scheduled line survives, exact stray duplicate still deduped"
+fi
+
 # --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
 #        heartbeats.sh's OWN liveness) reports absent/stale/fresh correctly,
 #        and is installed on a scheduler that is NOT bass-tuner's cron -- the
