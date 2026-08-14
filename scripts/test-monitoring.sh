@@ -405,6 +405,54 @@ else
   echo "OK     install-monitoring-crons.sh: unmanaged differently-scheduled line survives, exact stray duplicate still deduped"
 fi
 
+# --- 6f. bt-9777: install-cert-renewal-cron.sh's OWN cleanup line (separate
+#         from the raw-basename match bt-b38f already fixed, exercised in 6c
+#         above) still matched crontab lines on the SUBSTRING
+#         "run-monitor.sh cert-renewal ", which struck any line merely
+#         mentioning that monitor invocation -- including a hand-added,
+#         differently-scheduled cert-renewal line outside its own managed
+#         block. Fixed the same way as 6e/bt-d428: match the FULL line
+#         against $CRON_LINES verbatim (grep -vFxf) instead of a fragment.
+#
+#         Verified with a fake `crontab` shimmed onto PATH (never touches the
+#         real crontab) feeding a synthetic one that has, outside the managed
+#         block, an unmanaged cert-renewal line on a different schedule --
+#         must survive a --dry-run.
+FAKE_CRONTAB_BIN_9777="$TMP/fakebin-bt-9777"
+mkdir -p "$FAKE_CRONTAB_BIN_9777"
+cat > "$FAKE_CRONTAB_BIN_9777/crontab" <<'FAKECRONTABEOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-l" ]]; then
+  cat "$FAKE_CRONTAB_FILE"
+  exit 0
+fi
+cat > "${FAKE_CRONTAB_FILE}.installed"
+exit 0
+FAKECRONTABEOF
+chmod +x "$FAKE_CRONTAB_BIN_9777/crontab"
+
+FAKE_CRONTAB_FILE="$TMP/fake-crontab-bt-9777.txt"
+cat > "$FAKE_CRONTAB_FILE" <<FAKECRONEOF
+# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
+17 6 * * 1 $RUNNER cert-renewal $REPO/scripts/renew-wildcard-cert.sh
+47 * * * * mkdir -p $HOME/.local/share/meni-hub/bass-tuner-crontab-drift && $REPO/scripts/check-crontab-drift.sh >> $HOME/.local/share/meni-hub/bass-tuner-crontab-drift/cron.log 2>&1
+# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
+0 3 * * * $RUNNER cert-renewal $REPO/scripts/renew-wildcard-cert.sh --hand-added-different-schedule-bt-9777-selftest
+FAKECRONEOF
+
+n9777_out="$(PATH="$FAKE_CRONTAB_BIN_9777:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$CERT_INSTALLER" --dry-run 2>&1)"
+n9777_code=$?
+if [[ "$n9777_code" -ne 0 ]]; then
+  echo "FAIL   install-cert-renewal-cron.sh: --dry-run exited $n9777_code against a crontab with an unmanaged cert-renewal line:"
+  echo "$n9777_out" | sed 's/^/         /'
+  FAIL=1
+elif ! grep -q "hand-added-different-schedule-bt-9777-selftest" <<<"$n9777_out"; then
+  echo "FAIL   install-cert-renewal-cron.sh: cleanup deleted an UNMANAGED, differently-scheduled cert-renewal line outside its own block"
+  FAIL=1
+else
+  echo "OK     install-cert-renewal-cron.sh: unmanaged differently-scheduled cert-renewal line survives the installer"
+fi
+
 # --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
 #        heartbeats.sh's OWN liveness) reports absent/stale/fresh correctly,
 #        and is installed on a scheduler that is NOT bass-tuner's cron -- the

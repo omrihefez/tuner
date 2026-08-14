@@ -136,11 +136,17 @@ if [ -n "$DROPPED" ]; then
 fi
 
 STRIPPED_CRON="$(printf '%s\n' "$CURRENT_CRON" | sed "\\|^$BEGIN_MARK\$|,\\|^$END_MARK\$|d")"
-# Scoped to this monitor's run-monitor.sh invocation (bt-b38f), not the raw
-# script basename -- the basename matched (and deleted) ANY crontab line
-# mentioning renew-wildcard-cert.sh anywhere, managed or not, including a
-# hand-written or differently-scheduled renewal someone added deliberately.
-STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vF "run-monitor.sh cert-renewal " || true)"
+# Legacy cleanup pass, for a stray exact duplicate left behind by a corrupted
+# or partial marker pair (the sed range-delete above can't find it if either
+# marker is missing). Matched on a "run-monitor.sh cert-renewal " SUBSTRING
+# before this (bt-9777), which struck ANY crontab line merely mentioning that
+# monitor invocation -- not just its own managed block -- including a
+# hand-added line on a different schedule. Same defect shape as the raw-
+# basename bug bt-b38f fixed just above, and the one bt-d428 fixed in
+# install-monitoring-crons.sh's own legacy pass. Matching the FULL line
+# against $CRON_LINES verbatim instead still cleans up an exact stray
+# duplicate but leaves anything that merely mentions the monitor alone.
+STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vFxf <(printf '%s\n' "$CRON_LINES") || true)"
 
 NEW_CRON="$(printf '%s\n%s\n%s\n%s\n' "$STRIPPED_CRON" "$BEGIN_MARK" "$CRON_LINES" "$END_MARK")"
 
