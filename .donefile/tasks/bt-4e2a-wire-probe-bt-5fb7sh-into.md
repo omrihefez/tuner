@@ -2,12 +2,15 @@
 id: bt-4e2a
 title: Wire probe-bt-5fb7.sh into a periodic cron/monitor so a stale-deploy regression is caught
   automatically, not only when a task happens to close
-status: open
+status: claimed
 priority: p3
 tags:
   - ops
   - monitoring
 created: 2026-08-05
+claim:
+  owner: capacity-engine
+  at: 2026-08-14T14:59:48Z
 ---
 
 <!-- capacity-engine: provenance, not part of the finding -->
@@ -17,3 +20,6 @@ Discovered while working bt-a60b, session `bass-tuner-board-has-no--4db70b`, dis
 That task's report closed DONE (commit 7970cfd206bd666f5081176d21ee5de27e863360).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-08-14 claimed by capacity-engine
