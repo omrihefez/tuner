@@ -38,6 +38,7 @@ declare -A MAX_AGE_HOURS=(
   [fallback-cert]=30    # daily 06:05
   [domain-audit]=30     # daily 06:10
   [cert-renewal]=192    # weekly Mon 06:17 (7d + 1d slack)
+  [stale-deploy]=6      # every 2h at :22 (bt-4e2a) -- 3x cadence for slack
 )
 
 MENI_NOTIFY="$HOME/meni/bin/meni-notify"

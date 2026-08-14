@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Installs daily cron entries for check-fallback-cert.sh, audit-domains.sh
-# (bt-a942) and check-monitor-heartbeats.sh (bt-b542). All existed but were
+# Installs cron entries for check-fallback-cert.sh, audit-domains.sh
+# (bt-a942), check-monitor-heartbeats.sh (bt-b542), and
+# deploy/activation-probes/probe-bt-5fb7.sh (bt-4e2a). All existed but were
 # scheduled nowhere -- referenced only as one-shot closing evidence for the
-# tasks that wrote them (bt-2b10, bt-a740) -- so a real regression in any of
-# them would sit unnoticed indefinitely, which is exactly how the wildcard
-# fallback cert expired silently for over a month. All run through
+# tasks that wrote them (bt-2b10, bt-a740, bt-5fb7) -- so a real regression
+# in any of them would sit unnoticed indefinitely, which is exactly how the
+# wildcard fallback cert expired silently for over a month. All run through
 # scripts/run-monitor.sh, which writes a dated ~/inbox file on any non-zero
 # exit so the morning brief surfaces a failure.
 #
@@ -47,6 +48,7 @@ RUNNER="$REPO/scripts/run-monitor.sh"
 FALLBACK_CERT="$REPO/scripts/check-fallback-cert.sh"
 DOMAIN_AUDIT="$REPO/scripts/audit-domains.sh"
 HEARTBEAT="$REPO/scripts/check-monitor-heartbeats.sh"
+STALE_DEPLOY="$REPO/deploy/activation-probes/probe-bt-5fb7.sh"
 
 BEGIN_MARK="# BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
@@ -56,9 +58,17 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 # 07:00 heartbeat -- deliberately AFTER all three (and after the Monday
 # cert-renewal run), so it reads the logs the same morning's runs just wrote
 # rather than alerting on a gap the 06:05-06:17 window was about to close.
+# stale-deploy (bt-4e2a) -- probe-bt-5fb7.sh was only ever run as one-shot
+# `--live` evidence when a task closed, so a deploy that silently failed or
+# an edge cache serving a stale sw.js between closings would sit uncaught
+# indefinitely, the same gap bt-a942 found for the TLS/domain checks. Run
+# every 2h (offset :22 to dodge the 06:05-07:00 window and the top-of-hour
+# rush of other boxes' crons) rather than daily -- it's cheap (one curl) and
+# catching a stale deploy sooner narrows the window it ships broken to users.
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
-0 7 * * * $RUNNER heartbeat $HEARTBEAT"
+0 7 * * * $RUNNER heartbeat $HEARTBEAT
+22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
 # crontab log-dir lint (ma-0540): these lines run through run-monitor.sh,
 # which does its own `mkdir -p ... && { ... } >> "$LOG"` INSIDE the already-
@@ -138,5 +148,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed daily crons: 06:05 fallback-cert, 06:10 domain-audit, 07:00 heartbeat (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 07:00 heartbeat (daily), :22/2h stale-deploy (see: crontab -l)"
 fi

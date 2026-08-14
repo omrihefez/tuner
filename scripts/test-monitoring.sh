@@ -69,6 +69,14 @@ mkdir -p "$TMP/fakehome"
 check cert-renewal-selftest "renew-wildcard-cert.sh (forced failure)" \
   env HOME="$TMP/fakehome" "$REPO/scripts/renew-wildcard-cert.sh"
 
+# --- 3b. deploy/activation-probes/probe-bt-5fb7.sh (bt-4e2a), run against
+#         e53825c -- a superseded tuner-v6 commit, per
+#         deploy/activation-probes/README.md's own negative control -- so it
+#         must report the live CACHE (tuner-v10+) as NOT matching. Proves the
+#         monitor actually detects a stale deploy rather than always passing.
+check stale-deploy-selftest "probe-bt-5fb7.sh (forced failure vs stale ref e53825c)" \
+  "$REPO/deploy/activation-probes/probe-bt-5fb7.sh" e53825c
+
 # --- 4. check-monitor-heartbeats.sh (bt-b542): stale / missing / unknown
 #        monitors are reported, and running it through the real run-monitor.sh
 #        wrapper with a fully sandboxed HOME produces the same "-selftest"
@@ -126,7 +134,7 @@ else
   echo "OK     check-monitor-heartbeats.sh via run-monitor.sh: exit $rm_code -> $hb_inbox"
 fi
 
-# --- 5. all four are actually on the crontab, not just present on disk ---
+# --- 5. all five are actually on the crontab, not just present on disk ---
 # bt-d30a: this box runs several install-*-cron.sh installers (this repo's
 # own two, plus other projects') that each do a read-modify-write of the
 # WHOLE crontab (crontab -l | ... | crontab -), and this box routinely has
@@ -138,7 +146,7 @@ fi
 # so poll for a few seconds before trusting an absence -- a real missing-
 # entry regression still fails once that whole window comes up empty.
 CRON="$(crontab -l 2>/dev/null || true)"
-for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh"; do
+for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
   if echo "$CRON" | grep -q "$pat"; then
     echo "OK     $pat is scheduled in crontab"
   else
@@ -182,7 +190,7 @@ if [[ "$dry_code" -ne 0 ]]; then
   FAIL=1
 else
   dry_block="$(printf '%s\n' "$dry_out" | sed -n '/# BEGIN bass-tuner-monitoring/,/# END bass-tuner-monitoring/p')"
-  for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-monitor-heartbeats.sh"; do
+  for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
     if grep -qF "$pat" <<<"$dry_block"; then
       echo "OK     $pat is in install-monitoring-crons.sh's managed block"
     else
