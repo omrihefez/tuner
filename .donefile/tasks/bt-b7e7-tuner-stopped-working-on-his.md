@@ -28,3 +28,24 @@ THREE CANDIDATES, in order of likelihood:
 WHAT I ASKED HIM FOR: which symptom exactly (blank screen vs needle dead vs needle jumping vs no permission prompt), whether browser or installed app, and a screenshot of the built-in diagnostic panel at bass.omrihefez.com/?debug — that panel exists precisely for this and will name the failure directly.
 
 Filed rather than left as an answered message because he reported a fault and asked for a fix, and it is NOT fixed. If his two taps resolve it, close this with what it was — that answer is worth keeping, since "the tuner stopped working" has now happened once and will happen again.
+
+## Log
+- 2026-08-15 CODE READ, so his answer converts straight into a fix rather than starting an investigation.
+
+tuner.js already self-diagnoses and writes the fault to $micStatus in red. The branches, from the .catch on getUserMedia (~line 542):
+
+  NotAllowedError / "denied"  -> "Mic permission denied…" and the message itself spells out the Chrome path
+  NotFoundError               -> "No microphone found on this device."
+  location.protocol != https  -> "Mic only works over HTTPS."
+  anything else               -> generic "Mic error: <message>"
+
+THE GAP WORTH KNOWING: NotReadableError has NO dedicated branch, so "microphone is held by another app or a backgrounded instance of us" falls into the generic bucket and reads as an opaque "Mic error: Could not start audio source". That is precisely the leaked-stream case bt-8e75 addressed in code, and it is the one a user cannot self-diagnose from the text. If his screenshot shows that shape, the fix is swiping the app from recents — and this branch deserves its own message saying so.
+
+DISCRIMINATOR I gave him, which is sharper than the debug panel:
+  red text present  -> the text names the fault and usually the fix
+  "Listening…" in normal text but a dead needle -> mic opened fine, problem is downstream in pitch detection, want the ?debug panel for that
+  blank page -> not a mic problem at all
+
+Also relevant to the "held mic" theory: stop() does correctly release — it stops every track, closes the AudioContext and nulls the refs. So a clean Stop frees the device; only a backgrounded/crashed instance would hold it.
+
+Told him it can wait until morning: server, deploy and code are all verified healthy, so nothing degrades while it sits.
