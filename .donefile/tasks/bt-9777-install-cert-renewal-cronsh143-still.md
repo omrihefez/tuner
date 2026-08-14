@@ -3,12 +3,15 @@ id: bt-9777
 title: install-cert-renewal-cron.sh:143 still substring-matches, so it silently deletes hand-added
   cert-renewal crontab lines — residual of bt-b38f, and bt-d428 already wrote both the fix and the
   test
-status: open
+status: claimed
 priority: p2
 tags:
   - ops
   - safety
 created: 2026-08-14
+claim:
+  owner: capacity-engine
+  at: 2026-08-14T05:31:00Z
 ---
 
 `scripts/install-cert-renewal-cron.sh:143` still deletes any crontab line containing the substring "run-monitor.sh cert-renewal ", not just its own managed block:
@@ -26,3 +29,6 @@ THE FIX IS ALREADY WRITTEN, ELSEWHERE. bt-d428 (2026-08-14, 7c21a04d) hit the id
 AND THE TEST IS ALREADY WRITTEN TOO. bt-d428 added scripts/test-monitoring.sh step 6e: a fake-crontab negative control containing an unmanaged, differently-scheduled line, asserting it SURVIVES a --dry-run. That worker confirmed it fails against pre-fix code and passes after. Mirror it for the cert-renewal installer — and confirm the mirrored test fails against today's line 143 before changing it, or the test proves nothing.
 
 Filed by Main rather than auto-filed: bt-d428's FOLLOW-UP line named this exactly and landed on no board. That is the third follow-up tonight to evaporate between the report that found it and the board that should hold it (see df-a2ce and df-a39d).
+
+## Log
+- 2026-08-14 claimed by capacity-engine
