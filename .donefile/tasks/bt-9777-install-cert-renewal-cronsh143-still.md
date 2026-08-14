@@ -3,15 +3,26 @@ id: bt-9777
 title: install-cert-renewal-cron.sh:143 still substring-matches, so it silently deletes hand-added
   cert-renewal crontab lines — residual of bt-b38f, and bt-d428 already wrote both the fix and the
   test
-status: claimed
+status: done
 priority: p2
 tags:
   - ops
   - safety
 created: 2026-08-14
-claim:
-  owner: capacity-engine
-  at: 2026-08-14T05:31:00Z
+done:
+  at: 2026-08-14T05:33:32Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 74f882f
+    verified: 2026-08-14T05:33:32Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-08-14T05:33:29Z
+    log: evidence/bt-9777-2026-08-14T05-33-29Z-test.txt
+    sha256: bbf010be4df83b9dbd0a01dfeba0e8ffcb33ec323be6f4904277189c11b4e7ab
+    bytes: 2457
 ---
 
 `scripts/install-cert-renewal-cron.sh:143` still deletes any crontab line containing the substring "run-monitor.sh cert-renewal ", not just its own managed block:
@@ -32,3 +43,4 @@ Filed by Main rather than auto-filed: bt-d428's FOLLOW-UP line named this exactl
 
 ## Log
 - 2026-08-14 claimed by capacity-engine
+- 2026-08-14 done by capacity-engine/worker — commit 74f882f, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-9777-2026-08-14T05-33-29Z-test.txt)
