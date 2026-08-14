@@ -1,8 +1,7 @@
 ---
 id: bt-9777
-title: install-cert-renewal-cron.sh:143 still substring-matches, so it silently deletes hand-added
-  cert-renewal crontab lines — residual of bt-b38f, and bt-d428 already wrote both the fix and the
-  test
+title: install-cert-renewal-cron.sh:143 substring-matches, silently deleting hand-added cert-renewal
+  crontab lines
 status: done
 priority: p2
 tags:
@@ -44,3 +43,4 @@ Filed by Main rather than auto-filed: bt-d428's FOLLOW-UP line named this exactl
 ## Log
 - 2026-08-14 claimed by capacity-engine
 - 2026-08-14 done by capacity-engine/worker — commit 74f882f, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-9777-2026-08-14T05-33-29Z-test.txt)
+- 2026-08-14 TITLE TRIMMED 2026-08-14 by Main: was 193 chars, over the 180 limit, filed that way by me. The removed detail — that it is the residual of bt-b38f, and that bt-d428 already wrote both the grep -vFxf fix and the step-6e negative-control test to copy — is in the body above. No content lost, and the pointers to the existing fix and test are the part that matters.

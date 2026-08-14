@@ -15,7 +15,7 @@
 ## Done (most recent 15 of 63)
 
 - `bt-e5ea` **test-monitoring.sh step 5 (live crontab scan) is intermittently flaky on the shared box, unrelated to any installer logic** — 2026-08-14 ✓ evidenced
-- `bt-9777` **install-cert-renewal-cron.sh:143 still substring-matches, so it silently deletes hand-added cert-renewal crontab lines — residual of bt-b38f, and bt-d428 already wrote both the fix and the test** — 2026-08-14 ✓ evidenced
+- `bt-9777` **install-cert-renewal-cron.sh:143 substring-matches, silently deleting hand-added cert-renewal crontab lines** — 2026-08-14 ✓ evidenced
 - `bt-d428` **install-monitoring-crons.sh's equivalent cleanup pass (grep -vF "run-monitor.sh <name> ") also matches outside its own managed block, just with a narrower pattern than the basename bug this task fixed — not a live bug today but same defect shape if anyone ever hand-adds a line matching that exact string.** — 2026-08-14 ✓ evidenced
 - `bt-6f67` **bt-b34a is a false gate — ce-5e79 already decided judge_gates and ce-39cd supplied the 80-task live data its unblock predicate demanded** — 2026-08-13 ✓ evidenced
 - `bt-b34a` **Decide whether to flip judge_gates:true in capacity-engine — OMRI'S CALL, do not flip to generate data** — 2026-08-13 ✓ evidenced
