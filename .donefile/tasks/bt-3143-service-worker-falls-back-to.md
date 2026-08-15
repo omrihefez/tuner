@@ -2,13 +2,16 @@
 id: bt-3143
 title: Service worker falls back to cache only when fetch REJECTS, so a 5xx or a bad-deploy 404 is
   served to the user instead of the working cached copy
-status: open
+status: claimed
 priority: p2
 tags:
   - bug
   - pwa
   - offline
 created: 2026-08-15
+claim:
+  owner: capacity-engine
+  at: 2026-08-15T15:00:12Z
 ---
 
 sw.js's offline fallback is wired to fetch REJECTION only, so an HTTP error response is
@@ -68,3 +71,6 @@ test/sw.test.js gains a resolved-non-ok fixture covering both branches.
 
 VERIFY: `cd /home/omri/projects/bass-tuner && node --test test/sw.test.js` green, with new
 cases asserting the 500 path serves the cached body.
+
+## Log
+- 2026-08-15 claimed by capacity-engine
