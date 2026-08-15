@@ -1,13 +1,21 @@
 ---
 id: bt-8e12
 title: Update ~/meni/DOMAIN.md albumclub row to sunset/removed (same shape as apartments row, line 25)
-status: open
+status: done
 priority: p3
 tags:
   - docs
   - from-brief
   - cross-board
 created: 2026-08-15
+done:
+  at: 2026-08-15T03:31:05Z
+  by: omri@ubuntu-4gb-nbg1-1
+evidence:
+  - type: commit
+    value: db4fc3e
+    repo: meni
+    verified: 2026-08-15T03:31:05Z
 ---
 
 Named in the finding: meni/domain.md, sunset/removed
@@ -28,3 +36,6 @@ That task's report closed DONE (commit d66c96e).
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
 
 cross-board: names a file under 'meni' at /home/omri/meni — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-08-15 done by omri@ubuntu-4gb-nbg1-1 — commit db4fc3e (meni)
