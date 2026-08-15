@@ -18,7 +18,10 @@ const TUNER_PATH = path.join(__dirname, "..", "tuner.js");
 
 // A permissive fake DOM element: every method is a no-op, every accessed child
 // object (classList/style/dataset) is itself inert, and appendChild is tracked.
-function makeEl() {
+// If `elementsById` is passed, appendChild/insertBefore/setAttribute("id", …)
+// register the child there — lets getElementById find elements tuner.js creates
+// and inserts at runtime (bt-4b38's diag-copy button), not just static ones.
+function makeEl(elementsById) {
   const el = {
     textContent: "",
     value: "",
@@ -28,37 +31,69 @@ function makeEl() {
     innerHTML: "",
     className: "",
     id: "",
+    hidden: false,
     children: [],
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
     style: {},
     dataset: {},
-    addEventListener() {},
+    _listeners: {},
+    addEventListener(type, fn) { (el._listeners[type] ||= []).push(fn); },
     removeEventListener() {},
-    appendChild(c) { el.children.push(c); return c; },
+    appendChild(c) { el.children.push(c); if (elementsById && c.id) elementsById.set(c.id, c); return c; },
+    insertBefore(c, ref) {
+      const idx = el.children.indexOf(ref);
+      if (idx === -1) el.children.push(c); else el.children.splice(idx, 0, c);
+      if (elementsById && c.id) elementsById.set(c.id, c);
+      return c;
+    },
     removeChild() {},
     remove() {},
-    setAttribute() {},
+    setAttribute(k, v) { if (k === "id") { el.id = v; if (elementsById) elementsById.set(v, el); } },
     getAttribute() { return null; },
-    querySelector() { return makeEl(); },
+    querySelector() { return makeEl(elementsById); },
     querySelectorAll() { return []; },
     focus() {},
-    click() {},
+    click() { (el._listeners.click || []).forEach((fn) => fn({})); },
   };
   return el;
 }
 
+// ids that must resolve to null when nothing has registered them — lets a test
+// assert a control tuner.js creates conditionally (e.g. only when DIAG_ENABLED)
+// is genuinely ABSENT, not just standing in for the harness's generic fallback.
+const NO_FALLBACK_IDS = new Set(["diag-copy-btn", "diag-copy-status"]);
+
 function buildSandbox(overrides = {}) {
+  const elementsById = new Map();
+  // Pre-seed the two static diag elements as stable singletons (real index.html
+  // has them as fixed markup) so repeated getElementById("diag-log") calls from
+  // diag() accumulate onto the SAME element instead of each returning a fresh,
+  // empty one — needed for the diag-copy tests to see real accumulated log text.
+  const diagLogEl = makeEl(elementsById);
+  diagLogEl.id = "diag-log";
+  elementsById.set("diag-log", diagLogEl);
+  const diagPanelEl = makeEl(elementsById);
+  diagPanelEl.id = "diag-panel";
+  diagPanelEl.hidden = true;
+  elementsById.set("diag-panel", diagPanelEl);
+
   const documentStub = {
-    getElementById() { return makeEl(); },
-    querySelector() { return makeEl(); },
+    getElementById(id) {
+      if (elementsById.has(id)) return elementsById.get(id);
+      return NO_FALLBACK_IDS.has(id) ? null : makeEl(elementsById);
+    },
+    querySelector() { return makeEl(elementsById); },
     querySelectorAll() { return []; },
-    createElement() { return makeEl(); },
+    createElement() { return makeEl(elementsById); },
     createTextNode(t) { return { textContent: String(t) }; },
-    body: makeEl(),
+    createRange: overrides.createRange || function createRange() {
+      return { selectNodeContents() {} };
+    },
+    body: makeEl(elementsById),
     addEventListener() {},
   };
 
-  const locationStub = { protocol: "https:", host: "test.local", reload() {} };
+  const locationStub = { protocol: "https:", host: "test.local", search: overrides.search || "", reload() {} };
 
   const navigatorStub = {
     userAgent: "node-test-harness",
@@ -72,6 +107,10 @@ function buildSandbox(overrides = {}) {
       addEventListener() {},
       getRegistrations() { return Promise.resolve([]); },
     },
+    clipboard: overrides.clipboardWriteText
+      ? { writeText: overrides.clipboardWriteText }
+      : undefined,
+    share: overrides.share,
   };
 
   const windowStub = {
@@ -82,6 +121,10 @@ function buildSandbox(overrides = {}) {
     cancelAnimationFrame() {},
     Promise,
     location: locationStub,
+    getSelection: overrides.getSelection || function getSelection() {
+      return { removeAllRanges() {}, addRange() {} };
+    },
+    ...(overrides.caches ? { caches: overrides.caches } : {}),
   };
 
   const localStorageStub = {
@@ -90,6 +133,7 @@ function buildSandbox(overrides = {}) {
     setItem(k, v) { this._m.set(k, String(v)); },
     removeItem(k) { this._m.delete(k); },
   };
+  if (overrides.diagEnabled) localStorageStub._m.set("tuner:debug", "1");
 
   const sandbox = {
     document: documentStub,
@@ -103,6 +147,7 @@ function buildSandbox(overrides = {}) {
     console,
     Math, JSON, Date, Float32Array, Number, Array, Object, String, parseFloat, parseInt, isNaN,
     setTimeout, clearTimeout,
+    ...(overrides.caches ? { caches: overrides.caches } : {}),
   };
   sandbox.globalThis = sandbox;
   return sandbox;
@@ -130,15 +175,18 @@ const EXPORT_NAMES = [
   "tick",
   "tickInner",
   "playReferenceTone",
+  "copyDiagLog",
+  "buildDiagPayload",
+  "getDiagCacheVersion",
 ];
 
-function loadTuner(overrides) {
+function loadTuner(overrides = {}) {
   const source = fs.readFileSync(TUNER_PATH, "utf8");
   const epilogue = `\n;globalThis.__exports = { ${EXPORT_NAMES.join(", ")} };\n`;
   const sandbox = buildSandbox(overrides);
   vm.createContext(sandbox);
   vm.runInContext(source + epilogue, sandbox, { filename: "tuner.js" });
-  return sandbox.__exports;
+  return { ...sandbox.__exports, document: sandbox.document };
 }
 
 module.exports = { loadTuner };

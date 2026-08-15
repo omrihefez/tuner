@@ -634,9 +634,81 @@ function diag(msg) {
   el.textContent = (el.textContent || "") + `[${ts}] ${msg}\n`;
   el.scrollTop = el.scrollHeight;
 }
+// Copy/share the log off the device it was captured on — the log has real content
+// but no route to anyone who could act on it otherwise (bt-4b38). Built and wired
+// only when DIAG_ENABLED so the control doesn't exist at all for normal users.
+async function getDiagCacheVersion() {
+  try {
+    if (!("caches" in window)) return "(no Cache Storage API)";
+    const keys = await caches.keys();
+    return keys.length ? keys.join(", ") : "(no caches registered)";
+  } catch (e) {
+    return "(cache lookup failed: " + (e && e.message) + ")";
+  }
+}
+
+async function buildDiagPayload() {
+  const logEl = document.getElementById("diag-log");
+  const log = (logEl && logEl.textContent) || "";
+  const cacheVersion = await getDiagCacheVersion();
+  return `service worker cache: ${cacheVersion}\n\n${log}`;
+}
+
+function setDiagCopyStatus(msg) {
+  const status = document.getElementById("diag-copy-status");
+  if (status) status.textContent = msg;
+}
+
+async function copyDiagLog() {
+  const payload = await buildDiagPayload();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(payload);
+      setDiagCopyStatus("Copied to clipboard");
+      return;
+    } catch (e) { /* fall through to share/select */ }
+  }
+  if (navigator.share) {
+    try {
+      await navigator.share({ text: payload });
+      setDiagCopyStatus("Shared");
+      return;
+    } catch (e) { /* user cancelled, or share failed — fall through to select */ }
+  }
+  const logEl = document.getElementById("diag-log");
+  if (logEl && window.getSelection && document.createRange) {
+    const range = document.createRange();
+    range.selectNodeContents(logEl);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    setDiagCopyStatus("Selected — copy manually");
+  } else {
+    setDiagCopyStatus("Copy not available — select the text manually");
+  }
+}
+
 if (DIAG_ENABLED) {
   const panel = document.getElementById("diag-panel");
   if (panel) panel.hidden = false;
+  const logEl = document.getElementById("diag-log");
+  if (panel && logEl) {
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.id = "diag-copy-btn";
+    copyBtn.className = "diag-copy-btn";
+    copyBtn.textContent = "Copy diagnostics";
+    copyBtn.addEventListener("click", copyDiagLog);
+
+    const status = document.createElement("span");
+    status.id = "diag-copy-status";
+    status.className = "diag-copy-status";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+
+    panel.insertBefore(status, logEl);
+    panel.insertBefore(copyBtn, status);
+  }
 }
 window.addEventListener("error", (e) => diag("page error: " + e.message));
 window.addEventListener("unhandledrejection", (e) => diag("unhandled rejection: " + (e.reason && e.reason.message || e.reason)));
