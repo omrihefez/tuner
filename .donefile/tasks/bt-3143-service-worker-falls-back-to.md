@@ -2,16 +2,36 @@
 id: bt-3143
 title: Service worker falls back to cache only when fetch REJECTS, so a 5xx or a bad-deploy 404 is
   served to the user instead of the working cached copy
-status: claimed
+status: done
 priority: p2
 tags:
   - bug
   - pwa
   - offline
 created: 2026-08-15
-claim:
-  owner: capacity-engine
-  at: 2026-08-15T15:00:12Z
+activation: auto-deploy via Vercel git integration (push to origin/main) — no manual step
+done:
+  at: 2026-08-15T15:04:20Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: ed59601
+    verified: 2026-08-15T15:04:20Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && node --test test/sw.test.js
+    exit: 0
+    at: 2026-08-15T15:04:19Z
+    log: evidence/bt-3143-2026-08-15T15-04-19Z-test.txt
+    sha256: f677a79eb9079d9a1931c5630f40a13ae94973b82b4c30948e04b6ab3524e323
+    bytes: 3332
+  - type: live
+    cmd: "bash /home/omri/projects/bass-tuner/deploy/activation-probes/probe-bt-3143.sh | grep -q
+      '^probe-bt-3143: PASS'"
+    exit: 0
+    at: 2026-08-15T15:04:19Z
+    log: evidence/bt-3143-2026-08-15T15-04-19Z-live.txt
+    sha256: 5f4a95088cd72ba01a69794f0fe37654dfb574a5bc0adf8ab23dc03159b97f43
+    bytes: 114
 ---
 
 sw.js's offline fallback is wired to fetch REJECTION only, so an HTTP error response is
@@ -74,3 +94,4 @@ cases asserting the 500 path serves the cached body.
 
 ## Log
 - 2026-08-15 claimed by capacity-engine
+- 2026-08-15 done by capacity-engine/worker — commit ed59601, test `cd /home/omri/projects/bass-tuner && node --test test/sw.test.js` exit 0 (log: evidence/bt-3143-2026-08-15T15-04-19Z-test.txt), live `bash /home/omri/projects/bass-tuner/deploy/activation-probes/probe-bt-3143.sh | grep -q '^probe-bt-3143: PASS'` exit 0 (log: evidence/bt-3143-2026-08-15T15-04-19Z-live.txt)
