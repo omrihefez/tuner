@@ -13,6 +13,13 @@ function okResponse(body) {
   return { ok: true, clone() { return this; }, body };
 }
 
+// A response that RESOLVED (no network/DNS/TLS failure) but with a failing
+// HTTP status — a 500/502/503 from the host, or a 404 from a broken deploy
+// alias. Must not be confused with fetchImpl rejecting.
+function notOkResponse(body, status = 500) {
+  return { ok: false, status, clone() { return this; }, body };
+}
+
 // -----------------------------------------------------------------------------
 // App shell (navigation / .html / .js) — network-first
 // -----------------------------------------------------------------------------
@@ -88,6 +95,104 @@ test("navigation request offline: falls back to the cached page", async () => {
   const resp = await responsePromise;
   assert.equal(resp.body, "cached-index", "must fall back to the offline shell when the network fails");
   assert.deepEqual(fetchCalls, ["https://test.local/"]);
+});
+
+// -----------------------------------------------------------------------------
+// Resolved-but-not-ok responses (bt-3143) — a 5xx or a bad-deploy 404 that
+// RESOLVES must not be handed straight to the page just because it isn't a
+// fetch() rejection; it should fall back to a cached copy the same way an
+// actual offline rejection does, but only when there IS a cached copy.
+// -----------------------------------------------------------------------------
+
+test("navigation request: resolved 500 falls back to the cached page instead of being served", async () => {
+  const { listeners, fetchCalls } = loadSW({
+    fetchImpl: () => Promise.resolve(notOkResponse("host-error-page", 500)),
+    cacheMatchImpl: (url) => (url === "https://test.local/" ? okResponse("cached-index") : undefined),
+  });
+
+  const { responsePromise } = dispatchFetch(listeners, {
+    method: "GET",
+    url: "https://test.local/",
+    mode: "navigate",
+  });
+
+  const resp = await responsePromise;
+  assert.equal(resp.body, "cached-index", "a resolved 500 must not be served when a good cached copy exists");
+  assert.deepEqual(fetchCalls, ["https://test.local/"]);
+});
+
+test("navigation request: resolved 500 with nothing cached still returns the real error, not the offline shell", async () => {
+  const { listeners } = loadSW({
+    fetchImpl: () => Promise.resolve(notOkResponse("host-error-page", 500)),
+    cacheMatchImpl: () => undefined,
+  });
+
+  const { responsePromise } = dispatchFetch(listeners, {
+    method: "GET",
+    url: "https://test.local/",
+    mode: "navigate",
+  });
+
+  const resp = await responsePromise;
+  assert.equal(resp.body, "host-error-page", "with nothing cached there is nothing to fall back to — the real response must pass through");
+});
+
+test("navigation request: resolved 404 for a genuinely missing page is NOT masked by the /index.html shell", async () => {
+  const { listeners } = loadSW({
+    fetchImpl: () => Promise.resolve(notOkResponse("real-404-page", 404)),
+    // /index.html IS cached, but the requested page itself is not — a real
+    // routing 404 must still surface, not be hidden behind the app shell.
+    cacheMatchImpl: (url) => (url.endsWith("/index.html") ? okResponse("cached-index") : undefined),
+  });
+
+  const { responsePromise } = dispatchFetch(listeners, {
+    method: "GET",
+    url: "https://test.local/no-such-route",
+    mode: "navigate",
+  });
+
+  const resp = await responsePromise;
+  assert.equal(resp.body, "real-404-page", "a genuinely missing route must not be masked by the cached offline shell");
+});
+
+test("non-shell asset: resolved 500 on a re-fetch falls back to a copy that appeared in cache in the meantime", async () => {
+  let matchCalls = 0;
+  const { listeners, fetchCalls } = loadSW({
+    fetchImpl: () => Promise.resolve(notOkResponse("host-error-page", 500)),
+    cacheMatchImpl: (url) => {
+      matchCalls += 1;
+      // First check (before the fetch) misses, which is what triggers the
+      // fetch at all; the second check (after the resolved-not-ok response)
+      // finds a copy — e.g. populated by a concurrent request in between.
+      return matchCalls > 1 ? okResponse("cached-style") : undefined;
+    },
+  });
+
+  const { responsePromise } = dispatchFetch(listeners, {
+    method: "GET",
+    url: "https://test.local/style.css",
+    mode: "same-origin",
+  });
+
+  const resp = await responsePromise;
+  assert.equal(resp.body, "cached-style", "a resolved 500 must not be served once a cached copy is available");
+  assert.deepEqual(fetchCalls, ["https://test.local/style.css"]);
+});
+
+test("non-shell asset: resolved 500 with nothing ever cached still returns the real error", async () => {
+  const { listeners } = loadSW({
+    fetchImpl: () => Promise.resolve(notOkResponse("host-error-page", 500)),
+    cacheMatchImpl: () => undefined,
+  });
+
+  const { responsePromise } = dispatchFetch(listeners, {
+    method: "GET",
+    url: "https://test.local/new-icon.png",
+    mode: "same-origin",
+  });
+
+  const resp = await responsePromise;
+  assert.equal(resp.body, "host-error-page", "with nothing cached there is nothing to fall back to — the real response must pass through");
 });
 
 // -----------------------------------------------------------------------------

@@ -41,8 +41,13 @@ self.addEventListener("fetch", (e) => {
         if (resp.ok) {
           const respClone = resp.clone();
           caches.open(CACHE).then(c => c.put(e.request, respClone));
+          return resp;
         }
-        return resp;
+        // A resolved-but-failing response (5xx, or a bad-deploy 404) is not
+        // "offline" so it never hits the catch() below — fall back to the
+        // cached copy of THIS request if we have one, but don't widen that
+        // to the /index.html shell: a genuinely missing page must still 404.
+        return caches.match(e.request).then(r => r || resp);
       }).catch(() => caches.match(e.request).then(r => r || caches.match("/index.html")))
     );
     return;
@@ -53,8 +58,9 @@ self.addEventListener("fetch", (e) => {
       if (resp.ok) {
         const respClone = resp.clone();
         caches.open(CACHE).then(c => c.put(e.request, respClone));
+        return resp;
       }
-      return resp;
+      return caches.match(e.request).then(r2 => r2 || resp);
     }).catch(() => caches.match(e.request).then(r => r || caches.match("/index.html"))))
   );
 });
