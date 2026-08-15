@@ -9,7 +9,7 @@
 # fronted by a Cloudflare Tunnel, not Vercel.
 set -uo pipefail
 
-SUBS=(albumclub bass compose kidai meni planner tik trips tuner)
+SUBS=(bass compose kidai meni planner tik trips tuner)
 FAIL=0
 
 for d in "${SUBS[@]}"; do
