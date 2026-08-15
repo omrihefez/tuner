@@ -2,13 +2,16 @@
 id: bt-4b38
 title: Diagnostic log has no way off the device — no copy, share or beacon, so the on-page panel
   cannot help the open client-side p1
-status: open
+status: claimed
 priority: p2
 tags:
   - dx
   - observability
   - pwa
 created: 2026-08-15
+claim:
+  owner: capacity-engine
+  at: 2026-08-15T15:12:24Z
 ---
 
 The tuner has real client-side diagnostics and no way to get them off the device they
@@ -65,3 +68,6 @@ a test covers that the control is absent when DIAG_ENABLED is false.
 VERIFY: `cd /home/omri/projects/bass-tuner && node --test test/` green with the new case,
 plus a screenshot of the panel with the control visible under `?debug` and absent without
 it — committed under `.donefile/evidence/`, not left in a worktree.
+
+## Log
+- 2026-08-15 claimed by capacity-engine
