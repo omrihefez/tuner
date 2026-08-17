@@ -1,2 +1,0 @@
-$ bash -c "cd /home/omri/projects/bass-tuner && out=\$(bash scripts/renew-wildcard-cert.sh --force 2>&1); ec=\$?; echo \"\$out\" | grep -q \"Not touching Cloudflare or Vercel\" && [ \$ec -eq 0 ]"
-

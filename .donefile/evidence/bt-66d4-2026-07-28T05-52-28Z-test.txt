@@ -1,2 +1,0 @@
-$ grep -qF "🔵 alias" ~/meni/DOMAIN.md && grep -qF "3. ✅ CLOSED 2026-07-26" ~/meni/DOMAIN.md && grep -qF "tuner.omrihefez.com\` now **308-redirects to \`bass\`**" ~/meni/DOMAIN.md
-

@@ -1,3 +1,0 @@
-$ cd /home/omri/projects/capacity-engine && node test.mjs
-
-test.mjs: all green

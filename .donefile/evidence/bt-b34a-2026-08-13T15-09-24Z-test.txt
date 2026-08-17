@@ -1,2 +1,0 @@
-$ git -C /home/omri/projects/bass-tuner fetch origin --quiet && git -C /home/omri/projects/bass-tuner cat-file -e origin/main:.donefile/evidence/bt-b34a-decision.md
-

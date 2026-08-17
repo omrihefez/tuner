@@ -1,3 +1,0 @@
-$ node /home/omri/projects/donefile/dist/cli.js audit
-
-audit clean

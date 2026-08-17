@@ -1,2 +1,0 @@
-$ test ! -d /tmp/bt-a942-wt2 && ! git -C /home/omri/projects/bass-tuner rev-parse --verify --quiet bt-a942-heartbeat
-
