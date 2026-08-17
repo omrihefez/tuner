@@ -1,0 +1,44 @@
+$ cd /home/omri/projects/bass-tuner && node --test test/check-sw-cache-bump.test.js
+
+TAP version 13
+# check-sw-cache-bump: cached asset(s) changed [style.css] but sw.js CACHE version was not bumped (still "tuner-v1"). Bump CACHE in sw.js so clients pick up the update.
+# check-sw-cache-bump: cached asset(s) changed [style.css] but sw.js CACHE version was not bumped (still "tuner-v1"). Bump CACHE in sw.js so clients pick up the update.
+# Subtest: JS-only change (network-first asset): passes without a CACHE bump
+ok 1 - JS-only change (network-first asset): passes without a CACHE bump
+  ---
+  duration_ms: 196.274297
+  type: 'test'
+  ...
+# Subtest: HTML-only change (network-first asset): passes without a CACHE bump
+ok 2 - HTML-only change (network-first asset): passes without a CACHE bump
+  ---
+  duration_ms: 209.715985
+  type: 'test'
+  ...
+# Subtest: style.css change (still cache-first): fails without a CACHE bump
+ok 3 - style.css change (still cache-first): fails without a CACHE bump
+  ---
+  duration_ms: 191.538929
+  type: 'test'
+  ...
+# Subtest: style.css change: passes once sw.js and its CACHE are bumped together
+ok 4 - style.css change: passes once sw.js and its CACHE are bumped together
+  ---
+  duration_ms: 193.686716
+  type: 'test'
+  ...
+# Subtest: fixture git operations cannot escape into an ambient GIT_DIR
+ok 5 - fixture git operations cannot escape into an ambient GIT_DIR
+  ---
+  duration_ms: 304.972552
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1226.536076

@@ -2,16 +2,27 @@
 id: bt-f541
 title: "check-sw-cache-bump.test.js's git isolation is broken: a pre-push npm test run wiped and
   overwrote production main with test fixture content"
-status: claimed
+status: done
 priority: p0
 tags:
   - reliability
   - incident
   - ci
 created: 2026-08-18
-claim:
-  owner: capacity-engine
-  at: 2026-08-17T21:48:13Z
+done:
+  at: 2026-08-17T21:58:35Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 9a27a53
+    verified: 2026-08-17T21:58:35Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && node --test test/check-sw-cache-bump.test.js
+    exit: 0
+    at: 2026-08-17T21:58:34Z
+    log: evidence/bt-f541-2026-08-17T21-58-34Z-test.txt
+    sha256: a5d6a4151a3ddfa0e1f0f55f8154bfea3fc7db199e05d6bf1e0ec2d190f20968
+    bytes: 1558
 ---
 
 INCIDENT, 2026-08-18 ~00:16-00:36 IDT. During a routine `git push origin <branch>:main`
@@ -130,3 +141,4 @@ through the real hook, NO --no-verify. Hook ran build + 105 tests, push exit 0,
 4c2f5de..9a27a53. Main checkout after: core.bare=false, tree intact.
 bass.omrihefez.com still serves the real app (200, 3200 bytes,
 "<title>Tuner — bass & guitar, ad-free</title>").
+- 2026-08-18 done by capacity-engine/worker — commit 9a27a53, test `cd /home/omri/projects/bass-tuner && node --test test/check-sw-cache-bump.test.js` exit 0 (log: evidence/bt-f541-2026-08-17T21-58-34Z-test.txt)
