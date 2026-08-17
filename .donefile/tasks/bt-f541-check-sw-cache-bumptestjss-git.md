@@ -52,3 +52,16 @@ hook is changed to run that test suite in a way that cannot touch the real workt
 regardless of the bug (e.g. run node --test in a fully separate clone), and a normal
 `git push` (going through the real hook, no --no-verify) no longer risks repeating
 this.
+
+## Log
+- 2026-08-18 Same failure class as tonight's two path bugs, per Main's review: dn-b3b6
+(evidence rooted in a worktree that later vanishes) and dn-d05d
+(install-hooks baking a path that stops existing) are both "a path assumed
+stable turned out not to be." This one is the most dangerous variant of that
+class: it is not a stale reference failing closed later, it is a test
+escaping its own sandbox and operating on the REAL worktree while it still
+exists — so the blast radius is production (a live Vercel deploy), not a
+broken reference. Whoever picks this up should treat "does my fixture path
+actually stay inside the fixture" as the first thing to verify, not assume
+mkdtemp() alone guarantees it (this repo's code reads as correctly isolated
+and still failed).
