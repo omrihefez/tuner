@@ -298,8 +298,13 @@ fi
 #         second tracked file. Prove the wiring end to end with a fully
 #         sandboxed crontab/HOME (never touches the real crontab or sends a
 #         real alert): clean when the "live" block matches --print-line
-#         verbatim, drifted (and exit non-zero) when it doesn't.
-DRIFT_CHECK="$REPO/scripts/check-crontab-drift.sh"
+#         verbatim, drifted (and exit non-zero) when it doesn't. Calls
+#         meniapp's single shared implementation by absolute path (ma-c616 —
+#         no more local vendored copy), so BLOCK_LABEL/BEGIN_MARK/END_MARK/
+#         EXPECTED_CONTENT_CMD are passed explicitly below.
+DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
+DRIFT_BEGIN_MARK="# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
+DRIFT_END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 DRIFT_TMP="$(mktemp -d)"
 DRIFT_FAKE_HOME="$DRIFT_TMP/home"
 mkdir -p "$DRIFT_FAKE_HOME/meni/bin"
@@ -329,7 +334,10 @@ CURRENT_PRINT_LINE="$("$CERT_INSTALLER" --print-line)"
 
 write_drift_live "$CURRENT_PRINT_LINE"
 : >"$DRIFT_NOTIFY_CALLS"
-clean_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" "$DRIFT_CHECK" 2>&1)"
+clean_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" \
+  BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK="$DRIFT_BEGIN_MARK" END_MARK="$DRIFT_END_MARK" \
+  EXPECTED_CONTENT_CMD="$CERT_INSTALLER --print-line" INSTALLER_HINT="scripts/install-cert-renewal-cron.sh" \
+  "$DRIFT_CHECK" 2>&1)"
 clean_code=$?
 if [[ "$clean_code" -ne 0 ]]; then
   echo "FAIL   check-crontab-drift.sh: exited $clean_code against a live block matching --print-line verbatim:"
@@ -344,7 +352,10 @@ fi
 
 write_drift_live "$(sed 's/17 6/99 6/' <<<"$CURRENT_PRINT_LINE")"
 : >"$DRIFT_NOTIFY_CALLS"
-drift_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" "$DRIFT_CHECK" 2>&1)"
+drift_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" \
+  BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK="$DRIFT_BEGIN_MARK" END_MARK="$DRIFT_END_MARK" \
+  EXPECTED_CONTENT_CMD="$CERT_INSTALLER --print-line" INSTALLER_HINT="scripts/install-cert-renewal-cron.sh" \
+  "$DRIFT_CHECK" 2>&1)"
 drift_code=$?
 if [[ "$drift_code" -eq 0 ]]; then
   echo "FAIL   check-crontab-drift.sh: exited 0 against a deliberately drifted live block"

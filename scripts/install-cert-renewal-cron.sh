@@ -61,10 +61,16 @@ CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
 # crontab drift check (ma-09c1) — hourly: warns via meni-notify if the live
 # wildcard-cert-renewal block has drifted from this installer. Lives inside
 # the very block it guards, same convention as meniapp/deploy/crontab.meniapp.
-# Hardcoded to the canonical checkout, same rationale as SCRIPT/RUNNER above.
-DRIFT_CHECK="/home/omri/projects/bass-tuner/scripts/check-crontab-drift.sh"
+# Calls the single shared implementation in meniapp (ma-c616 — no more
+# per-repo vendored copies) by absolute path — this entry runs on the meni
+# VPS, same box as meniapp, so the absolute path always resolves. Its
+# BLOCK_LABEL/BEGIN_MARK/END_MARK/EXPECTED_CONTENT_CMD/INSTALLER_HINT are now
+# passed explicitly rather than relying on the script's own defaults — those
+# defaults derive from the script's OWN location (meniapp), not this repo's,
+# once it's no longer a local vendored copy.
+DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
 DRIFT_STATE_DIR="/home/omri/.local/share/meni-hub/bass-tuner-crontab-drift"
-DRIFT_LINE="47 * * * * mkdir -p $DRIFT_STATE_DIR && $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
+DRIFT_LINE="47 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK=\"$BEGIN_MARK\" END_MARK=\"$END_MARK\" EXPECTED_CONTENT_CMD=\"/home/omri/projects/bass-tuner/scripts/install-cert-renewal-cron.sh --print-line\" INSTALLER_HINT=\"scripts/install-cert-renewal-cron.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
 
 CRON_LINES="$CRON_LINE
 $DRIFT_LINE"
