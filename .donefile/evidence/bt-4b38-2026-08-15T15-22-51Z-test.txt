@@ -1,0 +1,641 @@
+$ cd /home/omri/projects/bass-tuner && npm test
+
+
+> bass-tuner@1.0.0 test
+> node --test test/*.test.js
+
+TAP version 13
+# Subtest: buildAnnouncement: in tune reads a clean confirmation
+ok 1 - buildAnnouncement: in tune reads a clean confirmation
+  ---
+  duration_ms: 1.228536
+  type: 'test'
+  ...
+# Subtest: buildAnnouncement: flat direction is named, magnitude rounded to the grid
+ok 2 - buildAnnouncement: flat direction is named, magnitude rounded to the grid
+  ---
+  duration_ms: 0.204987
+  type: 'test'
+  ...
+# Subtest: buildAnnouncement: sharp direction is named, magnitude rounded to the grid
+ok 3 - buildAnnouncement: sharp direction is named, magnitude rounded to the grid
+  ---
+  duration_ms: 0.181127
+  type: 'test'
+  ...
+# Subtest: buildAnnouncement: rounds to zero collapses to the in-tune sentence
+ok 4 - buildAnnouncement: rounds to zero collapses to the in-tune sentence
+  ---
+  duration_ms: 0.17599
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: silent when the text hasn't changed (no per-frame repeats)
+ok 5 - shouldAnnounce: silent when the text hasn't changed (no per-frame repeats)
+  ---
+  duration_ms: 0.195487
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: silent on a changed text within the throttle window
+ok 6 - shouldAnnounce: silent on a changed text within the throttle window
+  ---
+  duration_ms: 0.168882
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: fires on a changed text once the throttle window has elapsed
+ok 7 - shouldAnnounce: fires on a changed text once the throttle window has elapsed
+  ---
+  duration_ms: 0.25167
+  type: 'test'
+  ...
+# Subtest: shouldAnnounce: entering tune jumps the throttle queue immediately
+ok 8 - shouldAnnounce: entering tune jumps the throttle queue immediately
+  ---
+  duration_ms: 0.291601
+  type: 'test'
+  ...
+# check-sw-cache-bump: cached asset(s) changed [style.css] but sw.js CACHE version was not bumped (still "tuner-v1"). Bump CACHE in sw.js so clients pick up the update.
+# Subtest: JS-only change (network-first asset): passes without a CACHE bump
+ok 9 - JS-only change (network-first asset): passes without a CACHE bump
+  ---
+  duration_ms: 161.247048
+  type: 'test'
+  ...
+# Subtest: HTML-only change (network-first asset): passes without a CACHE bump
+ok 10 - HTML-only change (network-first asset): passes without a CACHE bump
+  ---
+  duration_ms: 167.020462
+  type: 'test'
+  ...
+# Subtest: style.css change (still cache-first): fails without a CACHE bump
+ok 11 - style.css change (still cache-first): fails without a CACHE bump
+  ---
+  duration_ms: 206.643576
+  type: 'test'
+  ...
+# Subtest: style.css change: passes once sw.js and its CACHE are bumped together
+ok 12 - style.css change: passes once sw.js and its CACHE are bumped together
+  ---
+  duration_ms: 158.192179
+  type: 'test'
+  ...
+# Subtest: diag copy control is absent when DIAG_ENABLED is false (default, no ?debug/localStorage)
+ok 13 - diag copy control is absent when DIAG_ENABLED is false (default, no ?debug/localStorage)
+  ---
+  duration_ms: 8.809616
+  type: 'test'
+  ...
+# Subtest: diag copy control is present when DIAG_ENABLED via localStorage["tuner:debug"]
+ok 14 - diag copy control is present when DIAG_ENABLED via localStorage["tuner:debug"]
+  ---
+  duration_ms: 2.607553
+  type: 'test'
+  ...
+# Subtest: copyDiagLog: writes the accumulated log plus the active SW cache version to the clipboard
+ok 15 - copyDiagLog: writes the accumulated log plus the active SW cache version to the clipboard
+  ---
+  duration_ms: 4.447646
+  type: 'test'
+  ...
+# Subtest: copyDiagLog: falls back to navigator.share when clipboard is unavailable
+ok 16 - copyDiagLog: falls back to navigator.share when clipboard is unavailable
+  ---
+  duration_ms: 1.832392
+  type: 'test'
+  ...
+# Subtest: copyDiagLog: falls back to select-all when neither clipboard nor share exist
+ok 17 - copyDiagLog: falls back to select-all when neither clipboard nor share exist
+  ---
+  duration_ms: 3.296847
+  type: 'test'
+  ...
+# Subtest: buildDiagPayload: reports when the Cache Storage API itself isn't available
+ok 18 - buildDiagPayload: reports when the Cache Storage API itself isn't available
+  ---
+  duration_ms: 1.596924
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: fires on the rising edge (out of tune -> in tune)
+ok 19 - shouldBuzz: fires on the rising edge (out of tune -> in tune)
+  ---
+  duration_ms: 1.774014
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent while already in tune (no per-frame spam)
+ok 20 - shouldBuzz: stays silent while already in tune (no per-frame spam)
+  ---
+  duration_ms: 0.243764
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent leaving tune (falling edge)
+ok 21 - shouldBuzz: stays silent leaving tune (falling edge)
+  ---
+  duration_ms: 0.173184
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent while consistently out of tune
+ok 22 - shouldBuzz: stays silent while consistently out of tune
+  ---
+  duration_ms: 0.167444
+  type: 'test'
+  ...
+# Subtest: start(): AudioContext throwing after getUserMedia resolves stops the mic track and clears state
+ok 23 - start(): AudioContext throwing after getUserMedia resolves stops the mic track and clears state
+  ---
+  duration_ms: 29.585545
+  type: 'test'
+  ...
+# Subtest: start(): a source/analyser failure after AudioContext succeeds also stops the track and closes the context
+ok 24 - start(): a source/analyser failure after AudioContext succeeds also stops the track and closes the context
+  ---
+  duration_ms: 26.281018
+  type: 'test'
+  ...
+# Subtest: start(): the happy path is unaffected — stream and analyser stay wired up
+ok 25 - start(): the happy path is unaffected — stream and analyser stay wired up
+  ---
+  duration_ms: 25.687541
+  type: 'test'
+  ...
+# Subtest: midiToFreq: concert A (A4, midi 69) is the reference A-ref
+ok 26 - midiToFreq: concert A (A4, midi 69) is the reference A-ref
+  ---
+  duration_ms: 4.121957
+  type: 'test'
+  ...
+# Subtest: midiToFreq: octaves double / halve the frequency
+ok 27 - midiToFreq: octaves double / halve the frequency
+  ---
+  duration_ms: 0.353246
+  type: 'test'
+  ...
+# Subtest: midiToFreq: standard string fundamentals @ A=440
+ok 28 - midiToFreq: standard string fundamentals @ A=440
+  ---
+  duration_ms: 0.194359
+  type: 'test'
+  ...
+# Subtest: midiToFreq: A-ref shift scales every note proportionally
+ok 29 - midiToFreq: A-ref shift scales every note proportionally
+  ---
+  duration_ms: 0.215807
+  type: 'test'
+  ...
+# Subtest: freqToMidi: reference and octaves land on exact integers
+ok 30 - freqToMidi: reference and octaves land on exact integers
+  ---
+  duration_ms: 0.230004
+  type: 'test'
+  ...
+# Subtest: freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+ok 31 - freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+  ---
+  duration_ms: 0.701369
+  type: 'test'
+  ...
+# Subtest: freqToMidi: a half step up is +1.0, a whole step is +2.0
+ok 32 - freqToMidi: a half step up is +1.0, a whole step is +2.0
+  ---
+  duration_ms: 0.283382
+  type: 'test'
+  ...
+# Subtest: cents: dead-on target reads 0 cents
+ok 33 - cents: dead-on target reads 0 cents
+  ---
+  duration_ms: 0.2003
+  type: 'test'
+  ...
+# Subtest: cents: one semitone sharp reads +100, one flat reads -100
+ok 34 - cents: one semitone sharp reads +100, one flat reads -100
+  ---
+  duration_ms: 0.412856
+  type: 'test'
+  ...
+# Subtest: cents: +50 cents is a quarter-tone above target
+ok 35 - cents: +50 cents is a quarter-tone above target
+  ---
+  duration_ms: 0.614018
+  type: 'test'
+  ...
+# Subtest: noteLabel: reference notes name correctly (scientific pitch notation)
+ok 36 - noteLabel: reference notes name correctly (scientific pitch notation)
+  ---
+  duration_ms: 0.333162
+  type: 'test'
+  ...
+# Subtest: noteLabel: sharps use the ♯ glyph
+ok 37 - noteLabel: sharps use the ♯ glyph
+  ---
+  duration_ms: 0.212872
+  type: 'test'
+  ...
+# Subtest: noteLabel: extreme MIDI range
+ok 38 - noteLabel: extreme MIDI range
+  ---
+  duration_ms: 0.127393
+  type: 'test'
+  ...
+# Subtest: noteLabel: rounds a fractional MIDI value to the nearest note
+ok 39 - noteLabel: rounds a fractional MIDI value to the nearest note
+  ---
+  duration_ms: 0.885835
+  type: 'test'
+  ...
+# Subtest: medianPitch: empty input returns the -1 sentinel
+ok 40 - medianPitch: empty input returns the -1 sentinel
+  ---
+  duration_ms: 0.199124
+  type: 'test'
+  ...
+# Subtest: medianPitch: single sample returns itself
+ok 41 - medianPitch: single sample returns itself
+  ---
+  duration_ms: 0.130038
+  type: 'test'
+  ...
+# Subtest: medianPitch: odd count returns the middle of the sorted values
+ok 42 - medianPitch: odd count returns the middle of the sorted values
+  ---
+  duration_ms: 0.170307
+  type: 'test'
+  ...
+# Subtest: medianPitch: even count returns the upper-middle sorted value
+ok 43 - medianPitch: even count returns the upper-middle sorted value
+  ---
+  duration_ms: 0.104327
+  type: 'test'
+  ...
+# Subtest: medianPitch: rejects a spurious octave-double outlier
+ok 44 - medianPitch: rejects a spurious octave-double outlier
+  ---
+  duration_ms: 0.098805
+  type: 'test'
+  ...
+# Subtest: closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+ok 45 - closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+  ---
+  duration_ms: 1.17347
+  type: 'test'
+  ...
+# Subtest: closestString: picks the nearer of two strings for an off-pitch input
+ok 46 - closestString: picks the nearer of two strings for an off-pitch input
+  ---
+  duration_ms: 0.161611
+  type: 'test'
+  ...
+# Subtest: closestString: guitar standard (E2..E4) maps the outer strings
+ok 47 - closestString: guitar standard (E2..E4) maps the outer strings
+  ---
+  duration_ms: 0.180985
+  type: 'test'
+  ...
+# Subtest: freqRange: brackets the strings and excludes the G string's 2nd harmonic
+ok 48 - freqRange: brackets the strings and excludes the G string's 2nd harmonic
+  ---
+  duration_ms: 0.318465
+  type: 'test'
+  ...
+# Subtest: freqRange: never opens the low edge below the 25 Hz floor
+ok 49 - freqRange: never opens the low edge below the 25 Hz floor
+  ---
+  duration_ms: 0.150407
+  type: 'test'
+  ...
+# Subtest: preset fixture: covers every instrument x tuning combination
+ok 50 - preset fixture: covers every instrument x tuning combination
+  ---
+  duration_ms: 0.110008
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Standard maps every string's own fundamental back to itself
+ok 51 - closestString: Bass / Standard maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.35689
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Standard window brackets every string and respects the 25 Hz floor
+ok 52 - freqRange: Bass / Standard window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.226262
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Drop D maps every string's own fundamental back to itself
+ok 53 - closestString: Bass / Drop D maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.130323
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Drop D window brackets every string and respects the 25 Hz floor
+ok 54 - freqRange: Bass / Drop D window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.09247
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Drop C maps every string's own fundamental back to itself
+ok 55 - closestString: Bass / Drop C maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.111313
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Drop C window brackets every string and respects the 25 Hz floor
+ok 56 - freqRange: Bass / Drop C window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.095273
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / Drop C\# maps every string's own fundamental back to itself
+ok 57 - closestString: Bass / Drop C\# maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.097259
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / Drop C\# window brackets every string and respects the 25 Hz floor
+ok 58 - freqRange: Bass / Drop C\# window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.122653
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / ½ step down maps every string's own fundamental back to itself
+ok 59 - closestString: Bass / ½ step down maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.104498
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / ½ step down window brackets every string and respects the 25 Hz floor
+ok 60 - freqRange: Bass / ½ step down window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.206723
+  type: 'test'
+  ...
+# Subtest: closestString: Bass / 5-string maps every string's own fundamental back to itself
+ok 61 - closestString: Bass / 5-string maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.124322
+  type: 'test'
+  ...
+# Subtest: freqRange: Bass / 5-string window brackets every string and respects the 25 Hz floor
+ok 62 - freqRange: Bass / 5-string window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.120642
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / Standard maps every string's own fundamental back to itself
+ok 63 - closestString: Guitar / Standard maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.117321
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / Standard window brackets every string and respects the 25 Hz floor
+ok 64 - freqRange: Guitar / Standard window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.087991
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / Drop D maps every string's own fundamental back to itself
+ok 65 - closestString: Guitar / Drop D maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.113362
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / Drop D window brackets every string and respects the 25 Hz floor
+ok 66 - freqRange: Guitar / Drop D window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.137019
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / DADGAD maps every string's own fundamental back to itself
+ok 67 - closestString: Guitar / DADGAD maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.117453
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / DADGAD window brackets every string and respects the 25 Hz floor
+ok 68 - freqRange: Guitar / DADGAD window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.148439
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / Open G maps every string's own fundamental back to itself
+ok 69 - closestString: Guitar / Open G maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.178837
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / Open G window brackets every string and respects the 25 Hz floor
+ok 70 - freqRange: Guitar / Open G window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.087298
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / ½ step down maps every string's own fundamental back to itself
+ok 71 - closestString: Guitar / ½ step down maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.156274
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / ½ step down window brackets every string and respects the 25 Hz floor
+ok 72 - freqRange: Guitar / ½ step down window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.485435
+  type: 'test'
+  ...
+# Subtest: closestString: Guitar / 7-string maps every string's own fundamental back to itself
+ok 73 - closestString: Guitar / 7-string maps every string's own fundamental back to itself
+  ---
+  duration_ms: 0.173708
+  type: 'test'
+  ...
+# Subtest: freqRange: Guitar / 7-string window brackets every string and respects the 25 Hz floor
+ok 74 - freqRange: Guitar / 7-string window brackets every string and respects the 25 Hz floor
+  ---
+  duration_ms: 0.080628
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+ok 75 - detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+  ---
+  duration_ms: 209.955874
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+ok 76 - detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+  ---
+  duration_ms: 0.910867
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: rejects a too-short buffer
+ok 77 - detectPitchYIN: rejects a too-short buffer
+  ---
+  duration_ms: 0.157351
+  type: 'test'
+  ...
+# Subtest: tickInner(): pitch detection is gated while the reference tone is playing
+ok 78 - tickInner(): pitch detection is gated while the reference tone is playing
+  ---
+  duration_ms: 30.883158
+  type: 'test'
+  ...
+# Subtest: playReferenceTone(): does not touch the gate for callers where the tuner isn't running
+ok 79 - playReferenceTone(): does not touch the gate for callers where the tuner isn't running
+  ---
+  duration_ms: 5.86306
+  type: 'test'
+  ...
+# Subtest: start(): requests a 22050 Hz AudioContext to match the stated 22.05kHz design
+ok 80 - start(): requests a 22050 Hz AudioContext to match the stated 22.05kHz design
+  ---
+  duration_ms: 33.943065
+  type: 'test'
+  ...
+# Subtest: start(): falls back to the device-default AudioContext if the sampleRate option is rejected
+ok 81 - start(): falls back to the device-default AudioContext if the sampleRate option is rejected
+  ---
+  duration_ms: 28.044189
+  type: 'test'
+  ...
+# Subtest: navigation request: network is tried before cache, and wins when online
+ok 82 - navigation request: network is tried before cache, and wins when online
+  ---
+  duration_ms: 7.029181
+  type: 'test'
+  ...
+# Subtest: .js request: network-first, same as navigation
+ok 83 - .js request: network-first, same as navigation
+  ---
+  duration_ms: 3.69122
+  type: 'test'
+  ...
+# Subtest: .html request (non-navigation, e.g. prefetch): also network-first
+ok 84 - .html request (non-navigation, e.g. prefetch): also network-first
+  ---
+  duration_ms: 1.924526
+  type: 'test'
+  ...
+# Subtest: navigation request offline: falls back to the cached page
+ok 85 - navigation request offline: falls back to the cached page
+  ---
+  duration_ms: 2.429795
+  type: 'test'
+  ...
+# Subtest: navigation request: resolved 500 falls back to the cached page instead of being served
+ok 86 - navigation request: resolved 500 falls back to the cached page instead of being served
+  ---
+  duration_ms: 2.336918
+  type: 'test'
+  ...
+# Subtest: navigation request: resolved 500 with nothing cached still returns the real error, not the offline shell
+ok 87 - navigation request: resolved 500 with nothing cached still returns the real error, not the offline shell
+  ---
+  duration_ms: 1.834562
+  type: 'test'
+  ...
+# Subtest: navigation request: resolved 404 for a genuinely missing page is NOT masked by the /index.html shell
+ok 88 - navigation request: resolved 404 for a genuinely missing page is NOT masked by the /index.html shell
+  ---
+  duration_ms: 2.450941
+  type: 'test'
+  ...
+# Subtest: non-shell asset: resolved 500 on a re-fetch falls back to a copy that appeared in cache in the meantime
+ok 89 - non-shell asset: resolved 500 on a re-fetch falls back to a copy that appeared in cache in the meantime
+  ---
+  duration_ms: 2.297845
+  type: 'test'
+  ...
+# Subtest: non-shell asset: resolved 500 with nothing ever cached still returns the real error
+ok 90 - non-shell asset: resolved 500 with nothing ever cached still returns the real error
+  ---
+  duration_ms: 2.513994
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache hit short-circuits, network is never touched
+ok 91 - non-shell asset (css): cache hit short-circuits, network is never touched
+  ---
+  duration_ms: 5.58652
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache miss falls back to network and populates the cache
+ok 92 - non-shell asset (css): cache miss falls back to network and populates the cache
+  ---
+  duration_ms: 2.325409
+  type: 'test'
+  ...
+# Subtest: non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting
+ok 93 - non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting
+  ---
+  duration_ms: 2.416722
+  type: 'test'
+  ...
+# Subtest: non-GET requests are ignored (no respondWith call)
+ok 94 - non-GET requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.829198
+  type: 'test'
+  ...
+# Subtest: cross-origin requests are ignored (no respondWith call)
+ok 95 - cross-origin requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.610857
+  type: 'test'
+  ...
+# Subtest: vercel.json has a catch-all header rule
+ok 96 - vercel.json has a catch-all header rule
+  ---
+  duration_ms: 1.844955
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets Strict-Transport-Security
+ok 97 - catch-all rule sets Strict-Transport-Security
+  ---
+  duration_ms: 0.418365
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets X-Content-Type-Options
+ok 98 - catch-all rule sets X-Content-Type-Options
+  ---
+  duration_ms: 0.266289
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets X-Frame-Options
+ok 99 - catch-all rule sets X-Frame-Options
+  ---
+  duration_ms: 0.139719
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets Referrer-Policy
+ok 100 - catch-all rule sets Referrer-Policy
+  ---
+  duration_ms: 0.232259
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets Cross-Origin-Opener-Policy
+ok 101 - catch-all rule sets Cross-Origin-Opener-Policy
+  ---
+  duration_ms: 0.241564
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets Cross-Origin-Resource-Policy
+ok 102 - catch-all rule sets Cross-Origin-Resource-Policy
+  ---
+  duration_ms: 0.214232
+  type: 'test'
+  ...
+# Subtest: catch-all rule sets a Content-Security-Policy with the required directives
+ok 103 - catch-all rule sets a Content-Security-Policy with the required directives
+  ---
+  duration_ms: 0.26544
+  type: 'test'
+  ...
+# Subtest: sw.js has a no-store Cache-Control rule so a deploy is always reachable
+ok 104 - sw.js has a no-store Cache-Control rule so a deploy is always reachable
+  ---
+  duration_ms: 0.439104
+  type: 'test'
+  ...
+1..104
+# tests 104
+# suites 0
+# pass 104
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 905.417084

@@ -1,0 +1,12 @@
+$ npx vitest --run -t "done --amend \(bt-7cfb\)" test/collect-evidence.test.ts
+
+
+ RUN  v2.1.9 /home/omri/projects/donefile
+
+ ✓ test/collect-evidence.test.ts (26 tests | 21 skipped) 335ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed | 21 skipped (26)
+   Start at  03:43:15
+   Duration  1.72s (transform 685ms, setup 86ms, collect 811ms, tests 335ms, environment 1ms, prepare 117ms)
+

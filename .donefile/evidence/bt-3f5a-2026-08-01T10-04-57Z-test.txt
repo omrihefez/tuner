@@ -1,0 +1,20 @@
+$ bash scripts/test-monitoring.sh
+
+OK     check-fallback-cert.sh (forced failure): exit 1 -> /home/omri/inbox/bass-tuner-fallback-cert-selftest-2026-08-01.md
+OK     audit-domains.sh (forced failure): exit 1 -> /home/omri/inbox/bass-tuner-domain-audit-selftest-2026-08-01.md
+OK     renew-wildcard-cert.sh (forced failure): exit 1 -> /home/omri/inbox/bass-tuner-cert-renewal-selftest-2026-08-01.md
+OK     check-monitor-heartbeats.sh: flags stale fallback-cert + missing cert-renewal, leaves fresh domain-audit alone
+OK     check-monitor-heartbeats.sh: unknown monitor name reported, not silently skipped
+OK     check-monitor-heartbeats.sh via run-monitor.sh: exit 1 -> /tmp/tmp.YLMtk77238/hbhome/inbox/bass-tuner-heartbeat-selftest-2026-08-01.md
+OK     check-fallback-cert.sh is scheduled in crontab
+OK     audit-domains.sh is scheduled in crontab
+OK     renew-wildcard-cert.sh is scheduled in crontab
+OK     check-monitor-heartbeats.sh is scheduled in crontab
+OK     check-fallback-cert.sh is in install-monitoring-crons.sh's managed block
+OK     audit-domains.sh is in install-monitoring-crons.sh's managed block
+OK     check-monitor-heartbeats.sh is in install-monitoring-crons.sh's managed block
+OK     check-heartbeat-liveness.sh: absent log reported
+OK     check-heartbeat-liveness.sh: stale (40h > 30h limit) log reported
+OK     check-heartbeat-liveness.sh: fresh (1h < 30h limit) log passes
+OK     check-heartbeat-liveness.sh is not crontab-scheduled
+OK     bass-tuner-heartbeat-watchdog.timer is installed, enabled and active (systemd --user, not cron)

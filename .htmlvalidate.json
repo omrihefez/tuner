@@ -1,0 +1,9 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "void-style": "off",
+    "no-raw-characters": "off",
+    "no-implicit-button-type": "off",
+    "aria-label-misuse": "off"
+  }
+}

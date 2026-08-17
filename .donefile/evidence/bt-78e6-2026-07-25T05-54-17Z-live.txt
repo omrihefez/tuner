@@ -1,0 +1,2 @@
+$ curl -s -o /dev/null -w '%{http_code}' https://tuner.omrihefez.com/ | grep -q '^200$'
+

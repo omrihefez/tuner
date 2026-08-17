@@ -1,0 +1,2 @@
+$ bash /home/omri/projects/bass-tuner/deploy/activation-probes/probe-bt-3143.sh | grep -q '^probe-bt-3143: PASS'
+

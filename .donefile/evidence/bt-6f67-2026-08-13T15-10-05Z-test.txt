@@ -1,0 +1,2 @@
+$ node /home/omri/projects/donefile/dist/cli.js show bt-b34a | grep -qx 'status: done'
+

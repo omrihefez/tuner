@@ -1,0 +1,96 @@
+$ cd /home/omri/projects/bass-tuner && node --test test/sw.test.js
+
+TAP version 13
+# Subtest: navigation request: network is tried before cache, and wins when online
+ok 1 - navigation request: network is tried before cache, and wins when online
+  ---
+  duration_ms: 10.729103
+  type: 'test'
+  ...
+# Subtest: .js request: network-first, same as navigation
+ok 2 - .js request: network-first, same as navigation
+  ---
+  duration_ms: 5.308418
+  type: 'test'
+  ...
+# Subtest: .html request (non-navigation, e.g. prefetch): also network-first
+ok 3 - .html request (non-navigation, e.g. prefetch): also network-first
+  ---
+  duration_ms: 1.520764
+  type: 'test'
+  ...
+# Subtest: navigation request offline: falls back to the cached page
+ok 4 - navigation request offline: falls back to the cached page
+  ---
+  duration_ms: 1.642095
+  type: 'test'
+  ...
+# Subtest: navigation request: resolved 500 falls back to the cached page instead of being served
+ok 5 - navigation request: resolved 500 falls back to the cached page instead of being served
+  ---
+  duration_ms: 1.574415
+  type: 'test'
+  ...
+# Subtest: navigation request: resolved 500 with nothing cached still returns the real error, not the offline shell
+ok 6 - navigation request: resolved 500 with nothing cached still returns the real error, not the offline shell
+  ---
+  duration_ms: 1.343347
+  type: 'test'
+  ...
+# Subtest: navigation request: resolved 404 for a genuinely missing page is NOT masked by the /index.html shell
+ok 7 - navigation request: resolved 404 for a genuinely missing page is NOT masked by the /index.html shell
+  ---
+  duration_ms: 1.294951
+  type: 'test'
+  ...
+# Subtest: non-shell asset: resolved 500 on a re-fetch falls back to a copy that appeared in cache in the meantime
+ok 8 - non-shell asset: resolved 500 on a re-fetch falls back to a copy that appeared in cache in the meantime
+  ---
+  duration_ms: 1.481719
+  type: 'test'
+  ...
+# Subtest: non-shell asset: resolved 500 with nothing ever cached still returns the real error
+ok 9 - non-shell asset: resolved 500 with nothing ever cached still returns the real error
+  ---
+  duration_ms: 1.764949
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache hit short-circuits, network is never touched
+ok 10 - non-shell asset (css): cache hit short-circuits, network is never touched
+  ---
+  duration_ms: 3.172309
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache miss falls back to network and populates the cache
+ok 11 - non-shell asset (css): cache miss falls back to network and populates the cache
+  ---
+  duration_ms: 1.933261
+  type: 'test'
+  ...
+# Subtest: non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting
+ok 12 - non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting
+  ---
+  duration_ms: 1.508649
+  type: 'test'
+  ...
+# Subtest: non-GET requests are ignored (no respondWith call)
+ok 13 - non-GET requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.002557
+  type: 'test'
+  ...
+# Subtest: cross-origin requests are ignored (no respondWith call)
+ok 14 - cross-origin requests are ignored (no respondWith call)
+  ---
+  duration_ms: 0.946287
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 233.518064

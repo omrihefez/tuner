@@ -1,0 +1,2 @@
+$ curl -sf https://bass.omrihefez.com/ | grep -q 'rel="icon" href="/favicon.png"'
+

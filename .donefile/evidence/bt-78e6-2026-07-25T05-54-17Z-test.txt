@@ -1,0 +1,2 @@
+$ grep -qF bt-417b ~/meni/DOMAIN.md && grep -qF '🟠 needs-attention' ~/meni/DOMAIN.md
+

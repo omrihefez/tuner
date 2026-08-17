@@ -1,0 +1,2 @@
+$ bash .donefile/evidence/verify-bt-07f2.sh
+

@@ -1,0 +1,9 @@
+{
+  "name": "bass-tuner",
+  "version": "1.0.0",
+  "description": "Web-based bass/guitar tuner (static PWA). Node is used only for tests.",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

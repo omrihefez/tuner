@@ -1,0 +1,2 @@
+$ code=$(curl -s -o /dev/null -w "%{http_code}" https://tuner.omrihefez.com/); [ "$code" = "308" ]
+

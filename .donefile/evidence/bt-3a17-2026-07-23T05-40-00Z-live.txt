@@ -1,0 +1,3 @@
+$ curl -sD - -o /dev/null https://tuner.omrihefez.com/ | grep -i content-security-policy
+
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests

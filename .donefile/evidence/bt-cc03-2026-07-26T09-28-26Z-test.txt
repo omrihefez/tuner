@@ -1,0 +1,3 @@
+$ node /home/omri/projects/capacity-engine/engine.mjs judge-probe
+
+2026-07-26T09:28:36.204Z judge-probe OK — {"ok":true,"reason":"2 + 2 equals 4 is a correct mathematical statement"}

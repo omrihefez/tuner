@@ -1,0 +1,280 @@
+$ npm test
+
+
+> bass-tuner@1.0.0 test
+> node --test test/*.test.js
+
+TAP version 13
+# Subtest: shouldBuzz: fires on the rising edge (out of tune -> in tune)
+ok 1 - shouldBuzz: fires on the rising edge (out of tune -> in tune)
+  ---
+  duration_ms: 1.087738
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent while already in tune (no per-frame spam)
+ok 2 - shouldBuzz: stays silent while already in tune (no per-frame spam)
+  ---
+  duration_ms: 0.372459
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent leaving tune (falling edge)
+ok 3 - shouldBuzz: stays silent leaving tune (falling edge)
+  ---
+  duration_ms: 0.28846
+  type: 'test'
+  ...
+# Subtest: shouldBuzz: stays silent while consistently out of tune
+ok 4 - shouldBuzz: stays silent while consistently out of tune
+  ---
+  duration_ms: 0.307387
+  type: 'test'
+  ...
+# Subtest: start(): AudioContext throwing after getUserMedia resolves stops the mic track and clears state
+ok 5 - start(): AudioContext throwing after getUserMedia resolves stops the mic track and clears state
+  ---
+  duration_ms: 31.03395
+  type: 'test'
+  ...
+# Subtest: start(): a source/analyser failure after AudioContext succeeds also stops the track and closes the context
+ok 6 - start(): a source/analyser failure after AudioContext succeeds also stops the track and closes the context
+  ---
+  duration_ms: 26.158658
+  type: 'test'
+  ...
+# Subtest: start(): the happy path is unaffected — stream and analyser stay wired up
+ok 7 - start(): the happy path is unaffected — stream and analyser stay wired up
+  ---
+  duration_ms: 26.541349
+  type: 'test'
+  ...
+# Subtest: midiToFreq: concert A (A4, midi 69) is the reference A-ref
+ok 8 - midiToFreq: concert A (A4, midi 69) is the reference A-ref
+  ---
+  duration_ms: 1.562634
+  type: 'test'
+  ...
+# Subtest: midiToFreq: octaves double / halve the frequency
+ok 9 - midiToFreq: octaves double / halve the frequency
+  ---
+  duration_ms: 0.30926
+  type: 'test'
+  ...
+# Subtest: midiToFreq: standard string fundamentals @ A=440
+ok 10 - midiToFreq: standard string fundamentals @ A=440
+  ---
+  duration_ms: 0.393489
+  type: 'test'
+  ...
+# Subtest: midiToFreq: A-ref shift scales every note proportionally
+ok 11 - midiToFreq: A-ref shift scales every note proportionally
+  ---
+  duration_ms: 0.182828
+  type: 'test'
+  ...
+# Subtest: freqToMidi: reference and octaves land on exact integers
+ok 12 - freqToMidi: reference and octaves land on exact integers
+  ---
+  duration_ms: 0.264631
+  type: 'test'
+  ...
+# Subtest: freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+ok 13 - freqToMidi ∘ midiToFreq round-trips for every MIDI note in range
+  ---
+  duration_ms: 2.246411
+  type: 'test'
+  ...
+# Subtest: freqToMidi: a half step up is +1.0, a whole step is +2.0
+ok 14 - freqToMidi: a half step up is +1.0, a whole step is +2.0
+  ---
+  duration_ms: 0.328996
+  type: 'test'
+  ...
+# Subtest: cents: dead-on target reads 0 cents
+ok 15 - cents: dead-on target reads 0 cents
+  ---
+  duration_ms: 0.207007
+  type: 'test'
+  ...
+# Subtest: cents: one semitone sharp reads +100, one flat reads -100
+ok 16 - cents: one semitone sharp reads +100, one flat reads -100
+  ---
+  duration_ms: 0.427261
+  type: 'test'
+  ...
+# Subtest: cents: +50 cents is a quarter-tone above target
+ok 17 - cents: +50 cents is a quarter-tone above target
+  ---
+  duration_ms: 0.589767
+  type: 'test'
+  ...
+# Subtest: noteLabel: reference notes name correctly (scientific pitch notation)
+ok 18 - noteLabel: reference notes name correctly (scientific pitch notation)
+  ---
+  duration_ms: 0.251077
+  type: 'test'
+  ...
+# Subtest: noteLabel: sharps use the ♯ glyph
+ok 19 - noteLabel: sharps use the ♯ glyph
+  ---
+  duration_ms: 0.133484
+  type: 'test'
+  ...
+# Subtest: noteLabel: extreme MIDI range
+ok 20 - noteLabel: extreme MIDI range
+  ---
+  duration_ms: 0.108549
+  type: 'test'
+  ...
+# Subtest: noteLabel: rounds a fractional MIDI value to the nearest note
+ok 21 - noteLabel: rounds a fractional MIDI value to the nearest note
+  ---
+  duration_ms: 0.117014
+  type: 'test'
+  ...
+# Subtest: medianPitch: empty input returns the -1 sentinel
+ok 22 - medianPitch: empty input returns the -1 sentinel
+  ---
+  duration_ms: 0.162065
+  type: 'test'
+  ...
+# Subtest: medianPitch: single sample returns itself
+ok 23 - medianPitch: single sample returns itself
+  ---
+  duration_ms: 0.120635
+  type: 'test'
+  ...
+# Subtest: medianPitch: odd count returns the middle of the sorted values
+ok 24 - medianPitch: odd count returns the middle of the sorted values
+  ---
+  duration_ms: 0.122855
+  type: 'test'
+  ...
+# Subtest: medianPitch: even count returns the upper-middle sorted value
+ok 25 - medianPitch: even count returns the upper-middle sorted value
+  ---
+  duration_ms: 0.097288
+  type: 'test'
+  ...
+# Subtest: medianPitch: rejects a spurious octave-double outlier
+ok 26 - medianPitch: rejects a spurious octave-double outlier
+  ---
+  duration_ms: 0.095418
+  type: 'test'
+  ...
+# Subtest: closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+ok 27 - closestString: bass standard (E1 A1 D2 G2) maps fundamentals to their string
+  ---
+  duration_ms: 1.131955
+  type: 'test'
+  ...
+# Subtest: closestString: picks the nearer of two strings for an off-pitch input
+ok 28 - closestString: picks the nearer of two strings for an off-pitch input
+  ---
+  duration_ms: 0.183856
+  type: 'test'
+  ...
+# Subtest: closestString: guitar standard (E2..E4) maps the outer strings
+ok 29 - closestString: guitar standard (E2..E4) maps the outer strings
+  ---
+  duration_ms: 0.168488
+  type: 'test'
+  ...
+# Subtest: freqRange: brackets the strings and excludes the G string's 2nd harmonic
+ok 30 - freqRange: brackets the strings and excludes the G string's 2nd harmonic
+  ---
+  duration_ms: 0.217736
+  type: 'test'
+  ...
+# Subtest: freqRange: never opens the low edge below the 25 Hz floor
+ok 31 - freqRange: never opens the low edge below the 25 Hz floor
+  ---
+  duration_ms: 0.124719
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+ok 32 - detectPitchYIN: recovers the fundamental of a clean sine within 0.5 Hz
+  ---
+  duration_ms: 171.27456
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+ok 33 - detectPitchYIN: gates out silence / sub-threshold noise, returning -1
+  ---
+  duration_ms: 3.444935
+  type: 'test'
+  ...
+# Subtest: detectPitchYIN: rejects a too-short buffer
+ok 34 - detectPitchYIN: rejects a too-short buffer
+  ---
+  duration_ms: 0.208681
+  type: 'test'
+  ...
+# Subtest: start(): requests a 22050 Hz AudioContext to match the stated 22.05kHz design
+ok 35 - start(): requests a 22050 Hz AudioContext to match the stated 22.05kHz design
+  ---
+  duration_ms: 32.025552
+  type: 'test'
+  ...
+# Subtest: start(): falls back to the device-default AudioContext if the sampleRate option is rejected
+ok 36 - start(): falls back to the device-default AudioContext if the sampleRate option is rejected
+  ---
+  duration_ms: 27.186761
+  type: 'test'
+  ...
+# Subtest: navigation request: network is tried before cache, and wins when online
+ok 37 - navigation request: network is tried before cache, and wins when online
+  ---
+  duration_ms: 4.462567
+  type: 'test'
+  ...
+# Subtest: .js request: network-first, same as navigation
+ok 38 - .js request: network-first, same as navigation
+  ---
+  duration_ms: 1.375461
+  type: 'test'
+  ...
+# Subtest: .html request (non-navigation, e.g. prefetch): also network-first
+ok 39 - .html request (non-navigation, e.g. prefetch): also network-first
+  ---
+  duration_ms: 3.391411
+  type: 'test'
+  ...
+# Subtest: navigation request offline: falls back to the cached page
+ok 40 - navigation request offline: falls back to the cached page
+  ---
+  duration_ms: 1.660511
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache hit short-circuits, network is never touched
+ok 41 - non-shell asset (css): cache hit short-circuits, network is never touched
+  ---
+  duration_ms: 1.727426
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache miss falls back to network and populates the cache
+ok 42 - non-shell asset (css): cache miss falls back to network and populates the cache
+  ---
+  duration_ms: 1.790856
+  type: 'test'
+  ...
+# Subtest: non-GET requests are ignored (no respondWith call)
+ok 43 - non-GET requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.41872
+  type: 'test'
+  ...
+# Subtest: cross-origin requests are ignored (no respondWith call)
+ok 44 - cross-origin requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.779942
+  type: 'test'
+  ...
+1..44
+# tests 44
+# suites 0
+# pass 44
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 337.217429

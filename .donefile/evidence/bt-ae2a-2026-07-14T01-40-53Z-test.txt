@@ -1,0 +1,2 @@
+$ test $(ls .donefile/tasks/ | grep -Ec 'b898|a66f|b0f3|8e75|243a|3a17|cbe8|7bc5|1628|8db5') -eq 10
+

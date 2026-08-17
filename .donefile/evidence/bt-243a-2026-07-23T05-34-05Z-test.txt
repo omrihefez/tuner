@@ -1,0 +1,2 @@
+$ sh -c "grep -q \"8192-sample window\" README.md && grep -q \"8192-sample window\" about.html && grep -q \"analyser.fftSize = 8192\" tuner.js"
+

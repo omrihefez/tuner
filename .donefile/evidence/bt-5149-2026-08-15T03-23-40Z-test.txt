@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && test $(grep -c albumclub scripts/audit-domains.sh) -eq 0 && echo "OK: no albumclub refs in audit-domains.sh"
+
+OK: no albumclub refs in audit-domains.sh

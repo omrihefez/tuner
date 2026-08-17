@@ -1,0 +1,2 @@
+$ bash -c 'cd /home/omri/projects/bass-tuner; tmp=$(mktemp -d); git clone -q . "$tmp"; echo dirty >> "$tmp/README.md"; out=$(HOME="$tmp/fake-home" bash "$tmp/scripts/renew-wildcard-cert.sh" 2>&1); rc=$?; rm -rf "$tmp"; [ "$rc" -eq 1 ] && echo "$out" | grep -q "uncommitted non-bookkeeping changes"'
+

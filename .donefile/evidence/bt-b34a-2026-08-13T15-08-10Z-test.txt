@@ -1,0 +1,3 @@
+$ git -C /home/omri/projects/bass-tuner fetch origin --quiet && git cat-file -e origin/main:.donefile/evidence/bt-b34a-decision.md
+
+fatal: path '.donefile/evidence/bt-b34a-decision.md' does not exist in 'origin/main'
