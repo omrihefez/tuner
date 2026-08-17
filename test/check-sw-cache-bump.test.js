@@ -183,48 +183,69 @@ test("style.css change: passes once sw.js and its CACHE are bumped together", ()
   assert.equal(status, 0, out);
 });
 
-// bt-f541 regression. Builds a stand-in for the real checkout — a repo with a
-// LINKED WORKTREE, because that is the shape that produces the exported
-// GIT_DIR — poisons the environment exactly as a pre-push hook does, then runs
-// this file's own fixture machinery and asserts the stand-in survived it.
+// bt-f541 regression. Builds a stand-in for the real checkout, poisons GIT_DIR
+// exactly as a pre-push hook does, runs this file's own fixture machinery, and
+// asserts the stand-in survived it.
 //
-// Against the pre-fix code every assertion below fails destructively: the
-// stand-in's HEAD moves to a commit titled "base", its tracked tree is replaced
-// by the fixture's 5 files, and core.bare flips to true.
-test("fixture git operations cannot escape into an ambient GIT_DIR", () => {
-  const host = fs.mkdtempSync(path.join(os.tmpdir(), "sw-cache-bump-host-"));
-  sh(host, "git init -q -b main");
-  sh(host, 'git config user.email "host@test.local"');
-  sh(host, 'git config user.name "Host"');
-  fs.writeFileSync(path.join(host, "app.js"), "REAL APP\n");
-  fs.mkdirSync(path.join(host, "docs"));
-  fs.writeFileSync(path.join(host, "docs", "readme.md"), "REAL DOCS\n");
-  sh(host, "git add -A && git commit -q -m 'real work'");
-  sh(host, `git worktree add -q ${JSON.stringify(path.join(host, "wt"))} -b feature`);
+// Run against BOTH poison forms, because they do NOT fail the same way and the
+// quiet one is the dangerous one:
+//
+//   .git/worktrees/<name>  what a push from a LINKED WORKTREE actually exports.
+//                          init can infer no work tree, so it sets core.bare on
+//                          the victim and the FIXTURE cwd becomes the work
+//                          tree — the victim's tree is replaced wholesale
+//                          (bass-tuner: 229 files -> 5). Loud.
+//
+//   .git                   init infers the parent as a valid work tree, so the
+//                          victim stays non-bare and add/commit operate on its
+//                          REAL tree: a bogus commit lands on the checked-out
+//                          branch while core.bare AND the tracked-file count
+//                          both stay clean. Only HEAD betrays it. Quiet.
+//
+// Hence: HEAD is the load-bearing assertion. core.bare and the file count are
+// worktree-form side effects, and a fix validated on those alone passes green
+// while the quiet form still escapes.
+for (const [label, poisonOf] of [
+  ["linked-worktree gitdir", (host) => path.join(host, ".git", "worktrees", "wt")],
+  ["plain gitdir", (host) => path.join(host, ".git")],
+]) {
+  test(`fixture git operations cannot escape into an ambient GIT_DIR (${label})`, () => {
+    const host = fs.mkdtempSync(path.join(os.tmpdir(), "sw-cache-bump-host-"));
+    sh(host, "git init -q -b main");
+    sh(host, 'git config user.email "host@test.local"');
+    sh(host, 'git config user.name "Host"');
+    fs.writeFileSync(path.join(host, "app.js"), "REAL APP\n");
+    fs.mkdirSync(path.join(host, "docs"));
+    fs.writeFileSync(path.join(host, "docs", "readme.md"), "REAL DOCS\n");
+    sh(host, "git add -A && git commit -q -m 'real work'");
+    sh(host, `git worktree add -q ${JSON.stringify(path.join(host, "wt"))} -b feature`);
 
-  const before = {
-    head: sh(host, "git rev-parse feature").trim(),
-    tree: sh(host, "git ls-tree -r --name-only feature"),
-    bare: sh(host, "git config --get core.bare").trim(),
-  };
-  assert.equal(before.bare, "false"); // guards the assertion below from vacuity
+    // `feature` for the worktree form, `main` for the plain form: each is the
+    // branch that form's inferred work tree actually has checked out, so each
+    // is the branch a bogus commit would land on.
+    const branch = label === "plain gitdir" ? "main" : "feature";
+    const before = {
+      head: sh(host, `git rev-parse ${branch}`).trim(),
+      tree: sh(host, `git ls-tree -r --name-only ${branch}`),
+      bare: sh(host, "git config --get core.bare").trim(),
+    };
+    assert.equal(before.bare, "false"); // guards the assertion below from vacuity
 
-  // Exactly what `git push` from a linked worktree hands its pre-push hook.
-  const poison = path.join(host, ".git", "worktrees", "wt");
-  const restore = process.env.GIT_DIR;
-  process.env.GIT_DIR = poison;
-  try {
-    const dir = makeRepo();
-    fs.writeFileSync(path.join(dir, "style.css"), "body { color: blue; }\n");
-    sh(dir, "git commit -aqm 'change style.css, no CACHE bump'");
-    const { status } = runCheck(dir);
-    assert.equal(status, 1); // the check still works normally under the poison
-  } finally {
-    if (restore === undefined) delete process.env.GIT_DIR;
-    else process.env.GIT_DIR = restore;
-  }
+    const restore = process.env.GIT_DIR;
+    process.env.GIT_DIR = poisonOf(host);
+    try {
+      const dir = makeRepo();
+      fs.writeFileSync(path.join(dir, "style.css"), "body { color: blue; }\n");
+      sh(dir, "git commit -aqm 'change style.css, no CACHE bump'");
+      const { status } = runCheck(dir);
+      assert.equal(status, 1); // the check still works normally under the poison
+    } finally {
+      if (restore === undefined) delete process.env.GIT_DIR;
+      else process.env.GIT_DIR = restore;
+    }
 
-  assert.equal(sh(host, "git rev-parse feature").trim(), before.head, "host HEAD moved");
-  assert.equal(sh(host, "git ls-tree -r --name-only feature"), before.tree, "host tree rewritten");
-  assert.equal(sh(host, "git config --get core.bare").trim(), before.bare, "host core.bare flipped");
-});
+    assert.equal(sh(host, `git rev-parse ${branch}`).trim(), before.head, "host HEAD moved");
+    assert.equal(sh(host, `git ls-tree -r --name-only ${branch}`), before.tree, "host tree rewritten");
+    assert.equal(sh(host, "git config --get core.bare").trim(), before.bare, "host core.bare flipped");
+  });
+}
