@@ -4,6 +4,12 @@
   "description": "Web-based bass/guitar tuner (static PWA). Node is used only for tests.",
   "private": true,
   "scripts": {
+    "//build": "bt-f541: there is nothing to compile here (static PWA), but the donefile pre-push hook's default gate is `npm run build && npm test`, and a missing script makes npm exit 1 — so the gate refused EVERY non-bookkeeping push, which is precisely the pressure that gets the next person to reach for --no-verify. `build` therefore runs the offline half of .github/workflows/ci.yml's static-checks job, so the local gate mirrors CI instead of dying on it. html-validate is left to CI alone: it shells out to `npx --yes html-validate@8.29.0`, which needs the network and has no business in a pre-push hook.",
+    "build": "npm run check:syntax && npm run check:links && npm run check:cache-bump",
+    "//check:syntax": "xargs -n1, not `-exec {} +` and not `-exec {} \\;`: `node --check a.js b.js` silently checks only a.js and exits 0, and find's exit status ignores what -exec returned. Both spellings pass on a file with a syntax error. xargs runs one file per invocation and exits 123 if any of them failed.",
+    "check:syntax": "find . -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check",
+    "check:links": "node scripts/check-links.js",
+    "check:cache-bump": "node scripts/check-sw-cache-bump.js",
     "test": "node --test test/*.test.js"
   }
 }

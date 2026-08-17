@@ -8,6 +8,21 @@
 //
 // Runs the real script as a subprocess against a scratch git repo so the
 // test exercises the actual git-diffing/regex-parsing behavior end to end.
+//
+// bt-f541: EVERY git call below must run with the GIT_* environment stripped
+// (gitEnv()). mkdtempSync() isolation is necessary but NOT sufficient, because
+// GIT_DIR and friends OUTRANK the process cwd — and `git push` from a LINKED
+// WORKTREE exports GIT_DIR=<repo>/.git/worktrees/<name> to the pre-push hook
+// (a push from the main checkout does not, which is why this went unnoticed).
+// The hook then runs `npm test`, so every git call here inherits it. With
+// GIT_DIR set and GIT_WORK_TREE unset, git treats the PROCESS CWD as the work
+// tree, so against the real repo: makeRepo()'s `git init` re-inits it and,
+// having no work tree of its own, sets core.bare=true on it; `git add -A &&
+// git commit` then lands the fixture's 4 synthetic files on the real
+// checked-out branch, replacing the entire tracked tree. That is exactly what
+// happened on 2026-08-18 — origin/main was overwritten with this file's
+// fixture history ("base" / "change tuner.js, no CACHE bump") and
+// bass.omrihefez.com served the fixture's `<html>v1</html>`.
 
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -30,13 +45,77 @@ function isAppShell(request) {
 self.addEventListener("fetch", (e) => {});
 `;
 
+// A copy of process.env with every GIT_* variable removed, so `cwd` is the
+// only thing that decides which repository a git call operates on. Deliberately
+// a prefix sweep rather than a list of known-dangerous names (GIT_DIR,
+// GIT_WORK_TREE, GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY, GIT_COMMON_DIR,
+// GIT_NAMESPACE, GIT_CONFIG_*, ...): a denylist has to be kept in step with
+// git's own additions, and the failure mode of missing one is this incident.
+// Nothing in this test needs a GIT_* variable, so drop them all.
+function gitEnv(extra = {}) {
+  const env = { ...process.env, ...extra };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith("GIT_")) delete env[key];
+  }
+  return env;
+}
+
 function sh(cwd, cmd) {
-  return execFileSync("sh", ["-c", cmd], { cwd, encoding: "utf8" });
+  return execFileSync("sh", ["-c", cmd], { cwd, encoding: "utf8", env: gitEnv() });
+}
+
+// The safety net, independent of WHY an escape might happen: make git itself
+// say which repository it resolves from the fixture dir, and refuse to run a
+// single mutating command unless the answer is the one we expect. gitEnv()
+// closes the mechanism we know about; this closes the class — a future escape
+// (a GIT_* variable git adds later, a stray includeIf in a global config, an
+// inherited cwd) then costs a red test instead of the host repo's tracked tree.
+//
+// Checked on BOTH sides of `git init`, because `git init` is itself one of the
+// destructive commands: run with an ambient GIT_DIR it re-inits that repo and
+// flips core.bare on it, which is how the real checkout ended up refusing every
+// command with "fatal: this operation must be run in a work tree".
+function resolveGitDir(dir) {
+  try {
+    return execFileSync("git", ["rev-parse", "--absolute-git-dir"], {
+      cwd: dir,
+      encoding: "utf8",
+      env: gitEnv(),
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return null; // not inside a repository — which is what we want pre-init
+  }
+}
+
+function escaped(dir, resolved, expected) {
+  return new Error(
+    `fixture escaped its sandbox: git in ${dir} resolved to ${resolved ?? "<none>"}, expected ${expected}. ` +
+      `Refusing to run git commands that would mutate a real repository (bt-f541).`,
+  );
+}
+
+// A freshly-mkdtemp'd dir under os.tmpdir() is not inside any repository, so
+// git resolving ANYTHING here means it came from outside — abort before
+// `git init` can touch it.
+function assertNoAmbientRepo(dir) {
+  const resolved = resolveGitDir(dir);
+  if (resolved !== null) throw escaped(dir, resolved, "no repository at all");
+}
+
+function assertIsolated(dir) {
+  const resolved = resolveGitDir(dir);
+  const expected = path.join(fs.realpathSync(dir), ".git");
+  if (resolved === null || fs.realpathSync(resolved) !== expected) {
+    throw escaped(dir, resolved, expected);
+  }
 }
 
 function makeRepo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sw-cache-bump-test-"));
+  assertNoAmbientRepo(dir);
   sh(dir, "git init -q -b main");
+  assertIsolated(dir);
   sh(dir, 'git config user.email "test@test.local"');
   sh(dir, 'git config user.name "Test"');
 
@@ -56,7 +135,9 @@ function runCheck(dir) {
     const out = execFileSync("node", ["scripts/check-sw-cache-bump.js"], {
       cwd: dir,
       encoding: "utf8",
-      env: { ...process.env, GITHUB_BASE_REF: "", GITHUB_EVENT_BEFORE: "" },
+      // gitEnv(), not { ...process.env }: the script under test runs `git diff`
+      // itself, so an inherited GIT_DIR would point IT at the real repo too.
+      env: gitEnv({ GITHUB_BASE_REF: "", GITHUB_EVENT_BEFORE: "" }),
     });
     return { status: 0, out };
   } catch (err) {
@@ -100,4 +181,50 @@ test("style.css change: passes once sw.js and its CACHE are bumped together", ()
 
   const { status, out } = runCheck(dir);
   assert.equal(status, 0, out);
+});
+
+// bt-f541 regression. Builds a stand-in for the real checkout — a repo with a
+// LINKED WORKTREE, because that is the shape that produces the exported
+// GIT_DIR — poisons the environment exactly as a pre-push hook does, then runs
+// this file's own fixture machinery and asserts the stand-in survived it.
+//
+// Against the pre-fix code every assertion below fails destructively: the
+// stand-in's HEAD moves to a commit titled "base", its tracked tree is replaced
+// by the fixture's 5 files, and core.bare flips to true.
+test("fixture git operations cannot escape into an ambient GIT_DIR", () => {
+  const host = fs.mkdtempSync(path.join(os.tmpdir(), "sw-cache-bump-host-"));
+  sh(host, "git init -q -b main");
+  sh(host, 'git config user.email "host@test.local"');
+  sh(host, 'git config user.name "Host"');
+  fs.writeFileSync(path.join(host, "app.js"), "REAL APP\n");
+  fs.mkdirSync(path.join(host, "docs"));
+  fs.writeFileSync(path.join(host, "docs", "readme.md"), "REAL DOCS\n");
+  sh(host, "git add -A && git commit -q -m 'real work'");
+  sh(host, `git worktree add -q ${JSON.stringify(path.join(host, "wt"))} -b feature`);
+
+  const before = {
+    head: sh(host, "git rev-parse feature").trim(),
+    tree: sh(host, "git ls-tree -r --name-only feature"),
+    bare: sh(host, "git config --get core.bare").trim(),
+  };
+  assert.equal(before.bare, "false"); // guards the assertion below from vacuity
+
+  // Exactly what `git push` from a linked worktree hands its pre-push hook.
+  const poison = path.join(host, ".git", "worktrees", "wt");
+  const restore = process.env.GIT_DIR;
+  process.env.GIT_DIR = poison;
+  try {
+    const dir = makeRepo();
+    fs.writeFileSync(path.join(dir, "style.css"), "body { color: blue; }\n");
+    sh(dir, "git commit -aqm 'change style.css, no CACHE bump'");
+    const { status } = runCheck(dir);
+    assert.equal(status, 1); // the check still works normally under the poison
+  } finally {
+    if (restore === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = restore;
+  }
+
+  assert.equal(sh(host, "git rev-parse feature").trim(), before.head, "host HEAD moved");
+  assert.equal(sh(host, "git ls-tree -r --name-only feature"), before.tree, "host tree rewritten");
+  assert.equal(sh(host, "git config --get core.bare").trim(), before.bare, "host core.bare flipped");
 });
