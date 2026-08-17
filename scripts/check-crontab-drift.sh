@@ -18,6 +18,18 @@
 # Usage:
 #   scripts/check-crontab-drift.sh
 set -euo pipefail
+# ma-c1b2 (ported via ma-a861): the "already alerted" latch in this guard is
+# written only after a delivery that actually happened and exited 0 — see
+# scripts/lib/alert-latch.sh for why the two-line best-effort spelling
+# silenced these guards permanently.
+# shellcheck source=lib/alert-latch.sh
+# FAIL CLOSED if the library is not there. A guard that cannot load its
+# notifier is a guard that cannot report, and continuing would reintroduce the
+# exact failure this task is about — silence that looks like health.
+. "$(dirname "${BASH_SOURCE[0]}")/lib/alert-latch.sh" || {
+  echo "FATAL: cannot source lib/alert-latch.sh — refusing to run a guard that cannot report" >&2
+  exit 2
+}
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BLOCK_LABEL="${BLOCK_LABEL:-wildcard-cert-renewal}"
@@ -51,8 +63,12 @@ if [[ -z "$LIVE_BLOCK" ]]; then
   MSG="⚠️ $BLOCK_LABEL crontab: the managed block ($BEGIN_MARK) is missing from the live crontab entirely — run $INSTALLER_HINT to install it"
   if [[ "$(cat "$LAST_ALERT_FILE" 2>/dev/null || true)" != "missing" ]]; then
     log "$MSG"
-    "$NOTIFY" "$MSG" 2>/dev/null || true
-    echo "missing" > "$LAST_ALERT_FILE"
+    # A failed delivery is already diagnosed and recorded by notify_and_latch, and
+    # deliberately does not change this guard's verdict — the finding is real either
+    # way, so keep this script's own `exit 1` rather than letting `set -e` abort at
+    # the call. `|| true` here discards a RETURN CODE that has already been handled;
+    # it is not the ma-c1b2 anti-pattern, which discarded the code AND latched anyway.
+    notify_and_latch "$NOTIFY" "$LAST_ALERT_FILE" "missing" "$MSG" || true
   else
     log "block still missing (already alerted, not re-notifying)"
   fi
@@ -87,7 +103,11 @@ if [[ "$(cat "$LAST_ALERT_FILE" 2>/dev/null || true)" == "$DIFF_HASH" ]]; then
   exit 1
 fi
 
-"$NOTIFY" "⚠️ $BLOCK_LABEL crontab drift: live crontab differs from $SOURCE_DESC — see $AUDIT_LOG. Re-run $INSTALLER_HINT after reconciling." \
-  2>/dev/null || true
-echo "$DIFF_HASH" > "$LAST_ALERT_FILE"
+# A failed delivery is already diagnosed and recorded by notify_and_latch, and
+# deliberately does not change this guard's verdict — the finding is real either
+# way, so keep this script's own `exit 1` rather than letting `set -e` abort at
+# the call. `|| true` here discards a RETURN CODE that has already been handled;
+# it is not the ma-c1b2 anti-pattern, which discarded the code AND latched anyway.
+notify_and_latch "$NOTIFY" "$LAST_ALERT_FILE" "$DIFF_HASH" \
+  "⚠️ $BLOCK_LABEL crontab drift: live crontab differs from $SOURCE_DESC — see $AUDIT_LOG. Re-run $INSTALLER_HINT after reconciling." || true
 exit 1
