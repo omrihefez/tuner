@@ -69,3 +69,64 @@ actually stay inside the fixture" as the first thing to verify, not assume
 mkdtemp() alone guarantees it (this repo's code reads as correctly isolated
 and still failed).
 - 2026-08-18 claimed by capacity-engine
+- 2026-08-18 ROOT CAUSE FOUND AND REPRODUCED. Not an environment race, not node --test
+parallelism, and mkdtempSync() was never the weak link — the ENVIRONMENT was.
+
+`git push` from a LINKED WORKTREE exports GIT_DIR=<repo>/.git/worktrees/<name>
+to the pre-push hook. A push from the MAIN checkout does not — verified both
+ways on git 2.43.0 — which is exactly why this test sat here safely for weeks
+and then fired the first time someone pushed from a worktree.
+
+The hook runs `npm test`, so every git call in check-sw-cache-bump.test.js
+inherited that GIT_DIR. GIT_DIR outranks cwd, and with GIT_WORK_TREE unset git
+treats the PROCESS CWD as the work tree. So, against the real repo:
+  - makeRepo()'s `git init` re-inits it ("warning: re-init") and, having no
+    work tree of its own, sets core.bare=true on it -> that is the second,
+    "not yet understood" symptom in this report, same mechanism, not distinct.
+  - `git config user.email/name` writes to the real repo's config.
+  - `git add -A && git commit` stages the FIXTURE dir as the work tree and
+    lands its files on the real checked-out branch, replacing the tracked tree.
+
+Reproduced end to end on a throwaway clone of this repo, running the REAL
+pre-push hook, pushing from a real linked worktree. Pre-fix control run:
+core.bare flipped false->true, branch tree went 229 files -> 5, and the log
+read "change style.css and bump CACHE" / "base" / "change style.css, no CACHE
+bump" — the exact commit titles from the incident. Post-fix run on the same
+setup: 105/105 tests pass, push exits 0, repo untouched (229 files,
+core.bare=false).
+
+FIX (9a27a53):
+  - gitEnv() strips every GIT_* var from the env of every git call, including
+    runCheck()'s (the script under test runs `git diff` itself, so it was
+    being pointed at the real repo too). Prefix sweep, not a denylist —
+    missing one name is how this happened.
+  - assertNoAmbientRepo()/assertIsolated() bracket `git init` and make git
+    itself name the repo it resolved. `git init` needs the check on BOTH
+    sides because it is itself one of the destructive commands. This closes
+    the CLASS, not just the known mechanism: any future escape (a GIT_* var
+    git adds later, a stray includeIf, an inherited cwd) now costs a red test
+    instead of the host repo's tree.
+  - Regression test builds a repo WITH a linked worktree, poisons GIT_DIR
+    exactly as the hook does, and asserts the stand-in's HEAD, tree and
+    core.bare all survive. Verified it fails destructively against the
+    pre-fix file ("host HEAD moved") and passes after.
+
+SECOND DEFECT FOUND while verifying, fixed in the same commit: the installed
+pre-push hook's default gate is `npm run build && npm test`, and this repo had
+no `build` script, so npm exited 1 and the hook REFUSED EVERY non-bookkeeping
+push. That is not a cosmetic gap — a gate that always fails is precisely the
+pressure that gets the next person to reach for --no-verify, which is how the
+corrupted tree reached origin in the first place. `npm run build` now runs the
+offline half of ci.yml's static-checks job (syntax / links / cache-bump), so
+the local gate mirrors CI instead of dying on it.
+Sharp edge worth remembering: check:syntax uses `xargs -n1` because
+`node --check a.js b.js` silently checks only a.js and exits 0 — both
+`-exec {} +` and `-exec {} \;` produce a syntax check that CANNOT FAIL.
+Verified falsifiable: exit 0 clean, exit 123 with a deliberately broken file.
+
+DONE WHEN satisfied end to end: this branch was landed by a normal
+`git push origin bt-f541-test-git-isolation:main` from a linked worktree,
+through the real hook, NO --no-verify. Hook ran build + 105 tests, push exit 0,
+4c2f5de..9a27a53. Main checkout after: core.bare=false, tree intact.
+bass.omrihefez.com still serves the real app (200, 3200 bytes,
+"<title>Tuner — bass & guitar, ad-free</title>").
