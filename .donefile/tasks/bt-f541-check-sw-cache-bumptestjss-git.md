@@ -2,13 +2,16 @@
 id: bt-f541
 title: "check-sw-cache-bump.test.js's git isolation is broken: a pre-push npm test run wiped and
   overwrote production main with test fixture content"
-status: open
+status: claimed
 priority: p0
 tags:
   - reliability
   - incident
   - ci
 created: 2026-08-18
+claim:
+  owner: capacity-engine
+  at: 2026-08-17T21:48:13Z
 ---
 
 INCIDENT, 2026-08-18 ~00:16-00:36 IDT. During a routine `git push origin <branch>:main`
@@ -65,3 +68,4 @@ broken reference. Whoever picks this up should treat "does my fixture path
 actually stay inside the fixture" as the first thing to verify, not assume
 mkdtemp() alone guarantees it (this repo's code reads as correctly isolated
 and still failed).
+- 2026-08-18 claimed by capacity-engine
