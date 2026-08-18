@@ -98,12 +98,14 @@ else
 fi
 
 # --- 2. audit-domains.sh, sabotaged to check a subdomain that isn't a real
-#        live app (falls through to CHECK/unexpected-code, not OK) ---
-sed 's/^SUBS=.*/SUBS=(nonexistent-bt-a942-selftest)/' \
-  "$REPO/scripts/audit-domains.sh" > "$TMP/audit-domains-fail.sh"
-chmod +x "$TMP/audit-domains-fail.sh"
+#        live app (falls through to CHECK/unexpected-code, not OK). ma-20c5:
+#        SUBS is now derived from DOMAIN.md at runtime, not a literal
+#        `SUBS=(...)` line, so the sabotage goes through the script's own
+#        AUDIT_SUBS override instead of sed-patching a line that no longer
+#        exists (same pattern as the HOME override on the renewal-selftest
+#        below) ---
 check domain-audit-selftest "audit-domains.sh (forced failure)" \
-  "$TMP/audit-domains-fail.sh"
+  env AUDIT_SUBS="nonexistent-bt-a942-selftest" "$REPO/scripts/audit-domains.sh"
 
 # --- 3. renew-wildcard-cert.sh, run with HOME pointed at an empty dir so its
 #        own first FATAL check (unreadable ~/.meni/auth.env, so no Infisical

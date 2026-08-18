@@ -10,6 +10,7 @@
     "check:syntax": "find . -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check",
     "check:links": "node scripts/check-links.js",
     "check:cache-bump": "node scripts/check-sw-cache-bump.js",
-    "test": "node --test test/*.test.js"
+    "//test": "ma-20c5: appended the scripts/*.test.sh loop so audit-domains.test.sh (and any future hermetic shell test alongside it) actually runs under CI's existing 'npm test' step -- this repo had no scripts/*.test.sh runner before, unlike meniapp's dedicated CI job.",
+    "test": "node --test test/*.test.js && for f in scripts/*.test.sh; do echo \"-- $f --\"; bash \"$f\" || exit 1; done"
   }
 }
