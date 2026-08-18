@@ -2,16 +2,27 @@
 id: bt-b130
 title: check-fallback-cert.sh only detects a wildcard cert that has ALREADY expired — it never reads
   notAfter, so it gives zero lead time on the exact failure it exists for
-status: claimed
+status: done
 priority: p3
 tags:
   - ops
   - monitoring
   - tls
 created: 2026-08-14
-claim:
-  owner: capacity-engine
-  at: 2026-08-18T00:22:45Z
+done:
+  at: 2026-08-18T00:25:56Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 404de65
+    verified: 2026-08-18T00:25:56Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-fallback-cert.sh
+    exit: 0
+    at: 2026-08-18T00:25:56Z
+    log: evidence/bt-b130-2026-08-18T00-25-56Z-test.txt
+    sha256: e45515487347bbf6c88090582495a8a5a7c9e6f7bb55ff80488b46e12ac78c30
+    bytes: 251
 ---
 
 `scripts/check-fallback-cert.sh` asserts the Vercel fallback TLS cert for unclaimed
@@ -61,3 +72,4 @@ VERIFY (from the main checkout, not a worktree — asserts a positive, and keeps
 
 ## Log
 - 2026-08-18 claimed by capacity-engine
+- 2026-08-18 done by capacity-engine/worker — commit 404de65, test `cd /home/omri/projects/bass-tuner && bash scripts/check-fallback-cert.sh` exit 0 (log: evidence/bt-b130-2026-08-18T00-25-56Z-test.txt)
