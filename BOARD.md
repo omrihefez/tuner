@@ -16,7 +16,7 @@
 
 ### p3
 
-- `bt-7654` **install-cert-renewal-cron.sh's own cleanup (bt-b38f's fix) has the identical residual substring-match defect for its "run-monitor.sh cert-renewal " pattern — same grep -vFxf fix would close it too** — #ops #safety
+- `bt-7654` **install-cert-renewal-cron.sh's cleanup has the same substring-match defect (bt-b38f fixed elsewhere) for its cert-renewal pattern — same grep -vFxf fix would close it** — #ops #safety
 - `bt-7964` **Vendored alert-latch.sh has zero consumers here, so every monitor re-alarms daily on an unchanged condition instead of latching once** — #ops #monitoring
 
 ## Done (most recent 15 of 70)

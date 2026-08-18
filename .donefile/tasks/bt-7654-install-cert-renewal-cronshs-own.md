@@ -1,8 +1,7 @@
 ---
 id: bt-7654
-title: install-cert-renewal-cron.sh's own cleanup (bt-b38f's fix) has the identical residual
-  substring-match defect for its "run-monitor.sh cert-renewal " pattern — same grep -vFxf fix would
-  close it too
+title: install-cert-renewal-cron.sh's cleanup has the same substring-match defect (bt-b38f fixed
+  elsewhere) for its cert-renewal pattern — same grep -vFxf fix would close it
 status: open
 priority: p3
 tags:
@@ -26,3 +25,6 @@ Discovered while working bt-d428, session `install-monitoring-crons-cee871`, dis
 That task's report closed DONE (commit 7c21a04d285bedc230a93019c7b193ab6edceb56).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-08-18 title: 'install-cert-renewal-cron.sh's own cleanup (bt-b38f's fix) has the identical residual substring-match defect for its "run-monitor.sh cert-renewal " pattern — same grep -vFxf fix would close it too' -> 'install-cert-renewal-cron.sh's cleanup has the same substring-match defect (bt-b38f fixed elsewhere) for its cert-renewal pattern — same grep -vFxf fix would close it'
