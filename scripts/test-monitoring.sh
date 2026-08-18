@@ -53,6 +53,50 @@ chmod +x "$TMP/check-fallback-cert-fail.sh"
 check fallback-cert-selftest "check-fallback-cert.sh (forced failure)" \
   "$TMP/check-fallback-cert-fail.sh"
 
+# --- 1b. check-fallback-cert.sh's days_remaining() threshold arithmetic
+#         (bt-b130), proven against fixed fixture dates -- not the real
+#         cert's actual notAfter -- so the "warn before expiry" logic is
+#         verified without waiting for a real cert to approach expiry, the
+#         same reason the original silent-expiry bug went unnoticed for a
+#         month. Sourcing is safe: the script's own BASH_SOURCE guard means
+#         main() does not run when it's sourced rather than executed. ---
+# shellcheck source=/dev/null
+source "$REPO/scripts/check-fallback-cert.sh"
+NOW_EPOCH=1787012645 # 2026-08-18T00:24:05Z, a fixed "now" for reproducibility
+
+# 30 days out: comfortably clear of the 21d default threshold
+future_days=$(days_remaining "$NOW_EPOCH" "Sep 17 00:24:05 2026 GMT")
+if [[ "$future_days" == "30" ]]; then
+  echo "OK     days_remaining(): 30d-out fixture -> ${future_days}d"
+else
+  echo "FAIL   days_remaining(): 30d-out fixture -> '${future_days}', expected 30"
+  FAIL=1
+fi
+
+# 10 days out: inside the 21d default threshold, should be flagged EXPIRING
+soon_days=$(days_remaining "$NOW_EPOCH" "Aug 28 00:24:05 2026 GMT")
+if [[ "$soon_days" == "10" ]]; then
+  echo "OK     days_remaining(): 10d-out fixture -> ${soon_days}d"
+else
+  echo "FAIL   days_remaining(): 10d-out fixture -> '${soon_days}', expected 10"
+  FAIL=1
+fi
+
+if (( future_days >= 21 )) && (( soon_days < 21 )); then
+  echo "OK     days_remaining(): 30d-out fixture clears the 21d default threshold, 10d-out fixture trips it"
+else
+  echo "FAIL   days_remaining(): fixtures don't straddle the 21d default threshold as expected (30d=${future_days}, 10d=${soon_days})"
+  FAIL=1
+fi
+
+# unparseable enddate: must fail closed (non-zero), not silently succeed
+if days_remaining "$NOW_EPOCH" "not-a-date" >/dev/null 2>&1; then
+  echo "FAIL   days_remaining(): unparseable enddate did not return non-zero"
+  FAIL=1
+else
+  echo "OK     days_remaining(): unparseable enddate correctly returns non-zero"
+fi
+
 # --- 2. audit-domains.sh, sabotaged to check a subdomain that isn't a real
 #        live app (falls through to CHECK/unexpected-code, not OK) ---
 sed 's/^SUBS=.*/SUBS=(nonexistent-bt-a942-selftest)/' \
