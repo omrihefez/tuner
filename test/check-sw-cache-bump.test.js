@@ -24,7 +24,7 @@
 // fixture history ("base" / "change tuner.js, no CACHE bump") and
 // bass.omrihefez.com served the fixture's `<html>v1</html>`.
 
-const { test } = require("node:test");
+const { test, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
@@ -111,8 +111,27 @@ function assertIsolated(dir) {
   }
 }
 
+// ce-f048: makeRepo() and the bt-f541 host fixture both mkdtemp'd a real git
+// repo per test and nothing removed them — 105 `sw-cache-bump-test-` dirs were
+// counted on the host /tmp on 2026-08-21, part of the 13,049 dirs / 10.6GB that
+// took / past the capacity engine's min_available_disk_mb floor and paused all
+// fleet dispatch for 46 hours. node:test runs `after` whether the file passed
+// or an assertion threw, so this is a finally and not a trailing rmSync a
+// failure can skip.
+const scratchDirs = [];
+
+function scratch(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  scratchDirs.push(dir);
+  return dir;
+}
+
+after(() => {
+  for (const dir of scratchDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+});
+
 function makeRepo() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sw-cache-bump-test-"));
+  const dir = scratch("sw-cache-bump-test-");
   assertNoAmbientRepo(dir);
   sh(dir, "git init -q -b main");
   assertIsolated(dir);
@@ -210,7 +229,7 @@ for (const [label, poisonOf] of [
   ["plain gitdir", (host) => path.join(host, ".git")],
 ]) {
   test(`fixture git operations cannot escape into an ambient GIT_DIR (${label})`, () => {
-    const host = fs.mkdtempSync(path.join(os.tmpdir(), "sw-cache-bump-host-"));
+    const host = scratch("sw-cache-bump-host-");
     sh(host, "git init -q -b main");
     sh(host, 'git config user.email "host@test.local"');
     sh(host, 'git config user.name "Host"');
