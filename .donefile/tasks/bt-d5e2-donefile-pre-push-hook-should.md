@@ -2,13 +2,16 @@
 id: bt-d5e2
 title: donefile pre-push hook should scrub GIT_* before running the suite — fleet-wide defense in
   depth for the bt-f541 worktree-GIT_DIR escape
-status: open
+status: claimed
 priority: p2
 tags:
   - reliability
   - ci
   - safety
 created: 2026-08-18
+claim:
+  owner: capacity-engine
+  at: 2026-08-22T21:17:22Z
 ---
 
 LIKELY ALREADY DONE — verify before building. Work merged after this finding was raised may already cover it:
@@ -26,3 +29,6 @@ Reported 2026-08-17 — read any relative time in the title above ("this morning
 That task's report closed DONE (commit 9a27a53).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-08-23 claimed by capacity-engine
