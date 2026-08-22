@@ -4,6 +4,11 @@ blocked_nag_days: 14
 board_path: BOARD.md
 repos:
   capacity-engine: /home/omri/projects/capacity-engine
+  # bt-d5e2 (2026-08-23): this board's GIT_* pre-push-scrub finding was fixed
+  # in donefile itself (hooks/pre-push.sh is donefile's shared template, not
+  # bass-tuner's own code), so the closing evidence commit resolves here.
+  # Same cross-repo-evidence need as donefile's own dn-a23f/dn-42b4 aliases.
+  donefile: /home/omri/projects/donefile
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
