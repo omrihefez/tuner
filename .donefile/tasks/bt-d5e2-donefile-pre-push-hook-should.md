@@ -2,16 +2,40 @@
 id: bt-d5e2
 title: donefile pre-push hook should scrub GIT_* before running the suite — fleet-wide defense in
   depth for the bt-f541 worktree-GIT_DIR escape
-status: claimed
+status: done
 priority: p2
 tags:
   - reliability
   - ci
   - safety
 created: 2026-08-18
-claim:
-  owner: capacity-engine
-  at: 2026-08-22T21:17:22Z
+done:
+  at: 2026-08-22T21:50:13Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 8ff147a
+    repo: donefile
+    verified: 2026-08-22T21:50:13Z
+  - type: test
+    cmd: cd /home/omri/projects/donefile && npx vitest run test/pre-push-hook.test.ts
+    exit: 0
+    at: 2026-08-22T21:50:04Z
+    log: evidence/bt-d5e2-2026-08-22T21-50-04Z-test.txt
+    sha256: 6c92df15aa735b7bbb7d0b84b2fef8c65be39f823a273870a64ba95a19f2e822
+    bytes: 378
+  - type: note
+    value: "Fixed in donefile itself (hooks/pre-push.sh is the shared pre-push template every registered
+      board installs), not in bass-tuner's own code. dn-1305 already scrubbed GIT_* inside
+      donefile's own vitest suite (test/setup.ts), but that protected only donefile's tests; every
+      other board running this hook, and any test file that doesn't scrub for itself, was still
+      exposed to bt-f541's mechanism. Added a GIT_* prefix-sweep to hooks/pre-push.sh right after
+      the toplevel cd, before eval \"$CMD\" runs. New regression test (pre-push-hook.test.ts) pushes
+      a real branch from a real linked worktree whose 'test' script dumps every ambient GIT_* var it
+      sees; confirmed red before the fix (GIT_DIR, GIT_PREFIX, GIT_EXEC_PATH etc leaking through)
+      and green after. Full donefile suite: 1434/1434 passing. Same finding was also filed on
+      donefile's own board as dn-cb48 (duplicate of this) -- closed done there too, same commit
+      8ff147a, to avoid re-dispatching the identical work."
 ---
 
 LIKELY ALREADY DONE — verify before building. Work merged after this finding was raised may already cover it:
@@ -32,3 +56,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-08-23 claimed by capacity-engine
+- 2026-08-23 done by capacity-engine/worker — commit 8ff147a (donefile), test `cd /home/omri/projects/donefile && npx vitest run test/pre-push-hook.test.ts` exit 0 (log: evidence/bt-d5e2-2026-08-22T21-50-04Z-test.txt)

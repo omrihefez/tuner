@@ -1,0 +1,13 @@
+$ cd /home/omri/projects/donefile && npx vitest run test/pre-push-hook.test.ts
+
+
+ RUN  v4.1.10 /home/omri/projects/donefile
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  00:50:05
+   Duration  7.84s (transform 292ms, setup 306ms, import 77ms, tests 7.11s, environment 0ms)
+
+Preparing worktree (new branch 'feature')
+Preparing worktree (new branch 'feature')
