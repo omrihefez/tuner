@@ -59,3 +59,22 @@ NOTE the exit-code trap: this board's audit currently exits 1 on this one findin
 findings appear between now and the fix, a bare exit-code assertion would be satisfied by the wrong
 thing — assert on the absence of `UNRESOLVED_REPO` specifically, keeping stderr (`2>&1`), not on
 `audit` exiting 0.
+
+## Log
+- 2026-08-24 FALSE — the alias is already registered. Dropping.
+
+bt-ceaa claims .donefile/config.yml has no `donefile` repo alias, so bt-d5e2's commit evidence
+resolves to a nonexistent path. It does have one, added by e44856e (on origin/main, verified
+with git merge-base --is-ancestor). Current aliases: capacity-engine, donefile, meni.
+
+The filing worker's checkout was 2 commits BEHIND origin, so its audit could not see the fix.
+That is exactly the defect it filed as ce-526d in the same sweep — a board checkout behind its
+own origin reports already-fixed findings as live — and this task is that bug's own output.
+Good instinct filing ce-526d; the irony is that bt-ceaa is the evidence for it.
+
+Also repaired while here: this board was diverged (3 unpushed local, 2 unpulled) with the push
+refused non-fast-forward. Rebased onto origin/main. Two conflicts, both resolved on their
+merits rather than by picking a side:
+  BOARD.md      regenerated with `donefile board` — it is a generated view, not content
+  config.yml    both sides added a DIFFERENT alias (donefile from origin, meni from local);
+                kept both, since each has its own documented reason
