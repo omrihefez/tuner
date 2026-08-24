@@ -9,6 +9,14 @@ repos:
   # bass-tuner's own code), so the closing evidence commit resolves here.
   # Same cross-repo-evidence need as donefile's own dn-a23f/dn-42b4 aliases.
   donefile: /home/omri/projects/donefile
+  # bt-8e12 (2026-08-15): this board files follow-ups whose fix belongs in
+  # ~/meni (DOMAIN.md is the domain registry; bt-5149 dropped `albumclub`
+  # from scripts/audit-domains.sh here and the matching registry row lives
+  # there). Workers are barred from committing to omrihefez/meni, so those
+  # land as Main's commits in a repo this board otherwise cannot resolve —
+  # and the evidence was real but uncitable, so the task would have had to
+  # close bare. Same need, same fix as donefile's dn-a23f.
+  meni: /home/omri/meni
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -

@@ -1,0 +1,66 @@
+$ cd /home/omri/projects/bass-tuner && node --test test/sw.test.js
+
+TAP version 13
+# Subtest: navigation request: network is tried before cache, and wins when online
+ok 1 - navigation request: network is tried before cache, and wins when online
+  ---
+  duration_ms: 5.909185
+  type: 'test'
+  ...
+# Subtest: .js request: network-first, same as navigation
+ok 2 - .js request: network-first, same as navigation
+  ---
+  duration_ms: 2.627974
+  type: 'test'
+  ...
+# Subtest: .html request (non-navigation, e.g. prefetch): also network-first
+ok 3 - .html request (non-navigation, e.g. prefetch): also network-first
+  ---
+  duration_ms: 4.59938
+  type: 'test'
+  ...
+# Subtest: navigation request offline: falls back to the cached page
+ok 4 - navigation request offline: falls back to the cached page
+  ---
+  duration_ms: 2.154104
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache hit short-circuits, network is never touched
+ok 5 - non-shell asset (css): cache hit short-circuits, network is never touched
+  ---
+  duration_ms: 5.108135
+  type: 'test'
+  ...
+# Subtest: non-shell asset (css): cache miss falls back to network and populates the cache
+ok 6 - non-shell asset (css): cache miss falls back to network and populates the cache
+  ---
+  duration_ms: 2.117243
+  type: 'test'
+  ...
+# Subtest: non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting
+ok 7 - non-shell asset not in cache, offline: resolves via the offline shell fallback instead of rejecting
+  ---
+  duration_ms: 2.26279
+  type: 'test'
+  ...
+# Subtest: non-GET requests are ignored (no respondWith call)
+ok 8 - non-GET requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.498682
+  type: 'test'
+  ...
+# Subtest: cross-origin requests are ignored (no respondWith call)
+ok 9 - cross-origin requests are ignored (no respondWith call)
+  ---
+  duration_ms: 1.804635
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 176.956499
