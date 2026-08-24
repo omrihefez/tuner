@@ -2,7 +2,7 @@
 id: bt-ceaa
 title: Register the 'donefile' repo alias in .donefile/config.yml — bt-d5e2's commit evidence
   resolves to a nonexistent path, so a closed task's evidence can never be verified
-status: open
+status: dropped
 priority: p3
 tags:
   - bookkeeping
@@ -78,3 +78,4 @@ merits rather than by picking a side:
   BOARD.md      regenerated with `donefile board` — it is a generated view, not content
   config.yml    both sides added a DIFFERENT alias (donefile from origin, meni from local);
                 kept both, since each has its own documented reason
+- 2026-08-24 dropped: false: the donefile alias IS registered (e44856e, on origin/main). The filing worker's checkout was 2 behind origin — this task is ce-526d's own output.
