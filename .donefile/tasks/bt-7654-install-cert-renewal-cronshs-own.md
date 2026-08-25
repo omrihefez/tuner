@@ -2,12 +2,15 @@
 id: bt-7654
 title: install-cert-renewal-cron.sh's cleanup has the same substring-match defect (bt-b38f fixed
   elsewhere) for its cert-renewal pattern — same grep -vFxf fix would close it
-status: open
+status: claimed
 priority: p3
 tags:
   - ops
   - safety
 created: 2026-08-14
+claim:
+  owner: capacity-engine
+  at: 2026-08-25T11:23:17Z
 ---
 
 Named in the finding: install-cert-renewal-cron.sh, run-monitor.sh
@@ -28,3 +31,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-08-18 title: 'install-cert-renewal-cron.sh's own cleanup (bt-b38f's fix) has the identical residual substring-match defect for its "run-monitor.sh cert-renewal " pattern — same grep -vFxf fix would close it too' -> 'install-cert-renewal-cron.sh's cleanup has the same substring-match defect (bt-b38f fixed elsewhere) for its cert-renewal pattern — same grep -vFxf fix would close it'
+- 2026-08-25 claimed by capacity-engine
