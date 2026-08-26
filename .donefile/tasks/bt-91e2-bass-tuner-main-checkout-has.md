@@ -23,3 +23,6 @@ That task's report closed DONE (commit 8ff147a — does not resolve here, see be
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `8ff147a` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-08-26 blocker bt-3143 closed 2026-08-15T15:04:20Z — recheck whether this can proceed now.
