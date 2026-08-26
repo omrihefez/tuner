@@ -78,3 +78,4 @@ Told him it can wait until morning: server, deploy and code are all verified hea
 - 2026-08-26 blocker bt-8e75 closed 2026-07-21T21:45:27Z — recheck whether this can proceed now.
 - 2026-08-26 blocker bt-5fb7 closed 2026-08-05T06:21:13Z — recheck whether this can proceed now.
 - 2026-08-26 blocker bt-8e75 closed 2026-07-21T21:45:27Z — recheck whether this can proceed now.
+- 2026-08-26 blocker bt-5fb7 closed 2026-08-05T06:21:13Z — recheck whether this can proceed now.
