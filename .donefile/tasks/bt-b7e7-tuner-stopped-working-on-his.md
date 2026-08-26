@@ -49,3 +49,4 @@ DISCRIMINATOR I gave him, which is sharper than the debug panel:
 Also relevant to the "held mic" theory: stop() does correctly release — it stops every track, closes the AudioContext and nulls the refs. So a clean Stop frees the device; only a backgrounded/crashed instance would hold it.
 
 Told him it can wait until morning: server, deploy and code are all verified healthy, so nothing degrades while it sits.
+- 2026-08-26 blocker bt-8e75 closed 2026-07-21T21:45:27Z — recheck whether this can proceed now.
