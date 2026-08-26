@@ -81,3 +81,6 @@ DONE WHEN
    alert across two consecutive simulated days, and a CHANGED failure set
    produces a second one. Must fail against current HEAD.
 4. Evidence command runs from `/home/omri/projects/bass-tuner`, not a worktree.
+
+## Log
+- 2026-08-26 blocker bt-a942 closed 2026-07-30T05:35:07Z — recheck whether this can proceed now.
