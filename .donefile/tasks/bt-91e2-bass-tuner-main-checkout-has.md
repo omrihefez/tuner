@@ -167,3 +167,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 - 2026-08-27 blocker bt-d5e2 closed 2026-08-22T21:50:13Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-8e12 closed 2026-08-15T03:31:05Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-3143 closed 2026-08-15T15:04:20Z — recheck whether this can proceed now.
+- 2026-08-27 blocker bt-d5e2 closed 2026-08-22T21:50:13Z — recheck whether this can proceed now.
