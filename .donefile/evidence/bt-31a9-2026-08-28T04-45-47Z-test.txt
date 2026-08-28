@@ -1,0 +1,2 @@
+$ bash /home/omri/projects/bass-tuner/scripts/ff-sync-main-checkout.sh 2>&1 | grep -q 'in sync at'
+

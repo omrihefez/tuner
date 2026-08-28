@@ -2,15 +2,34 @@
 id: bt-31a9
 title: bass-tuner's 10 cron jobs run scripts out of an unsynced checkout — same silent-stale shape
   fixed in house-control, donefile and tik-api tonight
-status: claimed
+status: done
 priority: p2
 tags:
   - infra
   - cron
 created: 2026-08-28
-claim:
-  owner: capacity-engine
-  at: 2026-08-28T04:30:15Z
+done:
+  at: 2026-08-28T04:45:48Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 4e17ae8
+    verified: 2026-08-28T04:45:48Z
+  - type: test
+    cmd: bash /home/omri/projects/bass-tuner/scripts/ff-sync-main-checkout.sh 2>&1 | grep -q 'in sync
+      at'
+    exit: 0
+    at: 2026-08-28T04:45:47Z
+    log: evidence/bt-31a9-2026-08-28T04-45-47Z-test.txt
+    sha256: a89ad6e58b797d0de8f7613cb014da1235ae947e3cdb8cdb4d77a4528af53f4b
+    bytes: 100
+  - type: note
+    value: "bass-tuner's own ff-sync landed (4e17ae8), installed live (*/3min cron), one real tick
+      confirmed. Cross-repo sweep per DONE WHEN: tik-next (tkn-19c4, done, live) and second-brain
+      (sb-7db9, done, live) got the same fix; trips-hub investigated and does not need it
+      (self-syncing runner clones, noted on this task's log); iac got the fix merged to origin/main
+      (841dcb1) but cron activation is DEFERRED because its live checkout is currently mid-WIP on
+      another worker's branch (port-alert-latch-ma-a861) and must not be disturbed — see follow-up."
 ---
 
 Generalising a pattern that three separate workers hit independently on 2026-08-27/28.
@@ -51,3 +70,4 @@ divergence), which is the bar.
 - 2026-08-28 released by capacity-engine
 - 2026-08-28 claimed by capacity-engine
 - 2026-08-28 trips-hub investigated: all its cron consumers (backflow, deploy-watchdog, dev-alias-heal, bookkeeping-secret-scan, alias-drift) already maintain their OWN private mirror clones / fetch origin fresh each run (RUNNER_DIR pattern, e.g. th-8d62/ma-a1f5/th-7649) rather than reading the shared /home/omri/projects/trips-hub checkout — same self-syncing shape as capacity-engine's git-archive export. No ff-sync needed there; explicitly recorded.
+- 2026-08-28 done by capacity-engine/worker — commit 4e17ae8, test `bash /home/omri/projects/bass-tuner/scripts/ff-sync-main-checkout.sh 2>&1 | grep -q 'in sync at'` exit 0 (log: evidence/bt-31a9-2026-08-28T04-45-47Z-test.txt)
