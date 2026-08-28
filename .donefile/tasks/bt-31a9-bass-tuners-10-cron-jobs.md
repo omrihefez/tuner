@@ -50,3 +50,4 @@ divergence), which is the bar.
 - 2026-08-28 claimed by capacity-engine
 - 2026-08-28 released by capacity-engine
 - 2026-08-28 claimed by capacity-engine
+- 2026-08-28 trips-hub investigated: all its cron consumers (backflow, deploy-watchdog, dev-alias-heal, bookkeeping-secret-scan, alias-drift) already maintain their OWN private mirror clones / fetch origin fresh each run (RUNNER_DIR pattern, e.g. th-8d62/ma-a1f5/th-7649) rather than reading the shared /home/omri/projects/trips-hub checkout — same self-syncing shape as capacity-engine's git-archive export. No ff-sync needed there; explicitly recorded.
