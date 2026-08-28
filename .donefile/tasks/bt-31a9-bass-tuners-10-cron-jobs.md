@@ -2,12 +2,15 @@
 id: bt-31a9
 title: bass-tuner's 10 cron jobs run scripts out of an unsynced checkout — same silent-stale shape
   fixed in house-control, donefile and tik-api tonight
-status: open
+status: claimed
 priority: p2
 tags:
   - infra
   - cron
 created: 2026-08-28
+claim:
+  owner: capacity-engine
+  at: 2026-08-28T03:48:52Z
 ---
 
 Generalising a pattern that three separate workers hit independently on 2026-08-27/28.
@@ -42,3 +45,6 @@ repos above are each either covered or explicitly recorded as not needing it. Co
 pattern rather than reinventing it — tk-66aa verified three behaviours on a scratch clone
 before shipping (in-sync no-op, clean fast-forward, refusal with unchanged HEAD on genuine
 divergence), which is the bar.
+
+## Log
+- 2026-08-28 claimed by capacity-engine
