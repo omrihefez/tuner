@@ -29,7 +29,12 @@ check() {
   local name="$1" desc="$2"
   shift 2
   local inbox="$HOME/inbox/bass-tuner-${name}-${DATE}.md"
-  rm -f "$inbox"
+  # bt-7964: also clear the fingerprint latch, not just the inbox file --
+  # otherwise a second run of this suite on the same day sees the same
+  # forced failure as already-alerted and correctly stays quiet, which would
+  # misread as this test regressing.
+  local latch="$HOME/.cache/bass-tuner-${name}.alert-latch"
+  rm -f "$inbox" "$latch" "${latch}.undelivered"
   "$RUNNER" "$name" "$@" >/dev/null 2>&1
   local code=$?
   if [[ "$code" -eq 0 ]]; then
@@ -589,5 +594,87 @@ if command -v systemctl >/dev/null 2>&1; then
 else
   echo "SKIP   systemctl not available in this environment -- cannot verify the timer is installed"
 fi
+
+# --- 8. bt-7964: run-monitor.sh now latches on a sha256 fingerprint of the
+#        failure output via lib/alert-latch.sh, so a PERSISTENT failure
+#        alerts once instead of once a day forever (bt-5149 was exactly that
+#        pattern: the same albumclub 404 re-alarming every single day with
+#        nothing changed). Proven against a script whose output is driven by
+#        a file so the exact same failure can be reproduced byte-for-byte
+#        across separate run-monitor.sh invocations -- this is the actual
+#        defect bt-5149 observed, not a hypothetical one.
+LATCH_NAME="latch-selftest-bt7964"
+LATCH_TMP="$(mktemp -d)"
+LATCH_FLAKY="$LATCH_TMP/flaky.sh"
+LATCH_OUTPUT="$LATCH_TMP/output.txt"
+LATCH_FILE="$HOME/.cache/bass-tuner-${LATCH_NAME}.alert-latch"
+latch_inbox() { echo "$HOME/inbox/bass-tuner-${LATCH_NAME}-$(date -I).md"; }
+
+cat > "$LATCH_FLAKY" <<'FLAKYEOF'
+#!/usr/bin/env bash
+cat "$LATCH_OUTPUT"
+exit 1
+FLAKYEOF
+chmod +x "$LATCH_FLAKY"
+rm -f "$(latch_inbox)" "$LATCH_FILE" "${LATCH_FILE}.undelivered"
+
+echo "same failure every time" > "$LATCH_OUTPUT"
+env LATCH_OUTPUT="$LATCH_OUTPUT" "$RUNNER" "$LATCH_NAME" "$LATCH_FLAKY" >/dev/null 2>&1
+if [[ -f "$(latch_inbox)" ]]; then
+  echo "OK     alert-latch: first occurrence of a failure alerts"
+else
+  echo "FAIL   alert-latch: first occurrence of a failure did not write an inbox alert"
+  FAIL=1
+fi
+rm -f "$(latch_inbox)"
+
+# repeat: byte-identical output -> must NOT write a second inbox file. This
+# is the actual bt-5149 bug (daily re-alarm on an unchanged condition) --
+# without the fix, this step fails because a fresh inbox file appears again.
+env LATCH_OUTPUT="$LATCH_OUTPUT" "$RUNNER" "$LATCH_NAME" "$LATCH_FLAKY" >/dev/null 2>&1
+if [[ -f "$(latch_inbox)" ]]; then
+  echo "FAIL   alert-latch: identical repeat failure re-alerted (bt-5149's daily-nag bug)"
+  FAIL=1
+else
+  echo "OK     alert-latch: identical repeat failure does not re-alert"
+fi
+
+# a genuinely different failure fingerprint must alert again
+echo "different failure now" > "$LATCH_OUTPUT"
+env LATCH_OUTPUT="$LATCH_OUTPUT" "$RUNNER" "$LATCH_NAME" "$LATCH_FLAKY" >/dev/null 2>&1
+if [[ -f "$(latch_inbox)" ]]; then
+  echo "OK     alert-latch: a changed failure fingerprint alerts again"
+else
+  echo "FAIL   alert-latch: a changed failure fingerprint did not re-alert"
+  FAIL=1
+fi
+rm -f "$(latch_inbox)"
+
+# resolve, then regress with the SAME output as just before the resolve --
+# must alert again (ma-c1b2: a passing run clears the latch, never permanent
+# silence on a recurring condition)
+cat > "$LATCH_FLAKY" <<'FLAKYEOF'
+#!/usr/bin/env bash
+exit 0
+FLAKYEOF
+chmod +x "$LATCH_FLAKY"
+env LATCH_OUTPUT="$LATCH_OUTPUT" "$RUNNER" "$LATCH_NAME" "$LATCH_FLAKY" >/dev/null 2>&1
+
+cat > "$LATCH_FLAKY" <<'FLAKYEOF'
+#!/usr/bin/env bash
+cat "$LATCH_OUTPUT"
+exit 1
+FLAKYEOF
+chmod +x "$LATCH_FLAKY"
+env LATCH_OUTPUT="$LATCH_OUTPUT" "$RUNNER" "$LATCH_NAME" "$LATCH_FLAKY" >/dev/null 2>&1
+if [[ -f "$(latch_inbox)" ]]; then
+  echo "OK     alert-latch: a resolve-then-regress cycle re-alerts even with the same fingerprint as before"
+else
+  echo "FAIL   alert-latch: same failure did not re-alert after an intervening pass"
+  FAIL=1
+fi
+
+rm -f "$(latch_inbox)" "$LATCH_FILE" "${LATCH_FILE}.undelivered"
+rm -rf "$LATCH_TMP"
 
 exit "$FAIL"
