@@ -2,12 +2,15 @@
 id: bt-7964
 title: Vendored alert-latch.sh has zero consumers here, so every monitor re-alarms daily on an
   unchanged condition instead of latching once
-status: open
+status: claimed
 priority: p3
 tags:
   - ops
   - monitoring
 created: 2026-08-18
+claim:
+  owner: capacity-engine
+  at: 2026-08-29T07:33:50Z
 ---
 
 `scripts/lib/alert-latch.sh` and `scripts/lib/alert-latch.test.sh` are vendored
@@ -179,3 +182,4 @@ DONE WHEN
 - 2026-08-27 blocker bt-5149 closed 2026-08-15T03:23:40Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-a942 closed 2026-07-30T05:35:07Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-5149 closed 2026-08-15T03:23:40Z — recheck whether this can proceed now.
+- 2026-08-29 claimed by capacity-engine
