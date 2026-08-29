@@ -33,6 +33,10 @@ const NOTE_NAMES = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","
 
 const state = {
   aref: 440,
+  // Mains frequency to notch out of the mic signal. 50 Hz across Europe,
+  // Israel and most of Asia/Africa; 60 Hz in the Americas and parts of Japan.
+  // Israel is 50, which is what Omri plays on.
+  mainsHz: 50,
   instrumentKey: "bass",
   tuningKey: "standard",
   selectedString: null,        // index, or null for auto-detect
@@ -311,6 +315,71 @@ function freqRange() {
   };
 }
 
+// ---------------------------------------------------------------- mains hum ---
+// An electric bass played through an amp carries the mains fundamental and its low
+// harmonics straight into the mic. In Israel that is 50 Hz; 60 Hz in the Americas.
+//
+// This is not a nuisance, it is the failure Omri reported on 2026-08-29 ("I can't
+// tune a drop 1/2 tone... it does not detect the notes properly"). Hum is far more
+// PERIODIC than a decaying plucked string, so YIN prefers it. Measured on synthetic
+// signals with realistic amp hum, before this existed:
+//   standard   E1 FAIL   A1 FAIL   D2 FAIL   G2 -> 49.0 Hz (an octave out)
+//   half-step  D#1 FAIL  G#1 "ok"  C#2 FAIL  F#2 -> 46.3 Hz
+// G#1 reading "ok" is the worst of it: 51.9 Hz is a whisker from 50 Hz hum, so the
+// tuner sat there looking confident and in tune while measuring the amplifier.
+//
+// Half-step down suffers more than standard, exactly as he noticed: its notes sit
+// nearer the hum and its search window opens lower, so more of the hum's harmonic
+// series falls inside the range YIN may pick from.
+//
+// WHY NOT A HIGH-PASS: the lowest string in half-step is Eb1 at 38.89 Hz, BELOW the
+// hum. Anything steep enough to remove 50 Hz removes the note.
+//
+// WHY NOT AN IIR NOTCH, which is the obvious answer and was tried first: a notch
+// narrow enough to spare G#1 (Q=30, ~1.7 Hz wide) needs ~1.5s to settle, and the
+// analyser window is 8192 samples at 22.05kHz = 0.37s. Filtering the window returns
+// mostly settling transient — measured -0.9 dB of rejection at 50 Hz, while costing
+// G#1 -1.5 dB. It attenuated the string MORE than the hum. Priming the filter by
+// repeating the window does not fix it either: 50 Hz is not a whole number of cycles
+// in 8192 samples, so every repeat seam is a discontinuity that re-excites the
+// transient.
+//
+// WHAT THIS DOES INSTEAD: least-squares removal of each hum partial. Project the
+// window onto sin/cos at the hum frequency, subtract exactly that component. No
+// filter state, so no transient and no settling time at all.
+const HUM_HARMONICS = 3;
+
+// Subtract the best-fit sinusoid at `freq` from `buf`, in place.
+function subtractPartial(buf, sampleRate, freq) {
+  const n = buf.length;
+  const w = 2 * Math.PI * freq / sampleRate;
+  let sc = 0, ss = 0, cc = 0, sscc = 0, cs = 0;
+  for (let i = 0; i < n; i++) {
+    const c = Math.cos(w * i), sn = Math.sin(w * i);
+    sc += buf[i] * c; ss += buf[i] * sn;
+    cc += c * c; sscc += sn * sn; cs += c * sn;
+  }
+  // Solve the 2x2 normal equations rather than assuming orthogonality: over a
+  // window that is not a whole number of cycles, cos and sin are NOT orthogonal,
+  // and assuming they are leaves a residual exactly where it hurts.
+  const det = cc * sscc - cs * cs;
+  if (Math.abs(det) < 1e-12) return;
+  const a = (sc * sscc - ss * cs) / det;
+  const b = (ss * cc - sc * cs) / det;
+  for (let i = 0; i < n; i++) buf[i] -= a * Math.cos(w * i) + b * Math.sin(w * i);
+}
+
+// Returns a filtered COPY; the caller's buffer belongs to the analyser.
+function rejectMainsHum(buf, sampleRate, mainsHz) {
+  const out = Float32Array.from(buf);
+  for (let h = 1; h <= HUM_HARMONICS; h++) {
+    const f = mainsHz * h;
+    if (f >= sampleRate / 2) break;
+    subtractPartial(out, sampleRate, f);
+  }
+  return out;
+}
+
 function detectPitchYIN(buf, sampleRate, minFreq, maxFreq) {
   const SIZE = buf.length;
   if (SIZE < 2) return -1;
@@ -397,7 +466,10 @@ function tickInner() {
     const buf = new Float32Array(state.analyser.fftSize);
     state.analyser.getFloatTimeDomainData(buf);
     const { minFreq, maxFreq } = freqRange();
-    const raw = detectPitchYIN(buf, state.audioCtx.sampleRate, minFreq, maxFreq);
+    // Strip mains hum before pitch detection — an amp feeds 50/60 Hz straight
+    // into the mic, and YIN prefers that steady tone to a decaying string.
+    const clean = rejectMainsHum(buf, state.audioCtx.sampleRate, state.mainsHz);
+    const raw = detectPitchYIN(clean, state.audioCtx.sampleRate, minFreq, maxFreq);
 
     if (raw < 0) {
       // Don't blank on the first miss — bass notes dip in and out as they sustain/

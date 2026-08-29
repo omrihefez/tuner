@@ -162,6 +162,8 @@ const EXPORT_NAMES = [
   "closestString",
   "medianPitch",
   "detectPitchYIN",
+  "rejectMainsHum",
+  "subtractPartial",
   "freqRange",
   "currentTuning",
   "shouldBuzz",
