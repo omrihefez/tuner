@@ -113,6 +113,8 @@ const $noteTarget = document.getElementById("note-target");
 const $noteCurrent= document.getElementById("note-current");
 const $needle     = document.getElementById("needle");
 const $cents      = document.getElementById("cents-display");
+const $inTuneBadge= document.getElementById("in-tune-badge");
+const $meterSection = document.getElementById("meter-section");
 const $announcer  = document.getElementById("tuner-announcer");
 const $startBtn   = document.getElementById("start-btn");
 const $micStatus  = document.getElementById("mic-status");
@@ -574,6 +576,13 @@ function tickInner() {
   if (enteredTune) triggerHaptic();
   state.wasInTune = isInTune;
 
+  // Decisive, unmissable in-tune state: the badge text, the note name color,
+  // and the whole meter card's background all flip together — not just the
+  // thin needle — so it reads at a glance without reading a signed number.
+  $inTuneBadge.classList.toggle("visible", isInTune);
+  $meterSection.classList.toggle("locked", isInTune);
+  $noteName.classList.toggle("in-tune", isInTune);
+
   if (announceNote !== null) {
     const announcement = buildAnnouncement(announceNote, announceCentsVal, isInTune);
     if (shouldAnnounce(now, state.lastAnnounceTs, state.lastAnnouncement, announcement, enteredTune)) {
@@ -688,6 +697,9 @@ function stop() {
   $announcer.textContent = "";
   $needle.style.left = "50%";
   $needle.className = "needle";
+  $inTuneBadge.classList.remove("visible");
+  $meterSection.classList.remove("locked");
+  $noteName.classList.remove("in-tune");
 }
 
 // === Wiring ===

@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b0e14" />
+  <meta name="theme-color" content="#f6f7fb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -38,20 +38,30 @@
       </div>
     </section>
 
-    <section class="meter-section">
+    <section class="meter-section" id="meter-section">
       <div class="note-display">
         <div id="note-name" class="note-name">–</div>
-        <div id="note-target" class="note-target">target — Hz</div>
-        <div id="note-current" class="note-current">heard — Hz</div>
+        <div class="note-freqs">
+          <span id="note-target" class="note-target">target — Hz</span>
+          <span id="note-current" class="note-current">heard — Hz</span>
+        </div>
       </div>
 
       <div class="needle-track" aria-label="cents off">
-        <div class="needle-scale">
-          <span>-50</span><span>-25</span><span>0</span><span>+25</span><span>+50</span>
+        <div class="direction-row">
+          <span class="dir-label dir-flat">◂ FLAT</span>
+          <span id="in-tune-badge" class="in-tune-badge">✓ IN TUNE</span>
+          <span class="dir-label dir-sharp">SHARP ▸</span>
         </div>
         <div class="needle-bar">
-          <div id="needle" class="needle"></div>
+          <div class="needle-zone-good"></div>
           <div class="needle-zero"></div>
+          <div id="needle" class="needle">
+            <div class="needle-tip"></div>
+          </div>
+        </div>
+        <div class="needle-scale">
+          <span>-50</span><span>-25</span><span>0</span><span>+25</span><span>+50</span>
         </div>
         <div id="cents-display" class="cents">— cents</div>
       </div>
@@ -78,7 +88,7 @@
         <pre id="diag-log"></pre>
       </details>
     </footer>
-    <p id="build-id" class="build-id">build 0829-1721</p>
+    <p id="build-id" class="build-id">build 0829-1729</p>
   </main>
   <script type="module" src="/tuner.js"></script>
 </body>
