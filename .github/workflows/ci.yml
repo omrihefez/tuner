@@ -6,6 +6,7 @@ name: CI
 # fleet's own push volume (th-419e), fixed the same way on meniapp/
 # capacity-engine already (ma-ce6e).
 on:
+  workflow_dispatch: {}
   push:
     branches: [main]
     paths-ignore:
