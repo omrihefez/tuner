@@ -70,3 +70,37 @@ test("every string detects under amp hum, in every tuning", () => {
     }
   }
 });
+
+// Continuity, not just correctness. Omri, 2026-08-29: "I can play a note and then
+// it locks down, and when I stop and play again it just doesn't find it... the
+// next time I play, it just doesn't catch."
+//
+// A decaying string is still a periodic signal, just a less perfect one. Two
+// things were dropping it: the RMS gate was tuned for the pre-subtraction signal
+// level, and YIN returned nothing when no tau cleared the strict threshold.
+test("a decaying note keeps detecting as it fades", () => {
+  state.instrumentKey = "bass";
+  state.tuningKey = "halfStep";
+  const { minFreq, maxFreq } = freqRange();
+  const f0 = midiToFreq(27, state.aref);   // Eb1, the lowest half-step string
+  let detected = 0, total = 0;
+  for (const amp of [0.20, 0.12, 0.07, 0.04, 0.02, 0.012, 0.008, 0.005]) {
+    total++;
+    const clean = rejectMainsHum(signal(f0, { hum: 0.25 }).map((v) => v * (amp / 0.15)), SR, 50);
+    const got = detectPitchYIN(Float32Array.from(clean), SR, minFreq, maxFreq);
+    if (got > 0 && Math.abs(1200 * Math.log2(got / f0)) < 30) detected++;
+  }
+  assert.equal(detected, total, `only ${detected}/${total} amplitudes detected as the note decayed`);
+});
+
+// The fallback must not invent a pitch out of nothing — that would be worse than
+// reporting silence, because the needle would wander convincingly.
+test("silence and noise still report nothing", () => {
+  state.instrumentKey = "bass";
+  state.tuningKey = "halfStep";
+  const { minFreq, maxFreq } = freqRange();
+  assert.equal(detectPitchYIN(new Float32Array(SIZE), SR, minFreq, maxFreq), -1, "silence");
+  const noise = new Float32Array(SIZE);
+  for (let i = 0; i < SIZE; i++) noise[i] = (Math.random() * 2 - 1) * 0.15;
+  assert.equal(detectPitchYIN(noise, SR, minFreq, maxFreq), -1, "white noise");
+});

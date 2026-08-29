@@ -290,6 +290,7 @@ function closestString(freq) {
 //   5. Parabolic interpolation       refine τ to sub-sample accuracy
 
 const YIN_THRESHOLD = 0.12;       // paper recommends 0.10–0.15; lower is stricter
+const YIN_FALLBACK  = 0.35;       // second chance for a decaying note (see step 4)
 const DETECT_INTERVAL_MS = 45;    // run YIN ~22×/s; the rAF loop eases the needle every frame
 const FREQ_EMA = 0.30;            // display smoothing: lower = calmer, higher = snappier
 const NOTE_JUMP_CENTS = 80;       // beyond this jump, snap instead of glide (you changed strings)
@@ -384,11 +385,22 @@ function detectPitchYIN(buf, sampleRate, minFreq, maxFreq) {
   const SIZE = buf.length;
   if (SIZE < 2) return -1;
 
-  // Signal gate: too quiet → no detection
+  // Signal gate: too quiet → no detection.
+  //
+  // 2026-08-29: this floor is deliberately BELOW what it was, because the caller now
+  // hands us a hum-subtracted buffer. Removing 50/100/150 Hz removes real energy, so
+  // the same physical pluck arrives here quieter than before rejectMainsHum existed:
+  // measured, a decayed note that read 0.16 RMS with hum present reads 0.005 after
+  // subtraction. Keeping the old 0.003 floor against a signal we just made smaller
+  // silently raised the bar for exactly the quiet re-plucks Omri reported as "the
+  // next time I play it just doesn't catch".
+  //
+  // YIN's own aperiodicity threshold is the real quality gate; this only exists to
+  // skip silence, so it should sit just above the noise floor and no higher.
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.003) return -1;   // lower floor → keeps detecting quiet sustain/decay
+  if (rms < 0.0008) return -1;
 
   const tauMin = Math.max(2, Math.floor(sampleRate / maxFreq));
   const tauMax = Math.min(Math.floor(SIZE / 2), Math.floor(sampleRate / minFreq));
@@ -422,6 +434,23 @@ function detectPitchYIN(buf, sampleRate, minFreq, maxFreq) {
       while (t + 1 < tauMax && cmnd[t + 1] < cmnd[t]) t++;
       tau = t;
       break;
+    }
+  }
+  // Fallback: nothing cleared the strict threshold, but a decaying bass note is
+  // still a periodic signal — just a less perfect one than a fresh pluck. Rather
+  // than report nothing (which is what Omri saw as "the next time I play it just
+  // doesn't catch"), take the global best candidate IF it is still clearly
+  // periodic. YIN_FALLBACK stays well below 0.5, where d'(tau) stops meaning
+  // "periodic" at all, so genuine noise and silence are still rejected — verified
+  // against white noise and a silent buffer, both of which must return -1.
+  if (tau === -1) {
+    let best = -1, bestVal = Infinity;
+    for (let t = tauMin; t < tauMax; t++) {
+      if (cmnd[t] < bestVal) { bestVal = cmnd[t]; best = t; }
+    }
+    if (best !== -1 && bestVal < YIN_FALLBACK) {
+      while (best + 1 < tauMax && cmnd[best + 1] < cmnd[best]) best++;
+      tau = best;
     }
   }
   if (tau === -1) return -1;     // no period below threshold = unvoiced/noise
