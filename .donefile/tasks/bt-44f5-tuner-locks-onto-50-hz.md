@@ -2,12 +2,27 @@
 id: bt-44f5
 title: Tuner locks onto 50 Hz amp hum instead of the string — half-step down worst hit, G#1 reads
   'in tune' while measuring the amplifier
-status: open
+status: done
 priority: p1
 tags:
   - from-omri
   - audio
 created: 2026-08-29
+done:
+  at: 2026-08-29T14:11:45Z
+  by: omri@ubuntu-4gb-nbg1-1
+evidence:
+  - type: commit
+    value: 6a95acf
+    verified: 2026-08-29T14:11:45Z
+  - type: live
+    cmd: curl -sL https://bass.omrihefez.com/tuner.js | grep -c rejectMainsHum
+    exit: 0
+    at: 2026-08-29T14:11:45Z
+    expect: "2"
+    log: evidence/bt-44f5-2026-08-29T14-11-45Z-live.txt
+    sha256: 891914dfc85630e34f256abc70886d1b77051dab0ccc1acee37f3c83cab53f54
+    bytes: 75
 ---
 
 HIS WORDS (2026-08-29 16:47): "I don't know what you did to tuner app but it have gotten worse. I
@@ -67,3 +82,6 @@ Two incidental blockers fixed on the way out, both real: the pre-push gate refus
 this repo because it has ZERO dependencies so node_modules can never exist (a regression from
 dn-14b1, which changed silent-skip to refuse); and vercel.json declared no outputDirectory, so the
 deploy failed looking for public/.
+
+## Log
+- 2026-08-29 done by omri@ubuntu-4gb-nbg1-1 — commit 6a95acf, live `curl -sL https://bass.omrihefez.com/tuner.js | grep -c rejectMainsHum` exit 0 (--live-expect "2") (log: evidence/bt-44f5-2026-08-29T14-11-45Z-live.txt)

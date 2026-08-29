@@ -1,0 +1,3 @@
+$ curl -sL https://bass.omrihefez.com/tuner.js | grep -c rejectMainsHum
+
+2
