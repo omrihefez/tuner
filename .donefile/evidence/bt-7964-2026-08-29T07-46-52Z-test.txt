@@ -1,0 +1,12 @@
+$ bash /home/omri/projects/bass-tuner/scripts/run-monitor-latch.test.sh
+
+1. first occurrence of a failure alerts
+  ok — first occurrence of a failure alerts
+2. a byte-identical repeat failure does NOT re-alert (the bt-5149 bug)
+  ok — identical repeat failure does not re-alert
+3. a genuinely different failure fingerprint alerts again
+  ok — a changed failure fingerprint alerts again
+4. a resolve-then-regress cycle re-alerts even with the same fingerprint as before
+  ok — resolve-then-regress re-alerts (ma-c1b2: never permanent silence)
+
+PASS (4 assertions)

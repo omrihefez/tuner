@@ -2,15 +2,36 @@
 id: bt-7964
 title: Vendored alert-latch.sh has zero consumers here, so every monitor re-alarms daily on an
   unchanged condition instead of latching once
-status: claimed
+status: done
 priority: p3
 tags:
   - ops
   - monitoring
 created: 2026-08-18
-claim:
-  owner: capacity-engine
-  at: 2026-08-29T07:33:50Z
+done:
+  at: 2026-08-29T07:46:53Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 3a67407
+    verified: 2026-08-29T07:46:53Z
+  - type: test
+    cmd: bash /home/omri/projects/bass-tuner/scripts/run-monitor-latch.test.sh
+    exit: 0
+    at: 2026-08-29T07:46:52Z
+    log: evidence/bt-7964-2026-08-29T07-46-52Z-test.txt
+    sha256: ed9f084d019b069063958ba71a6cb1fd965e1bd94ab92c8f953f0db5c8238cea
+    bytes: 571
+  - type: note
+    value: "Option A: wired lib/alert-latch.sh into run-monitor.sh (fingerprint the failure, latch via
+      notify_and_latch, clear latch on a pass). Did NOT add alert-latch.sh to meniapp
+      check-vendored-guard-drift.sh's GUARDS manifest as the task body suggested -- that map's
+      semantics are existence-forbidden for consolidated scripts, the opposite of what a
+      deliberately-vendored library needs; filed as a follow-up instead. Closing --test is a new
+      hermetic scripts/run-monitor-latch.test.sh (also now runs under npm test) rather than the full
+      test-monitoring.sh, because that suite's crontab-presence checks have a documented
+      pre-existing concurrent-rewrite race (bt-d30a) reproduced live during this task, unrelated to
+      this change."
 ---
 
 `scripts/lib/alert-latch.sh` and `scripts/lib/alert-latch.test.sh` are vendored
@@ -183,3 +204,4 @@ DONE WHEN
 - 2026-08-27 blocker bt-a942 closed 2026-07-30T05:35:07Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-5149 closed 2026-08-15T03:23:40Z — recheck whether this can proceed now.
 - 2026-08-29 claimed by capacity-engine
+- 2026-08-29 done by capacity-engine/worker — commit 3a67407, test `bash /home/omri/projects/bass-tuner/scripts/run-monitor-latch.test.sh` exit 0 (log: evidence/bt-7964-2026-08-29T07-46-52Z-test.txt)
