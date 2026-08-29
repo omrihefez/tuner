@@ -1,0 +1,2 @@
+$ curl -sL https://bass.omrihefez.com/tuner.js | sha256sum | grep -q $(git -C /home/omri/projects/bass-tuner show 794ef3a:tuner.js | sha256sum | cut -d' ' -f1)
+
