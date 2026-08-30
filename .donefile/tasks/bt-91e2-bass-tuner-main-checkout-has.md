@@ -2,15 +2,31 @@
 id: bt-91e2
 title: bass-tuner main checkout has a stale staged .donefile/config.yml + bt-3143 evidence-file diff
   sitting uncommitted since 2026-08-15 (bt-8e12/bt-3143, both already done) — commit or discard it
-status: claimed
+status: done
 priority: p3
 tags:
   - bass-tuner
   - bookkeeping
 created: 2026-08-23
-claim:
-  owner: capacity-engine
-  at: 2026-08-30T22:51:01Z
+done:
+  at: 2026-08-30T22:51:49Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: cec3f28
+    verified: 2026-08-30T22:51:49Z
+  - type: test
+    cmd: git -C /home/omri/projects/bass-tuner status --porcelain
+    exit: 0
+    at: 2026-08-30T22:51:49Z
+    log: evidence/bt-91e2-2026-08-30T22-51-49Z-test.txt
+    sha256: efe2f1eea2812d5377c201df3e3b6492443f3a17a83f275b720b7412bd6f8e7f
+    bytes: 60
+  - type: note
+    value: "not real / already fixed: the staged .donefile/config.yml + bt-3143 evidence diff was
+      already committed in cec3f28 (donefile: register the meni repo alias, and bt-3143 evidence),
+      well before this task was dispatched. Verified git status -sb and git diff --cached --stat
+      both clean, main up to date with origin/main."
 ---
 
 Named in the finding: donefile/config.yml, bt-8e12/bt-3143
@@ -173,3 +189,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 - 2026-08-27 blocker bt-d5e2 closed 2026-08-22T21:50:13Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-8e12 closed 2026-08-15T03:31:05Z — recheck whether this can proceed now.
 - 2026-08-31 claimed by capacity-engine
+- 2026-08-31 done by capacity-engine/worker — commit cec3f28, test `git -C /home/omri/projects/bass-tuner status --porcelain` exit 0 (log: evidence/bt-91e2-2026-08-30T22-51-49Z-test.txt)

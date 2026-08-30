@@ -1,0 +1,2 @@
+$ git -C /home/omri/projects/bass-tuner status --porcelain
+
