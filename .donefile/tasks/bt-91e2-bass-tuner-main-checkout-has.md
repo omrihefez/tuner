@@ -2,12 +2,15 @@
 id: bt-91e2
 title: bass-tuner main checkout has a stale staged .donefile/config.yml + bt-3143 evidence-file diff
   sitting uncommitted since 2026-08-15 (bt-8e12/bt-3143, both already done) — commit or discard it
-status: open
+status: claimed
 priority: p3
 tags:
   - bass-tuner
   - bookkeeping
 created: 2026-08-23
+claim:
+  owner: capacity-engine
+  at: 2026-08-30T22:51:01Z
 ---
 
 Named in the finding: donefile/config.yml, bt-8e12/bt-3143
@@ -169,3 +172,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 - 2026-08-27 blocker bt-3143 closed 2026-08-15T15:04:20Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-d5e2 closed 2026-08-22T21:50:13Z — recheck whether this can proceed now.
 - 2026-08-27 blocker bt-8e12 closed 2026-08-15T03:31:05Z — recheck whether this can proceed now.
+- 2026-08-31 claimed by capacity-engine
