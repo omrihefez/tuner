@@ -69,6 +69,8 @@ CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
 # defaults derive from the script's OWN location (meniapp), not this repo's,
 # once it's no longer a local vendored copy.
 DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
+# Same consolidation for the log-dir lint (ma-b531): shared implementation
+LINT_LOGDIRS="/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh"
 DRIFT_STATE_DIR="/home/omri/.local/share/meni-hub/bass-tuner-crontab-drift"
 DRIFT_LINE="47 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK=\"$BEGIN_MARK\" END_MARK=\"$END_MARK\" EXPECTED_CONTENT_CMD=\"/home/omri/projects/bass-tuner/scripts/install-cert-renewal-cron.sh --print-line\" INSTALLER_HINT=\"scripts/install-cert-renewal-cron.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
 
@@ -87,7 +89,7 @@ fi
 # future line that bypasses the wrapper and redirects directly. The drift
 # check line above is a real cron-level redirect and IS subject to ma-5896,
 # hence its own `mkdir -p ... &&` prefix.
-if ! printf '%s\n' "$CRON_LINES" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; then
+if ! printf '%s\n' "$CRON_LINES" | bash "$LINT_LOGDIRS" -; then
   echo "[install-cert-renewal-cron] refusing to install: rendered lines failed the log-dir lint (see above)." >&2
   exit 1
 fi

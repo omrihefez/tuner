@@ -50,6 +50,11 @@ DOMAIN_AUDIT="$REPO/scripts/audit-domains.sh"
 HEARTBEAT="$REPO/scripts/check-monitor-heartbeats.sh"
 STALE_DEPLOY="$REPO/deploy/activation-probes/probe-bt-5fb7.sh"
 
+# Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
+# copy); runs on the same box as meniapp, so the absolute path always
+# resolves.
+LINT_LOGDIRS="/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh"
+
 BEGIN_MARK="# BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 
@@ -75,7 +80,7 @@ CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 # running process (not a cron-level `>>` redirect), so ma-5896 doesn't apply
 # to them today -- this is a regression guard against a future line that
 # bypasses the wrapper and redirects directly.
-if ! printf '%s\n' "$CRON_LINES" | bash "$SCRIPT_DIR/lint-crontab-logdirs.sh" -; then
+if ! printf '%s\n' "$CRON_LINES" | bash "$LINT_LOGDIRS" -; then
   echo "[install-monitoring-crons] refusing to install: rendered lines failed the log-dir lint (see above)." >&2
   exit 1
 fi
