@@ -2,15 +2,31 @@
 id: bt-c050
 title: Install iac's ff-sync cron (scripts/install-ff-sync-cron.sh, already on origin/main at
   841dcb1) once /home/omri/projects/iac's live checkout is back on main
-status: claimed
+status: done
 priority: p3
 tags:
   - infra
   - cron
 created: 2026-08-28
-claim:
-  owner: capacity-engine
-  at: 2026-08-31T23:49:26Z
+done:
+  at: 2026-08-31T23:51:26Z
+  by: capacity-engine/worker
+evidence:
+  - type: test
+    cmd: crontab -l | grep -A1 'BEGIN iac-ff-sync (scripts/install-ff-sync-cron.sh)' | grep -q
+      'ff-sync-main-checkout.sh'
+    exit: 0
+    at: 2026-08-31T23:51:25Z
+    log: evidence/bt-c050-2026-08-31T23-51-25Z-test.txt
+    sha256: f5f95a5cd990e22b6d4f5ed9fac6ef7835050f9290d1a7b6580664687cf0eae2
+    bytes: 116
+  - type: note
+    value: iac's ff-sync cron script (scripts/install-ff-sync-cron.sh, iac origin/main@841dcb1) already
+      existed but the crontab only had an EMPTY iac-ff-sync marker block (never actually installed).
+      iac's live checkout is confirmed on main (HEAD 757c416, 841dcb1 is an ancestor). Ran 'bash
+      scripts/install-ff-sync-cron.sh' in /home/omri/projects/iac; the */3min cron line is now
+      present, and ff-sync-main-checkout.sh ran manually with exit 0 ('in sync at 757c416'). No code
+      change/commit — this was a one-time crontab install (idempotent, --remove available).
 ---
 
 Named in the finding: scripts/install-ff-sync-cron.sh, origin/main, home/omri/projects/iac
@@ -35,3 +51,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 - 2026-09-01 claimed by capacity-engine
 - 2026-09-01 released by capacity-engine
 - 2026-09-01 claimed by capacity-engine
+- 2026-09-01 done by capacity-engine/worker — test `crontab -l | grep -A1 'BEGIN iac-ff-sync (scripts/install-ff-sync-cron.sh)' | grep -q 'ff-sync-main-checkout.sh'` exit 0 (log: evidence/bt-c050-2026-08-31T23-51-25Z-test.txt)

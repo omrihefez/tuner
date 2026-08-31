@@ -1,0 +1,2 @@
+$ crontab -l | grep -A1 'BEGIN iac-ff-sync (scripts/install-ff-sync-cron.sh)' | grep -q 'ff-sync-main-checkout.sh'
+
