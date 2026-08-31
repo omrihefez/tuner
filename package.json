@@ -10,7 +10,11 @@
     "check:syntax": "find . -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -r -n1 node --check",
     "check:links": "node scripts/check-links.js",
     "check:cache-bump": "node scripts/check-sw-cache-bump.js",
-    "//test": "ma-20c5: appended the scripts/*.test.sh loop so audit-domains.test.sh (and any future hermetic shell test alongside it) actually runs under CI's existing 'npm test' step -- this repo had no scripts/*.test.sh runner before, unlike meniapp's dedicated CI job.",
-    "test": "node --test test/*.test.js && for f in scripts/*.test.sh; do echo \"-- $f --\"; bash \"$f\" || exit 1; done"
+    "//test": "ma-20c5: appended the scripts/*.test.sh loop so audit-domains.test.sh (and any future hermetic shell test alongside it) actually runs under CI's existing 'npm test' step -- this repo had no scripts/*.test.sh runner before, unlike meniapp's dedicated CI job. bt-4722: added scripts/lib/*.test.sh -- alert-latch.test.sh lives under scripts/lib/ and the old glob never matched it, so it silently never ran here or in CI despite passing standalone (10/10) every time someone remembered to run it by hand.",
+    "test": "node --test test/*.test.js && for f in scripts/*.test.sh scripts/lib/*.test.sh; do echo \"-- $f --\"; bash \"$f\" || exit 1; done",
+    "//test:unit": "bt-4722: everything with no real external dependency -- no unstubbed subprocess, no real network, no real crontab. See docs/TESTING.md for why the three scripts/*.test.sh files count as unit despite spawning bash.",
+    "test:unit": "node --test test/announce.test.js test/diag-copy.test.js test/haptic.test.js test/mains-hum.test.js test/mic-leak.test.js test/pitch-math.test.js test/reference-tone-gate.test.js test/sample-rate.test.js test/sw.test.js test/vercel-headers.test.js && for f in scripts/*.test.sh scripts/lib/*.test.sh; do echo \"-- $f --\"; bash \"$f\" || exit 1; done",
+    "//test:integration": "bt-4722: the one test that spawns real git + node subprocesses against real temp git repos to exercise scripts/check-sw-cache-bump.js's actual git-diff logic. See docs/TESTING.md.",
+    "test:integration": "node --test test/check-sw-cache-bump.test.js"
   }
 }
