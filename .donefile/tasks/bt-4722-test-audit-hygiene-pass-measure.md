@@ -2,11 +2,14 @@
 id: bt-4722
 title: Test audit + hygiene pass (measure first, don't assume bloat) — fanned out from meniapp
   ma-65f4/ma-38dd
-status: open
+status: claimed
 priority: p3
 tags:
   - tests
 created: 2026-08-24
+claim:
+  owner: capacity-engine
+  at: 2026-08-31T08:36:31Z
 ---
 
 Fan-out of the meniapp test audit+hygiene methodology (ma-65f4, meniapp, commit e5d2f114) to this repo.
@@ -21,3 +24,6 @@ WHAT TO DO — measure first, don't assume bloat:
 PROVENANCE: this follow-up was discovered and auto-filed from ma-38dd (meniapp), which itself fans out ma-65f4. ma-65f4 was Omri's actual ask, scoped to meniapp (hub/app/plugin) — "Start with the hub and once it's grounded you can parallelize into the others." Extending it to this repo is a reasonable extrapolation, but it is NOT itself something Omri asked for by name, so it is filed self-generated (no from-omri tag). If Omri confirms he wants this done everywhere, this should be retagged from-omri that day.
 
 DONE WHEN: either (a) the audit is done, suites are appropriately split, a testing-rules doc is written from real measurements, and nothing lost coverage — cite before/after numbers and the doc's path/commit; or (b) the audit was done and concluded no changes were warranted — say so explicitly with the measurements that led there. Either outcome is a valid close; "found less bloat than expected" is a legitimate result, not a failure to find work.
+
+## Log
+- 2026-08-31 claimed by capacity-engine
