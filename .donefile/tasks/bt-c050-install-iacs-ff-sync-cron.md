@@ -2,15 +2,12 @@
 id: bt-c050
 title: Install iac's ff-sync cron (scripts/install-ff-sync-cron.sh, already on origin/main at
   841dcb1) once /home/omri/projects/iac's live checkout is back on main
-status: claimed
+status: open
 priority: p3
 tags:
   - infra
   - cron
 created: 2026-08-28
-claim:
-  owner: capacity-engine
-  at: 2026-08-31T21:34:29Z
 ---
 
 Named in the finding: scripts/install-ff-sync-cron.sh, origin/main, home/omri/projects/iac
@@ -33,3 +30,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-01 claimed by capacity-engine
+- 2026-09-01 released by capacity-engine
