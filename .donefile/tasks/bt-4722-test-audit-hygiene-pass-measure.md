@@ -2,14 +2,25 @@
 id: bt-4722
 title: Test audit + hygiene pass (measure first, don't assume bloat) — fanned out from meniapp
   ma-65f4/ma-38dd
-status: claimed
+status: done
 priority: p3
 tags:
   - tests
 created: 2026-08-24
-claim:
-  owner: capacity-engine
-  at: 2026-08-31T08:36:31Z
+done:
+  at: 2026-08-31T08:43:08Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 3c8bc92a8c7879e9cfd4aef207df26f4a6d42baf
+    verified: 2026-08-31T08:43:08Z
+  - type: test
+    cmd: npm test
+    exit: 0
+    at: 2026-08-31T08:43:03Z
+    log: evidence/bt-4722-2026-08-31T08-43-03Z-test.txt
+    sha256: 0f43dc5b124b9910d7bb3fe36ef330a3516eaccc829525d772063b03e6f88e3b
+    bytes: 25460
 ---
 
 Fan-out of the meniapp test audit+hygiene methodology (ma-65f4, meniapp, commit e5d2f114) to this repo.
@@ -27,3 +38,4 @@ DONE WHEN: either (a) the audit is done, suites are appropriately split, a testi
 
 ## Log
 - 2026-08-31 claimed by capacity-engine
+- 2026-08-31 done by capacity-engine/worker — commit 3c8bc92a8c78, test `npm test` exit 0 (log: evidence/bt-4722-2026-08-31T08-43-03Z-test.txt)
