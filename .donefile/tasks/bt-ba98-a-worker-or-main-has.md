@@ -3,11 +3,14 @@ id: bt-ba98
 title: A worker or Main has an in-progress stash "bt-8e75 mic leak fix" (tuner.js) sitting unapplied
   in bass-tuner's shared .git — surfaced only because my worktree's stash pop hit it by accident.
   Worth checking whether that work is still wanted / should be applied properly.
-status: open
+status: claimed
 priority: p3
 tags:
   - ops
 created: 2026-08-29
+claim:
+  owner: capacity-engine
+  at: 2026-09-01T13:12:05Z
 ---
 
 Named in the finding: tuner.js
@@ -21,3 +24,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit 3a67407).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-01 claimed by capacity-engine
