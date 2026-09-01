@@ -1,0 +1,4 @@
+$ grep -n setupErr /home/omri/projects/bass-tuner/tuner.js
+
+635:      } catch (setupErr) {
+643:        throw setupErr;

@@ -3,14 +3,32 @@ id: bt-ba98
 title: A worker or Main has an in-progress stash "bt-8e75 mic leak fix" (tuner.js) sitting unapplied
   in bass-tuner's shared .git — surfaced only because my worktree's stash pop hit it by accident.
   Worth checking whether that work is still wanted / should be applied properly.
-status: claimed
+status: done
 priority: p3
 tags:
   - ops
 created: 2026-08-29
-claim:
-  owner: capacity-engine
-  at: 2026-09-01T13:12:05Z
+done:
+  at: 2026-09-01T13:13:16Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: bfc2056
+    verified: 2026-09-01T13:13:16Z
+  - type: test
+    cmd: grep -n setupErr /home/omri/projects/bass-tuner/tuner.js
+    exit: 0
+    at: 2026-09-01T13:13:16Z
+    log: evidence/bt-ba98-2026-09-01T13-13-16Z-test.txt
+    sha256: 7c8bdd2ee97675bd63a97e347ffa8d714fa131a8f7e6dde88d99d31788dd0961
+    bytes: 119
+  - type: note
+    value: "not real / already fixed: the stash 'bt-8e75 mic leak fix' (created 2026-07-22 00:42:49,
+      3min before commit) is byte-identical to bfc2056's diff, which is on origin/main and closed
+      bt-8e75 done on 2026-07-21. Confirmed via diff bfc2056^..bfc2056 -- tuner.js == git stash show
+      -p, identical. The worker who fixed bt-8e75 apparently stashed a WIP copy of the same edit and
+      separately committed it, then never dropped the stash. Nothing was unapplied or lost --
+      dropped the redundant stash (was b9b3884)."
 ---
 
 Named in the finding: tuner.js
@@ -27,3 +45,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-01 claimed by capacity-engine
+- 2026-09-01 done by capacity-engine/worker — commit bfc2056, test `grep -n setupErr /home/omri/projects/bass-tuner/tuner.js` exit 0 (log: evidence/bt-ba98-2026-09-01T13-13-16Z-test.txt)
