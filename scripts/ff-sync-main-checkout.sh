@@ -36,6 +36,16 @@
 # changes conflict with the incoming range, which just defers a tick.
 set -uo pipefail
 
+# Scrub inherited git plumbing env before ANY git call below (sb-f539).
+# GIT_DIR OUTRANKS a `cd` into REPO_ROOT -- an ambient GIT_DIR/GIT_WORK_TREE
+# (git exports these into every hook and every process it spawns) would make
+# every `git` call below operate on a DIFFERENT repo than the one this script
+# just cd'd into, silently. Same class and same fix as sb-7d11
+# (install-prune-cron.sh, 52897e1), trips-hub's th-cf17, and second-brain's
+# sb-be37 (153b522).
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY \
+  GIT_ALTERNATE_OBJECT_DIRECTORIES
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATE_DIR="${FF_SYNC_STATE_DIR:-$HOME/.local/share/meni-hub/ff-sync-bass-tuner-main-checkout}"
 NOTIFY="${MENI_NOTIFY_BIN:-$HOME/meni/bin/meni-notify}"
