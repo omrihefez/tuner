@@ -198,26 +198,50 @@ fi
 # more than one worker session runnable at once -- so `crontab -l` here can
 # land mid another process's rewrite and read back a snapshot that's
 # genuinely missing an entry for a moment, even though it's live just before
-# and after. A single retry measured as insufficient (a live install can hold
-# the crontab in a rewritten-but-not-yet-restored state for more than 0.5s),
-# so poll for a few seconds before trusting an absence -- a real missing-
-# entry regression still fails once that whole window comes up empty.
-CRON="$(crontab -l 2>/dev/null || true)"
+# and after. bt-d30a's fix was a blind 5x0.5s poll, which only shrinks that
+# race's odds; bt-30a0 measured it still losing 2 of 3 back-to-back
+# full-suite runs (a different monitor name each time) under today's heavier
+# box load.
+#
+# Every installer that can cause this flicker already serializes its
+# read-modify-write on ONE shared lock before it touches the crontab
+# (ma-09c1) -- see install-monitoring-crons.sh's CRONTAB_LOCK. Taking that
+# SAME lock here, shared, before reading means we block until any in-flight
+# rewrite finishes and then read a snapshot that is never torn -- for every
+# installer that participates in the lock, this removes the race instead of
+# just narrowing the window.
+#
+# The poll-with-retry underneath is kept as a second line of defense for a
+# writer that does NOT (yet) take the shared lock -- one such gap
+# (iac/scripts/install-mail-digest-cron.sh) exists today, filed separately as
+# iac-62b1 -- and its budget is widened (5x0.5s -> 8x1s) since that fallback
+# path is still a blind poll.
+CRONTAB_LOCK="$HOME/.local/share/meni-hub/crontab-install.lock"
+mkdir -p "$(dirname "$CRONTAB_LOCK")"
+read_crontab_locked() {
+  exec 201>"$CRONTAB_LOCK"
+  flock -s -w 10 201
+  crontab -l 2>/dev/null || true
+  flock -u 201
+  exec 201>&-
+}
+
+CRON="$(read_crontab_locked)"
 for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
   if echo "$CRON" | grep -q "$pat"; then
     echo "OK     $pat is scheduled in crontab"
   else
     found=0
-    for attempt in 1 2 3 4 5; do
-      sleep 0.5
-      CRON="$(crontab -l 2>/dev/null || true)"
+    for attempt in 1 2 3 4 5 6 7 8; do
+      sleep 1
+      CRON="$(read_crontab_locked)"
       if echo "$CRON" | grep -q "$pat"; then
         found=1
         break
       fi
     done
     if [[ "$found" -eq 1 ]]; then
-      echo "OK     $pat is scheduled in crontab (missing on first read, present after $attempt retries -- likely raced a concurrent crontab rewrite)"
+      echo "OK     $pat is scheduled in crontab (missing on first lock-serialized read, present after $attempt retries -- a writer outside the shared lock is the likely cause)"
     else
       echo "FAIL   $pat missing from crontab"
       FAIL=1
