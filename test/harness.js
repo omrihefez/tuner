@@ -76,6 +76,13 @@ function buildSandbox(overrides = {}) {
   diagPanelEl.id = "diag-panel";
   diagPanelEl.hidden = true;
   elementsById.set("diag-panel", diagPanelEl);
+  // Same reason as diag-log: tuner.js captures $micStatus ONCE at module scope,
+  // so a test that later calls getElementById("mic-status") must get that very
+  // element back rather than a fresh empty stand-in, or every assertion on the
+  // mic error text reads an object nothing ever wrote to and passes vacuously.
+  const micStatusEl = makeEl(elementsById);
+  micStatusEl.id = "mic-status";
+  elementsById.set("mic-status", micStatusEl);
 
   const documentStub = {
     getElementById(id) {
@@ -93,7 +100,7 @@ function buildSandbox(overrides = {}) {
     addEventListener() {},
   };
 
-  const locationStub = { protocol: "https:", host: "test.local", search: overrides.search || "", reload() {} };
+  const locationStub = { protocol: overrides.protocol || "https:", host: "test.local", search: overrides.search || "", reload() {} };
 
   const navigatorStub = {
     userAgent: "node-test-harness",

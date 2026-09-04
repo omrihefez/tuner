@@ -653,12 +653,23 @@ function start() {
       const name = err.name || "Error";
       diag("getUserMedia rejected: " + name + " — " + (err.message || ""));
       let msg = `Mic error: ${err.message || name}`;
-      if (name === "NotAllowedError" || /denied/i.test(err.message || "")) {
+      // Order matters. An insecure origin rejects with NotAllowedError, so the
+      // protocol check has to come FIRST — otherwise it can never fire and the
+      // user is sent to a site-settings page that cannot fix an http origin.
+      if (location.protocol !== "https:") {
+        msg = "Mic only works over HTTPS. Open this page at https://bass.omrihefez.com.";
+      } else if (name === "NotReadableError" || name === "TrackStartError"
+                 || /could not start audio source/i.test(err.message || "")) {
+        // bt-b7e7 / bt-8e75: the mic is held by another app, or by a
+        // backgrounded copy of this one. The old code let this fall into the
+        // generic bucket, where it read "Mic error: Could not start audio
+        // source" — true, unactionable, and the single failure a user cannot
+        // diagnose from the text.
+        msg = "Microphone is in use by another app. Close it — or swipe this app away from recents if the tuner was already open — then reload.";
+      } else if (name === "NotAllowedError" || /denied/i.test(err.message || "")) {
         msg = "Mic permission denied. Open Chrome ⋮ menu → Settings → Site settings → Microphone → bass.omrihefez.com → Allow, then reload.";
       } else if (name === "NotFoundError") {
         msg = "No microphone found on this device.";
-      } else if (location.protocol !== "https:") {
-        msg = "Mic only works over HTTPS.";
       }
       showMicError(msg);
     });
