@@ -68,3 +68,6 @@ fire.
 
 Filed on bass-tuner because it carries the monitoring-script family and its own
 board is quiet; the work spans repos, so path-scope commits per repo.
+
+## Log
+- 2026-09-07 blocker ce-fd76 closed 2026-08-31T07:57:05Z — recheck whether this can proceed now.
