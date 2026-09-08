@@ -2,13 +2,16 @@
 id: bt-ea85
 title: ff-sync-main-checkout.sh is hand-copied into 8 repos and already differs in length, with
   nothing asserting the copies agree
-status: open
+status: claimed
 priority: p3
 tags:
   - debt
   - tooling
   - cross-board
 created: 2026-08-31
+claim:
+  owner: capacity-engine
+  at: 2026-09-08T14:17:10Z
 ---
 
 `scripts/ff-sync-main-checkout.sh` exists as a hand-copied file in EIGHT repos,
@@ -71,3 +74,4 @@ board is quiet; the work spans repos, so path-scope commits per repo.
 
 ## Log
 - 2026-09-07 blocker ce-fd76 closed 2026-08-31T07:57:05Z — recheck whether this can proceed now.
+- 2026-09-08 claimed by capacity-engine
