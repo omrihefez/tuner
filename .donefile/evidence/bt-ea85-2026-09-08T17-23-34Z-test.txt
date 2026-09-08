@@ -1,0 +1,24 @@
+$ bash /home/omri/projects/donefile/scripts/lib/alert-latch-fleet-divergence.test.sh && bash /home/omri/projects/donefile/scripts/lib/ff-sync-fleet-divergence.test.sh
+
+  ok   SANITY: predicate correctly rejects a pre-conversion-shaped standalone copy
+  ok   SANITY: predicate accepts a genuine thin wrapper
+  ok   /home/omri/projects/bass-tuner/scripts/lib/alert-latch.sh sources the canonical lib, no local re-implementation
+  ok   /home/omri/projects/tik-api/scripts/lib/alert-latch.sh sources the canonical lib, no local re-implementation
+  ok   /home/omri/projects/second-brain/scripts/lib/alert-latch.sh sources the canonical lib, no local re-implementation
+  ok   /home/omri/projects/trips-hub/scripts/lib/alert-latch.sh sources the canonical lib, no local re-implementation
+  ok   /home/omri/projects/meniapp/scripts/lib/alert-latch.sh sources the canonical lib, no local re-implementation
+
+passed: 7  failed: 0
+  ok   SANITY: predicate correctly rejects a pre-conversion-shaped standalone copy
+  ok   SANITY: predicate accepts a genuine thin wrapper
+  ok   /home/omri/projects/second-brain/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/house-control/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/tik-next/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/donefile/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/tik-api/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/bass-tuner/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/meniapp/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/iac/scripts/ff-sync-main-checkout.sh sources the shared lib, no local re-implementation
+  ok   /home/omri/projects/trips-hub/scripts/ff-sync-dev-checkout.sh sources the shared lib, no local re-implementation
+
+passed: 11  failed: 0

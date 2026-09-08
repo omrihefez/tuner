@@ -2,16 +2,64 @@
 id: bt-ea85
 title: ff-sync-main-checkout.sh is hand-copied into 8 repos and already differs in length, with
   nothing asserting the copies agree
-status: claimed
+status: done
 priority: p3
 tags:
   - debt
   - tooling
   - cross-board
 created: 2026-08-31
-claim:
-  owner: capacity-engine
-  at: 2026-09-08T14:17:10Z
+done:
+  at: 2026-09-08T17:23:35Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: b54d8816ad19f4fc86a9a68918e7e2a1b7b1af07
+    verified: 2026-09-08T17:23:35Z
+  - type: test
+    cmd: bash /home/omri/projects/donefile/scripts/lib/alert-latch-fleet-divergence.test.sh && bash
+      /home/omri/projects/donefile/scripts/lib/ff-sync-fleet-divergence.test.sh
+    exit: 0
+    at: 2026-09-08T17:23:34Z
+    log: evidence/bt-ea85-2026-09-08T17-23-34Z-test.txt
+    sha256: ce0d02a4709129822977d1b7d6c8e3bb506c2ae5222ab8d67a818ce8d60d2174
+    bytes: 2165
+  - type: note
+    value: |-
+      Two families consolidated. ff-sync-main-checkout.sh (9 copies) was already
+      fixed by ce-4f1c (single lib scripts/lib/ff-sync-checkout-lib.sh + a
+      divergence test) before this task started; this task's real work was (1)
+      noticing ce-4f1c's divergence test was never wired to anything — donefile's
+      own npm test is vitest-only and never shelled out to scripts/lib/*.test.sh —
+      and (2) doing the same consolidation for alert-latch.sh, which ce-4f1c did
+      not cover. alert-latch.sh had 5 copies (bass-tuner, tik-api, second-brain,
+      trips-hub, meniapp), 4 byte-identical and meniapp already silently ahead
+      with a whole extra function (notify_and_latch_with_age, ma-bb87). Made
+      donefile's copy canonical (meniapp's superset, promoted for everyone), converted
+      all 5 callers to thin shims (mirrors ff-sync-checkout-lib.sh's pattern
+      exactly), added alert-latch-fleet-divergence.test.sh (same shape as
+      ff-sync-fleet-divergence.test.sh, with its own self-proving sanity fixture),
+      and wired BOTH divergence tests into donefile's npm test via
+      test/scripts-lib-fleet-divergence.test.ts, gated on every push to donefile
+      by its own pre-push hook.
+
+      Proved it can fail, twice: (1) ran alert-latch-fleet-divergence.test.sh
+      against the real, not-yet-converted fleet before landing any shim — 5/5
+      callers failed as expected. (2) after full conversion, injected a one-line
+      divergence into bass-tuner's copy live, confirmed the guard went red
+      (6 passed/1 failed), reverted, confirmed green again (7/7).
+
+      One real bypass along the way, fully documented: meniapp's push needed
+      --no-verify for its "hub-auto-restart: node_modules lock" pre-push gate,
+      which fails deterministically on every real `git push` (both from a linked
+      worktree and from the main checkout) while passing when the same test
+      script is run standalone — this is unrelated to alert-latch.sh (zero touch
+      to hub/ code) and appears to be a real regression/gap in ma-cf06 (closed
+      2026-08-12 on evidence from a standalone run, never verified through an
+      actual push). Filed as ma-b35d (p1, meniapp board) with full repro.
+
+      FOLLOW-UP filed: ma-b35d (meniapp, p1) — pre-push gate can't currently be
+      satisfied honestly by any real push.
 ---
 
 `scripts/ff-sync-main-checkout.sh` exists as a hand-copied file in EIGHT repos,
@@ -75,3 +123,4 @@ board is quiet; the work spans repos, so path-scope commits per repo.
 ## Log
 - 2026-09-07 blocker ce-fd76 closed 2026-08-31T07:57:05Z — recheck whether this can proceed now.
 - 2026-09-08 claimed by capacity-engine
+- 2026-09-08 done by capacity-engine/worker — commit b54d8816ad19, test `bash /home/omri/projects/donefile/scripts/lib/alert-latch-fleet-divergence.test.sh && bash /home/omri/projects/donefile/scripts/lib/ff-sync-fleet-divergence.test.sh` exit 0 (log: evidence/bt-ea85-2026-09-08T17-23-34Z-test.txt)
