@@ -2,7 +2,7 @@
 id: bt-6773
 title: "pre-push gate 'hub-auto-restart: node_modules lock' fails on every real push, passes
   standalone (ma-cf06 regression)"
-status: open
+status: claimed
 priority: p1
 tags:
   - hub
@@ -11,6 +11,9 @@ created: 2026-09-08
 filed:
   owner: capacity-engine
   at: 2026-09-08T17:31:52Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-08T18:11:14Z
 ---
 
 POSSIBLE CROSS-BOARD DUPLICATE — ma-b35d on meniapp (open, 90% title match) looks like the same finding. This filed anyway because that match is scored WITHOUT the repo-identity check same-board dedupe relies on (ce-916b: routing had no signal for either finding to place it confidently), so it's a pointer to check, not a confirmed dup. START HERE: read ma-b35d before doing any work — if it already covers this, close with a note saying so instead of redoing it.
@@ -23,3 +26,6 @@ Reported 2026-09-08 — read any relative time in the title above ("this morning
 That task's report closed DONE (commit b54d8816ad19f4fc86a9a68918e7e2a1b7b1af07).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-08 claimed by capacity-engine
