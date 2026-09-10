@@ -30,3 +30,6 @@ Reported 2026-09-11 — read any relative time in the title above ("this morning
 That task's report closed DONE (commit 0532fc85b906e85ef0f2bf6c8c4088a75494fe75).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-11 blocker bt-a2c2 closed 2026-09-10T21:20:20Z — recheck whether this can proceed now.
