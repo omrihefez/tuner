@@ -2,7 +2,7 @@
 id: bt-a2c2
 title: audit-domains.sh discards the security headers it already fetches — compose.omrihefez.com
   serves no CSP or X-Frame-Options while all seven sibling hosts do
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -12,6 +12,9 @@ created: 2026-09-10
 filed:
   owner: meni-worker/board-refill-work-discov-ecd8db
   at: 2026-09-10T20:23:38Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-10T21:12:47Z
 ---
 
 ## What is wrong
@@ -94,3 +97,4 @@ above are copied from those responses, not inferred.
 ## Log
 - 2026-09-11 claimed by capacity-engine
 - 2026-09-11 released by capacity-engine
+- 2026-09-11 claimed by capacity-engine
