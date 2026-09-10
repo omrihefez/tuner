@@ -1,0 +1,20 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+
+1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked
+  ok — meniapp is derived and checked, not missing
+2. a tombstoned row is never audited
+  ok — tombstoned row excluded
+3. a non-Vercel live host (Cloudflare Tunnel) is SKIPped, not run through the Vercel-gate check, and not silently dropped
+  ok — Cloudflare-Tunnel host is named via SKIP, its normal 404 never fails the run
+4. a genuine Vercel Deployment-Protection redirect still fails loudly (bt-417b class)
+  ok — the original bt-417b drift detection still fires
+5. AUDIT_SUBS overrides the DOMAIN.md derivation entirely (test-monitoring.sh's bt-a942 self-test relies on this to force a failure)
+  ok — AUDIT_SUBS bypasses DOMAIN_MD entirely (even an unreadable one), so the self-test sabotage still works
+6. an unreadable DOMAIN.md fails loudly instead of running an empty/stale audit
+  ok — missing DOMAIN.md refuses to run rather than silently checking nothing
+7. bt-a2c2: a 200 host with NO security headers at all (the compose.omrihefez.com shape) is reported as DRIFT, not OK
+  ok — a 200 response with zero security headers is DRIFT, and this is exactly the shape the discovery run measured live on compose.omrihefez.com
+8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely
+  ok — report-only CSP satisfies the baseline and a 401 host is correctly exempt
+
+PASS (8 assertions)
