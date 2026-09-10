@@ -2,7 +2,7 @@
 id: bt-a2c2
 title: audit-domains.sh discards the security headers it already fetches — compose.omrihefez.com
   serves no CSP or X-Frame-Options while all seven sibling hosts do
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -12,9 +12,27 @@ created: 2026-09-10
 filed:
   owner: meni-worker/board-refill-work-discov-ecd8db
   at: 2026-09-10T20:23:38Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-10T21:12:47Z
+done:
+  at: 2026-09-10T21:20:20Z
+  by: capacity-engine/worker
+  waived: "scripts/audit-domains.sh is a monitoring cron script (installed by
+    install-monitoring-crons.sh, runs at 10 6 * * * reading the file straight off this checkout),
+    not part of the deployed bass-tuner PWA -- the 'security' tag match is this board's
+    Vercel-deploy activation gate, which has no bearing on a cron script. No restart/deploy step
+    exists to run; the next scheduled run picks up the change from disk. Confirmed live 2026-09-11
+    by running the script directly: it already reports DRIFT on compose.omrihefez.com with today's
+    real headers."
+evidence:
+  - type: commit
+    value: 0532fc85b906e85ef0f2bf6c8c4088a75494fe75
+    verified: 2026-09-10T21:20:20Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-09-10T21:20:16Z
+    log: evidence/bt-a2c2-2026-09-10T21-20-16Z-test.txt
+    sha256: 0605c99391467ad27cb5e68524bf49be1d212804560fd952eeaeae734580f8af
+    bytes: 1559
 ---
 
 ## What is wrong
@@ -99,3 +117,4 @@ above are copied from those responses, not inferred.
 - 2026-09-11 released by capacity-engine
 - 2026-09-11 claimed by capacity-engine
 - 2026-09-11 Live run against today's estate (2026-09-11 00:18 IDT) confirms compose.omrihefez.com is DRIFT: DRIFT  compose.omrihefez.com -> 200 missing security headers: content-security-policy,x-frame-options,x-content-type-options,referrer-policy. Fixing compose's headers is Main's call (separate repo, no board) -- not done here; this task only makes the gap loud. bass/kidai/meniapp all pass with full baseline; planner (401) and the redirecting hosts (meni/tik/trips/arch-preview/tuner) are exempt by design and reported OK.
+- 2026-09-11 done by capacity-engine/worker — commit 0532fc85b906, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-a2c2-2026-09-10T21-20-16Z-test.txt) (evidence waived: scripts/audit-domains.sh is a monitoring cron script (installed by install-monitoring-crons.sh, runs at 10 6 * * * reading the file straight off this checkout), not part of the deployed bass-tuner PWA -- the 'security' tag match is this board's Vercel-deploy activation gate, which has no bearing on a cron script. No restart/deploy step exists to run; the next scheduled run picks up the change from disk. Confirmed live 2026-09-11 by running the script directly: it already reports DRIFT on compose.omrihefez.com with today's real headers.)
