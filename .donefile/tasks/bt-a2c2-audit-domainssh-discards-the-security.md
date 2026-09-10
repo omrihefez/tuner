@@ -98,3 +98,4 @@ above are copied from those responses, not inferred.
 - 2026-09-11 claimed by capacity-engine
 - 2026-09-11 released by capacity-engine
 - 2026-09-11 claimed by capacity-engine
+- 2026-09-11 Live run against today's estate (2026-09-11 00:18 IDT) confirms compose.omrihefez.com is DRIFT: DRIFT  compose.omrihefez.com -> 200 missing security headers: content-security-policy,x-frame-options,x-content-type-options,referrer-policy. Fixing compose's headers is Main's call (separate repo, no board) -- not done here; this task only makes the gap loud. bass/kidai/meniapp all pass with full baseline; planner (401) and the redirecting hosts (meni/tik/trips/arch-preview/tuner) are exempt by design and reported OK.
