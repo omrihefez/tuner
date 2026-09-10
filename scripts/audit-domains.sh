@@ -28,6 +28,47 @@
 # (which forces a failure by pointing this at a nonexistent host, in place
 # of the old sed-patch against a literal `SUBS=` line this script no longer
 # has).
+#
+# SECURITY-HEADER BASELINE (bt-a2c2): `resp` below already contains the full
+# response header block for every host — this script used to fetch it and
+# then look only at the status line, so a host with NO security headers at
+# all (compose.omrihefez.com: no CSP, no X-Frame-Options, no
+# X-Content-Type-Options, no Referrer-Policy, measured live 2026-09-10) went
+# unnoticed while its seven siblings all set every one of these. The baseline
+# below is what those seven siblings actually send, not an aspirational list:
+#   - content-security-policy (report-only counts — `trips` enforces
+#     report-only rather than blocking, and still meaningfully opted in)
+#   - x-frame-options
+#   - x-content-type-options
+#   - referrer-policy
+# Applied ONLY to a host that actually served a 200 page (REQUIRED_HEADERS
+# check below). A 401 (`planner`) is exempt: an auth challenge has no page
+# body for a header like X-Frame-Options to protect, and none of the sibling
+# 401 responses carry any of these headers either — so a 401 with no security
+# headers is the norm, not drift. A 307/308 redirect is exempt for the same
+# reason one hop earlier: the browser will re-request and it is the eventual
+# 200's headers that matter, not the redirect's. Missing headers on a 200 are
+# reported as DRIFT (same severity/verb as the existing Deployment-Protection
+# drift line above), not a separate category, because both mean "this host's
+# posture silently diverged from its siblings."
+REQUIRED_HEADERS=(x-frame-options x-content-type-options referrer-policy)
+
+# missing_security_headers <raw response headers>
+#   Prints a comma-separated list of missing baseline header names (empty if
+#   none are missing).
+missing_security_headers() {
+  local resp="$1" missing=()
+  echo "$resp" | grep -qi '^content-security-policy:' \
+    || echo "$resp" | grep -qi '^content-security-policy-report-only:' \
+    || missing+=("content-security-policy")
+  local h
+  for h in "${REQUIRED_HEADERS[@]}"; do
+    echo "$resp" | grep -qi "^${h}:" || missing+=("$h")
+  done
+  local IFS=,
+  echo "${missing[*]}"
+}
+
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -70,8 +111,16 @@ for d in "${SUBS[@]}"; do
   if echo "$loc" | grep -qi 'vercel\.com'; then
     echo "DRIFT  $host -> $code $loc"
     FAIL=1
-  elif [[ "$code" == "200" || "$code" == "307" || "$code" == "401" || "$code" == "308" ]]; then
-    echo "OK     $host -> $code ${loc:+($loc)}"
+  elif [[ "$code" == "200" ]]; then
+    missing="$(missing_security_headers "$resp")"
+    if [ -n "$missing" ]; then
+      echo "DRIFT  $host -> $code missing security headers: $missing"
+      FAIL=1
+    else
+      echo "OK     $host -> $code (security headers present)"
+    fi
+  elif [[ "$code" == "307" || "$code" == "401" || "$code" == "308" ]]; then
+    echo "OK     $host -> $code ${loc:+($loc)} (header baseline not applicable: no page served)"
   else
     echo "CHECK  $host -> $code ${loc:+($loc)}"
     FAIL=1

@@ -15,7 +15,8 @@ ok() { echo "  ok — $*"; pass=$((pass + 1)); }
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 FIXTURE="$TMP/DOMAIN.md"
-FIXTURE_MAP="$TMP/responses.tsv"   # host<TAB>code<TAB>location
+FIXTURE_MAP="$TMP/responses.tsv"   # host<TAB>code<TAB>location<TAB>extra-headers (| separated "name: value")
+FULL_HEADERS="content-security-policy: default-src 'self'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer"
 
 cat >"$FIXTURE" <<'EOF'
 | Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
@@ -25,6 +26,7 @@ cat >"$FIXTURE" <<'EOF'
 | `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
 | `meniapp` | Meni app | meniapp | Vercel | wildcard | 🟢 live | the ma-20c5 gap: real Vercel host missing from the old array |
 | `meniapp-api` | worker orchestration | meniapp | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, must SKIP not FAIL |
+| `authed` | auth-gated app | some-repo | Vercel | wildcard | 🟢 live | 401 host, header baseline exempt |
 EOF
 
 CURL_STUB="$TMP/curl-stub.sh"
@@ -39,8 +41,15 @@ if [ -z "$row" ]; then
 fi
 code="$(cut -f2 <<<"$row")"
 loc="$(cut -f3 <<<"$row")"
+hdrs="$(cut -f4 <<<"$row")"
 printf 'HTTP/1.1 %s Status\r\n' "$code"
 [ -n "$loc" ] && printf 'location: %s\r\n' "$loc"
+if [ -n "$hdrs" ]; then
+  IFS='|' read -ra H <<<"$hdrs"
+  for h in "${H[@]}"; do
+    printf '%s\r\n' "$h"
+  done
+fi
 printf '\r\n'
 EOF
 chmod +x "$CURL_STUB"
@@ -49,9 +58,10 @@ run() { CURL_FIXTURE_MAP="$FIXTURE_MAP" DOMAIN_MD="$FIXTURE" CURL_CMD="$CURL_STU
 
 echo "1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked"
 : >"$FIXTURE_MAP"
-printf 'bass.omrihefez.com\t200\t\n' >>"$FIXTURE_MAP"
-printf 'meniapp.omrihefez.com\t200\t\n' >>"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp-api.omrihefez.com\t404\t\n' >>"$FIXTURE_MAP"
+printf 'authed.omrihefez.com\t401\t\n' >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0, got $rc: $out"
 grep -q "OK     meniapp.omrihefez.com -> 200" <<<"$out" || fail "expected meniapp to be actively checked, got: $out"
@@ -68,9 +78,10 @@ ok "Cloudflare-Tunnel host is named via SKIP, its normal 404 never fails the run
 
 echo "4. a genuine Vercel Deployment-Protection redirect still fails loudly (bt-417b class)"
 : >"$FIXTURE_MAP"
-printf 'bass.omrihefez.com\t200\t\n' >>"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t307\thttps://vercel.com/login\n' >>"$FIXTURE_MAP"
 printf 'meniapp-api.omrihefez.com\t404\t\n' >>"$FIXTURE_MAP"
+printf 'authed.omrihefez.com\t401\t\n' >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 on a vercel.com login redirect, got $rc: $out"
 grep -q "^DRIFT  meniapp.omrihefez.com" <<<"$out" || fail "expected a DRIFT line for the gated host, got: $out"
@@ -91,6 +102,35 @@ rc=$?
 rm -f /tmp/audit-out-$$
 [ "$rc" -eq 2 ] || fail "expected exit 2 for a missing registry, got $rc"
 ok "missing DOMAIN.md refuses to run rather than silently checking nothing"
+
+echo "7. bt-a2c2: a 200 host with NO security headers at all (the compose.omrihefez.com shape) is reported as DRIFT, not OK"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t200\t\n' >>"$FIXTURE_MAP"
+printf 'meniapp-api.omrihefez.com\t404\t\n' >>"$FIXTURE_MAP"
+printf 'authed.omrihefez.com\t401\t\n' >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 when a 200 host is missing its whole security-header baseline, got $rc: $out"
+grep -q "^DRIFT  meniapp.omrihefez.com -> 200 missing security headers:" <<<"$out" || fail "expected a DRIFT line naming the missing headers, got: $out"
+grep -q "content-security-policy" <<<"$out" || fail "expected content-security-policy named as missing, got: $out"
+grep -q "x-frame-options" <<<"$out" || fail "expected x-frame-options named as missing, got: $out"
+grep -q "x-content-type-options" <<<"$out" || fail "expected x-content-type-options named as missing, got: $out"
+grep -q "referrer-policy" <<<"$out" || fail "expected referrer-policy named as missing, got: $out"
+grep -q "^OK     bass.omrihefez.com -> 200" <<<"$out" || fail "expected bass (full baseline) to stay OK, got: $out"
+ok "a 200 response with zero security headers is DRIFT, and this is exactly the shape the discovery run measured live on compose.omrihefez.com"
+
+echo "8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer\n' >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp-api.omrihefez.com\t404\t\n' >>"$FIXTURE_MAP"
+printf 'authed.omrihefez.com\t401\t\n' >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (report-only CSP counts, 401 is exempt), got $rc: $out"
+grep -q "^OK     bass.omrihefez.com -> 200" <<<"$out" || fail "expected report-only CSP to satisfy the CSP check, got: $out"
+grep -q "^OK     authed.omrihefez.com -> 401" <<<"$out" || fail "expected the 401 host to be OK despite carrying zero security headers, got: $out"
+grep -q "^DRIFT  authed" <<<"$out" && fail "a 401 host must never be flagged for missing security headers, got: $out"
+ok "report-only CSP satisfies the baseline and a 401 host is correctly exempt"
 
 echo
 echo "PASS ($pass assertions)"
