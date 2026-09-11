@@ -1,10 +1,12 @@
 version: 2
+
+# ar-7fc7: no npm ecosystem entry here. package.json declares zero
+# dependencies (Node is used only to run tests against local files, no
+# node_modules, no lockfile of any kind) -- the weekly npm_and_yarn update
+# job ran every week and never opened a PR because there is nothing it could
+# ever bump. Re-add it if this repo ever gains a real npm dependency.
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
