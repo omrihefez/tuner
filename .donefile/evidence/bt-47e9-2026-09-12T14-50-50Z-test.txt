@@ -1,0 +1,23 @@
+$ bash /home/omri/projects/bass-tuner/scripts/check-heartbeat-alert-dedup.test.sh
+
+--- check-monitor-heartbeats.sh (per-monitor dedup) ---
+1. first tick of a stale monitor alerts
+  ok — first stale tick alerts
+2. three more ticks of the SAME staleness do not re-alert
+  ok — persistent staleness alerts once, not once per tick
+3. recovering clears the latch
+  ok — recovery reports OK and does not alert
+4. a later recurrence of the same staleness alerts again (never permanent silence)
+  ok — recurrence after recovery re-alerts
+5. a monitor that has NEVER logged also dedups across ticks
+  ok — never-logged monitor alerts once across repeated ticks
+
+--- check-heartbeat-liveness.sh (own dedup) ---
+6. first tick of a stale heartbeat log alerts
+  ok — first stale liveness tick alerts
+7. repeated ticks of the same staleness do not re-alert
+  ok — persistent liveness staleness alerts once, not once per tick
+8. recovering clears the latch, and a later recurrence re-alerts
+  ok — liveness recovery clears the latch and a later recurrence re-alerts
+
+PASS (8 assertions)
