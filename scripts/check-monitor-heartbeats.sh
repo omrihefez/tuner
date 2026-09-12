@@ -22,12 +22,28 @@
 # failure mode that got this script written in the first place (the note
 # for THIS gap sat unread in ~/inbox for a full day before Main found it).
 #
+# bt-47e9: that direct meni-notify call used to fire on EVERY run for as
+# long as a monitor stayed stale/missing -- same class of bug as th-b15d
+# (trips-hub's heal-dev-alias.sh), which re-sent one message 65 times in
+# eight hours. Each condition now goes through lib/alert-latch.sh's
+# notify_and_latch, keyed per monitor name + condition kind (never on the
+# rendered message, since it embeds an ever-increasing age in hours and
+# would look "new" on every tick). The latch is cleared the moment that
+# monitor reports OK again, so a later recurrence still alerts.
+#
 # Usage: check-monitor-heartbeats.sh [monitor-name ...]
 #   No args: checks every monitor in MAX_AGE_HOURS below.
 #   One or more names: checks only those. An unknown name is reported as
 #   UNKNOWN (not silently skipped) so pointing this at a typo'd or removed
 #   monitor name is itself visible, the same way a stale log is.
 set -uo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/alert-latch.sh
+. "$HERE/lib/alert-latch.sh" || {
+  echo "FATAL: cannot source lib/alert-latch.sh -- refusing to run a guard that cannot report" >&2
+  exit 2
+}
 
 # name -> max age in hours before its log is considered stale, sized to that
 # monitor's own installed cron cadence (see install-monitoring-crons.sh /
@@ -42,6 +58,7 @@ declare -A MAX_AGE_HOURS=(
 )
 
 MENI_NOTIFY="$HOME/meni/bin/meni-notify"
+ALERT_DIR="$HOME/.cache/bass-tuner-monitor-heartbeats-alerts"
 
 if [[ $# -gt 0 ]]; then
   TARGETS=("$@")
@@ -51,11 +68,28 @@ fi
 
 FAIL=0
 
+# alert <name> <condition> <message> -- <condition> is the latch VALUE: a
+# stable label for the kind of failure (never-run / no-marker / bad-timestamp
+# / stale), not the rendered message, so a ticking age doesn't defeat the
+# dedup on every run. notify_and_latch only ever DELIVERS then latches -- it
+# does not itself compare against what's already latched (same contract
+# run-monitor.sh relies on), so the "is this the same condition as last time"
+# check has to happen here, before calling it.
 alert() {
-  local msg="$1"
+  local name="$1" condition="$2" msg="$3"
+  local latch="$ALERT_DIR/${name}.alert-latch"
   echo "STALE    $msg"
-  bash "$MENI_NOTIFY" "$msg" >/dev/null 2>&1 || true
+  if [[ "$(cat "$latch" 2>/dev/null || true)" == "$condition" ]]; then
+    alert_latch_log "$name: already alerted for '$condition', not re-notifying"
+  else
+    notify_and_latch "$MENI_NOTIFY" "$latch" "$condition" "$msg" >/dev/null 2>&1 || true
+  fi
   FAIL=1
+}
+
+clear_alert() {
+  local name="$1"
+  rm -f "$ALERT_DIR/${name}.alert-latch" "$ALERT_DIR/${name}.alert-latch.undelivered" 2>/dev/null || true
 }
 
 for name in "${TARGETS[@]}"; do
@@ -69,20 +103,20 @@ for name in "${TARGETS[@]}"; do
   log="$HOME/.cache/bass-tuner-${name}.log"
 
   if [[ ! -f "$log" ]]; then
-    alert "bass-tuner heartbeat: $name has NEVER logged a run (expected $log)"
+    alert "$name" "never-run" "bass-tuner heartbeat: $name has NEVER logged a run (expected $log)"
     continue
   fi
 
   last_line="$(grep -E '^=== ' "$log" | tail -1)"
   last_ts="$(awk '{print $3}' <<<"$last_line")"
   if [[ -z "$last_ts" ]]; then
-    alert "bass-tuner heartbeat: $name's log has no parseable run marker ($log)"
+    alert "$name" "no-marker" "bass-tuner heartbeat: $name's log has no parseable run marker ($log)"
     continue
   fi
 
   last_epoch="$(date -d "$last_ts" +%s 2>/dev/null || true)"
   if [[ -z "$last_epoch" ]]; then
-    alert "bass-tuner heartbeat: $name's last timestamp '$last_ts' failed to parse ($log)"
+    alert "$name" "bad-timestamp:$last_ts" "bass-tuner heartbeat: $name's last timestamp '$last_ts' failed to parse ($log)"
     continue
   fi
 
@@ -90,9 +124,10 @@ for name in "${TARGETS[@]}"; do
   age_hours=$(( (now_epoch - last_epoch) / 3600 ))
 
   if (( age_hours > max_age )); then
-    alert "bass-tuner heartbeat: $name last ran ${age_hours}h ago (limit ${max_age}h) -- $log"
+    alert "$name" "stale" "bass-tuner heartbeat: $name last ran ${age_hours}h ago (limit ${max_age}h) -- $log"
   else
     echo "OK       $name last ran ${age_hours}h ago (limit ${max_age}h)"
+    clear_alert "$name"
   fi
 done
 
