@@ -91,10 +91,11 @@ fi
 # same repo — takes this same lock, so two installers running concurrently
 # on this box serialize instead of one clobbering the other's freshly-written
 # block. See meniapp/scripts/check-crontab-drift.sh's header.
-CRONTAB_LOCK="$HOME/.local/share/meni-hub/crontab-install.lock"
-mkdir -p "$(dirname "$CRONTAB_LOCK")"
-exec 200>"$CRONTAB_LOCK"
-flock -x 200
+. "$(dirname "${BASH_SOURCE[0]}")/lib/crontab-install-lock.sh" || {
+  echo "FATAL: cannot source lib/crontab-install-lock.sh -- refusing to modify the crontab without the shared lock" >&2
+  exit 1
+}
+crontab_install_take_lock
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 

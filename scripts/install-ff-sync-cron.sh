@@ -25,10 +25,11 @@ LINE="*/3 * * * * mkdir -p $STATE_DIR && $REPO_ROOT/scripts/ff-sync-main-checkou
 # Shared crontab lock (ma-09c1) — same lock every fleet crontab installer
 # takes, so two installers running concurrently serialize instead of one
 # clobbering the other's freshly-written block.
-CRONTAB_LOCK="$HOME/.local/share/meni-hub/crontab-install.lock"
-mkdir -p "$(dirname "$CRONTAB_LOCK")"
-exec 200>"$CRONTAB_LOCK"
-flock -x 200
+. "$(dirname "${BASH_SOURCE[0]}")/lib/crontab-install-lock.sh" || {
+  echo "FATAL: cannot source lib/crontab-install-lock.sh -- refusing to modify the crontab without the shared lock" >&2
+  exit 1
+}
+crontab_install_take_lock
 
 current="$(crontab -l 2>/dev/null || true)"
 stripped="$(printf '%s\n' "$current" | awk -v b="$BEGIN" -v e="$END" '
