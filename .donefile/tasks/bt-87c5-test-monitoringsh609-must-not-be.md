@@ -2,7 +2,7 @@
 id: bt-87c5
 title: test-monitoring.sh:609 must-NOT-be-crontab-scheduled guard fails OPEN — crontab -l (69KB)
   SIGPIPEs into grep -q under pipefail, so the watchdog being cron-scheduled prints OK
-status: claimed
+status: done
 priority: p2
 tags:
   - reliability
@@ -11,9 +11,26 @@ created: 2026-09-13
 filed:
   owner: meni-worker/board-refill-work-discov-7e9ddf
   at: 2026-09-13T11:29:42Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-13T12:34:30Z
+done:
+  at: 2026-09-13T12:59:35Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 3d4df2705da58d7083005176c8c53b98402eb1ea
+    verified: 2026-09-13T12:59:35Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-09-13T12:59:11Z
+    log: evidence/bt-87c5-2026-09-13T12-59-11Z-test.txt
+    sha256: b1c9805ab00c853dee7bd18001b16734967f28f1999faea5f7f61619b4d6c931
+    bytes: 3717
+  - type: note
+    value: "Fixed line 609's crontab -l | grep -q direct pipe (SIGPIPE-under-pipefail fails-open) by
+      capturing crontab -l via command substitution and testing with a here-string (no pipe on
+      either side). Added a regression test (7b) that stubs crontab with a >64KB yes|head filler:
+      proved the OLD pipe shape misses the watchdog 10/10 in an isolated repro and 3/3 in-suite, and
+      the fixed shape catches it every time. Full suite exits 0."
 ---
 
 `scripts/test-monitoring.sh` lines 606-614:
@@ -82,3 +99,4 @@ DONE WHEN:
 - 2026-09-13 claimed by capacity-engine
 - 2026-09-13 released by capacity-engine
 - 2026-09-13 claimed by capacity-engine
+- 2026-09-13 done by capacity-engine/worker — commit 3d4df2705da5, test `cd /home/omri/projects/bass-tuner && bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-87c5-2026-09-13T12-59-11Z-test.txt)
