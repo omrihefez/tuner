@@ -2,7 +2,7 @@
 id: bt-443d
 title: fix compose.omrihefez.com's missing security headers (CSP, X-Frame-Options,
   X-Content-Type-Options, Referrer-Policy, wildcard CORS)
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -13,6 +13,9 @@ created: 2026-09-11
 filed:
   owner: capacity-engine
   at: 2026-09-10T21:24:04Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-13T15:56:00Z
 ---
 
 LIKELY ALREADY DONE — verify before building. Work merged after this finding was raised may already cover it:
@@ -33,3 +36,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-11 blocker bt-a2c2 closed 2026-09-10T21:20:20Z — recheck whether this can proceed now.
+- 2026-09-13 claimed by capacity-engine
