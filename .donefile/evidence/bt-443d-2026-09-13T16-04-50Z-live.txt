@@ -1,0 +1,2 @@
+$ resp=$(curl -sD - -o /dev/null --max-time 15 https://compose.omrihefez.com/) && echo "$resp" | grep -qi "^content-security-policy:" && echo "$resp" | grep -qi "^x-frame-options:" && echo "$resp" | grep -qi "^x-content-type-options:" && echo "$resp" | grep -qi "^referrer-policy:" && echo "$resp" | grep -qi "^access-control-allow-origin: https://compose.omrihefez.com"
+
