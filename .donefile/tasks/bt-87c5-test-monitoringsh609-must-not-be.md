@@ -2,7 +2,7 @@
 id: bt-87c5
 title: test-monitoring.sh:609 must-NOT-be-crontab-scheduled guard fails OPEN — crontab -l (69KB)
   SIGPIPEs into grep -q under pipefail, so the watchdog being cron-scheduled prints OK
-status: claimed
+status: open
 priority: p2
 tags:
   - reliability
@@ -11,9 +11,6 @@ created: 2026-09-13
 filed:
   owner: meni-worker/board-refill-work-discov-7e9ddf
   at: 2026-09-13T11:29:42Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-13T12:02:59Z
 ---
 
 `scripts/test-monitoring.sh` lines 606-614:
@@ -80,3 +77,4 @@ DONE WHEN:
 
 5. PRIORITY, from the worker itself: with the premise weaker than this body implies, p2 rests on CONSEQUENCE not on frequency — a guard that fails OPEN under some unreproduced condition is worse than one that fails always, because the passing run is the one you see. That is a judgement, stated as one. Price it off the numbers above, not off the original prose.
 - 2026-09-13 claimed by capacity-engine
+- 2026-09-13 released by capacity-engine
