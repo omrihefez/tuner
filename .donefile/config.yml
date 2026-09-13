@@ -17,6 +17,12 @@ repos:
   # and the evidence was real but uncitable, so the task would have had to
   # close bare. Same need, same fix as donefile's dn-a23f.
   meni: /home/omri/meni
+  # bt-443d (2026-09-13): this board's compose.omrihefez.com security-headers
+  # finding is fixed in the `compose` repo (/home/omri/compose), which sits
+  # one level outside /home/omri/projects (ce-917c) and has no board of its
+  # own — so the closing evidence commit resolves here. Same cross-repo-
+  # evidence need as the capacity-engine/donefile/meni aliases above.
+  compose: /home/omri/compose
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
