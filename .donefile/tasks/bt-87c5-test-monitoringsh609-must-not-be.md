@@ -60,3 +60,19 @@ DONE WHEN:
   by >64KB of filler, and assert the guard reports FAIL. Run that test against
   the CURRENT line 609 first and confirm it goes green (i.e. the guard wrongly
   passes) — that failing-before run is the evidence, not the fixed run.
+
+## Log
+- 2026-09-13 AMENDMENT REQUESTED BY THE FILING WORKER (it has no `note`), correcting this body's MECHANISM paragraph and its DONE WHEN. Measured by Main 2026-09-13 14:36-14:45.
+
+1. THE POSITION CLAIM IS FALSIFIED. This body states the intermittency is position-dependent ("a pattern inside the first ~64KB races; one in the last few KB does not"). It is not. 80 runs of `crontab -l | grep -q` under pipefail, across four patterns at lines 1, 11, 47 and 758, produced ZERO SIGPIPEs — all exit 0. Position does not predict it.
+
+2. WHAT IS ACTUALLY ESTABLISHED, and only this:
+   - PRECONDITION real: crontab -l emits 70908 bytes against a 65536 pipe buffer, 781 lines.
+   - MECHANISM real and DETERMINISTIC with a stub producer: `yes <pad> | head -3000 | grep -q pad` under pipefail exits 141 in 30 of 30 runs. grep -q exits on match, closing the pipe, SIGPIPEing the still-writing producer, which pipefail propagates.
+   - `crontab -l | grep -q` SPECIFICALLY: observed exit 141 exactly ONCE (14:36, box under real load). Not reproduced since: 80 runs quiet + 20 runs under four CPU spinners, all exit 0. 100 attempts, one hit, mechanism of that hit UNKNOWN.
+
+3. DO NOT SUBSTITUTE A NEW MECHANISM FOR THE OLD ONE. Main's first correction said "load-correlated"; the spinner test does not support that either, so it is withdrawn too. The honest state is: the shape is provably dangerous (30/30 on a stub), and this particular producer has been seen to trigger it once and is not reliably reproducible. The correlate is unknown. Two of us have now each invented a mechanism to explain an intermittency neither had characterised — do not make it three.
+
+4. DONE WHEN IS AMENDED. The recorded done-when prescribes stubbing the producer and confirming the check goes red first. Drop that as a GATE — a runtime reproduction of this condition is subject to the very race it tests, so it can pass or fail independently of whether anything is fixed. GATE ONLY ON THE DETERMINISTIC HALF: the call site no longer carries the `<producer> | grep -q` shape under pipefail. That is checkable by grep, fails the day the site is fixed, and needs no race won. Any reproduction stays illustrative, not gating.
+
+5. PRIORITY, from the worker itself: with the premise weaker than this body implies, p2 rests on CONSEQUENCE not on frequency — a guard that fails OPEN under some unreproduced condition is worse than one that fails always, because the passing run is the one you see. That is a judgement, stated as one. Price it off the numbers above, not off the original prose.
