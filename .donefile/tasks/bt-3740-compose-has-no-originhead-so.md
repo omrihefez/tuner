@@ -2,7 +2,7 @@
 id: bt-3740
 title: compose has no origin/HEAD, so every default-branch check this board makes against it is
   silently SKIPPED — the exact check bt-443d registered it for
-status: open
+status: claimed
 priority: p2
 tags:
   - audit
@@ -11,6 +11,9 @@ created: 2026-09-14
 filed:
   owner: meni-worker/board-refill-work-discov-a006fa
   at: 2026-09-14T13:24:59Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-14T13:55:43Z
 ---
 
 `cd /home/omri/projects/bass-tuner && node /mnt/HC_Volume_106231699/cache/capacity-engine/head/donefile-reminder-gate.js audit --actionable` reports:
@@ -34,3 +37,6 @@ Two ways to fix, pick one and say why:
 The second is probably right for the same reason the finding exists: the current failure is invisible, and config is the only place that is not.
 
 DONE WHEN: `cd /home/omri/projects/bass-tuner && node /mnt/HC_Volume_106231699/cache/capacity-engine/head/donefile-reminder-gate.js audit --actionable` no longer reports DEFAULT_BRANCH_UNRESOLVED for `/home/omri/compose`, AND the fix has been shown to actually restore the check — not merely to silence the finding. Demonstrate that by pointing a default-branch check at a known compose commit and confirming it now resolves rather than skipping.
+
+## Log
+- 2026-09-14 claimed by capacity-engine
