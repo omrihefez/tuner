@@ -104,6 +104,15 @@ fi
 }
 crontab_install_take_lock
 
+# Stale-checkout guard (ma-2f6d): this installer renders CRON_LINES from its
+# OWN checked-out source, so re-running it from a worktree branched before a
+# later change to this file would silently regress the live block back to the
+# old render -- see scripts/lib/stale-checkout-guard.sh's header (sb-bd30).
+. "$(dirname "${BASH_SOURCE[0]}")/lib/stale-checkout-guard.sh" || {
+  echo "FATAL: cannot source lib/stale-checkout-guard.sh -- refusing to modify the crontab without the stale-checkout guard" >&2
+  exit 1
+}
+
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
 
 # Monitor names (run-monitor.sh's first argument) on stdin's cron lines.
@@ -163,6 +172,7 @@ if [ "$DRY_RUN" = "1" ]; then
   echo "[install-cert-renewal-cron] dry-run: crontab would become:" >&2
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
+  refuse_if_stale_crontab_render "$SCRIPT_DIR" "scripts/install-cert-renewal-cron.sh" "--print-line" "$CRON_LINES" "main" || exit 1
   printf '%s\n' "$NEW_CRON" | crontab -
   echo "[install-cert-renewal-cron] installed Monday 06:17 cron for $SCRIPT (see: crontab -l)"
 fi
