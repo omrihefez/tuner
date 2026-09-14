@@ -1,0 +1,2 @@
+$ out="$(cd /home/omri/projects/bass-tuner && bash scripts/test-monitoring.sh 2>&1 || true)"; grep -q "bt-87c5: fixed guard (capture + here-string) caught the watchdog" <<<"$out"
+
