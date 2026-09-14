@@ -1,0 +1,2 @@
+$ cd /home/omri/projects/bass-tuner && OUT=$(node /mnt/HC_Volume_106231699/cache/capacity-engine/head/donefile-reminder-gate.js audit --actionable 2>&1); N=$(printf "%s" "$OUT" | grep -o DEFAULT_BRANCH_UNRESOLVED | wc -l); [ "$N" = "0" ] && node -e "const git=require(\"/home/omri/projects/donefile/dist/lib/git.js\");const r=git.resolveDefaultBranch(\"/home/omri/compose\",\"main\");process.exit(r.ref===\"refs/remotes/origin/main\"?0:1)"
+

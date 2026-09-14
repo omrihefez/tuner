@@ -2,7 +2,7 @@
 id: bt-3740
 title: compose has no origin/HEAD, so every default-branch check this board makes against it is
   silently SKIPPED — the exact check bt-443d registered it for
-status: claimed
+status: done
 priority: p2
 tags:
   - audit
@@ -11,9 +11,25 @@ created: 2026-09-14
 filed:
   owner: meni-worker/board-refill-work-discov-a006fa
   at: 2026-09-14T13:24:59Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-14T13:55:43Z
+done:
+  at: 2026-09-14T14:01:32Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: f9e4e21c59f65caf0cab82a9b539829c0b9cd12a
+    verified: 2026-09-14T14:01:32Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && OUT=$(node
+      /mnt/HC_Volume_106231699/cache/capacity-engine/head/donefile-reminder-gate.js audit
+      --actionable 2>&1); N=$(printf "%s" "$OUT" | grep -o DEFAULT_BRANCH_UNRESOLVED | wc -l); [
+      "$N" = "0" ] && node -e "const
+      git=require(\"/home/omri/projects/donefile/dist/lib/git.js\");const
+      r=git.resolveDefaultBranch(\"/home/omri/compose\",\"main\");process.exit(r.ref===\"refs/remotes/origin/main\"?0:1)"
+    exit: 0
+    at: 2026-09-14T14:01:26Z
+    log: evidence/bt-3740-2026-09-14T14-01-26Z-test.txt
+    sha256: 8e16f15acc028aecaac11696dbf2f83b17f4c4538813d2b23d88651de8a02cf8
+    bytes: 441
 ---
 
 `cd /home/omri/projects/bass-tuner && node /mnt/HC_Volume_106231699/cache/capacity-engine/head/donefile-reminder-gate.js audit --actionable` reports:
@@ -40,3 +56,4 @@ DONE WHEN: `cd /home/omri/projects/bass-tuner && node /mnt/HC_Volume_106231699/c
 
 ## Log
 - 2026-09-14 claimed by capacity-engine
+- 2026-09-14 done by capacity-engine/worker — commit f9e4e21c59f6, test `cd /home/omri/projects/bass-tuner && OUT=$(node /mnt/HC_Volume_106231699/cache/capacity-engine/head/donefile-reminder-gate.js audit --actionable 2>&1); N=$(printf "%s" "$OUT" | grep -o DEFAULT_BRANCH_UNRESOLVED | wc -l); [ "$N" = "0" ] && node -e "const git=require(\"/home/omri/projects/donefile/dist/lib/git.js\");const r=git.resolveDefaultBranch(\"/home/omri/compose\",\"main\");process.exit(r.ref===\"refs/remotes/origin/main\"?0:1)"` exit 0 (log: evidence/bt-3740-2026-09-14T14-01-26Z-test.txt)
