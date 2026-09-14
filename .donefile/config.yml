@@ -22,7 +22,18 @@ repos:
   # one level outside /home/omri/projects (ce-917c) and has no board of its
   # own — so the closing evidence commit resolves here. Same cross-repo-
   # evidence need as the capacity-engine/donefile/meni aliases above.
-  compose: /home/omri/compose
+  # bt-3740 (2026-09-14): that clone has an origin remote but no
+  # `origin/HEAD` set locally (nobody ever ran `git remote set-head origin
+  # -a` there), so every default-branch check against it — UNMERGED_EVIDENCE,
+  # OPEN_LIKELY_SHIPPED, STALE_BLOCK — was silently SKIPPED rather than
+  # passing. Pinned declaratively here (compose's real, and only, remote
+  # branch is `main`) instead of fixed with `git remote set-head` alone,
+  # because that fix is state on an untracked clone and would silently
+  # un-fix itself the moment this clone is replaced; config survives a
+  # re-clone and is the one place this failure would not have been invisible.
+  compose:
+    path: /home/omri/compose
+    integration_branch: main
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
