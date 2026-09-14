@@ -13,6 +13,7 @@
 #
 #   bash scripts/install-ff-sync-cron.sh          # install / update
 #   bash scripts/install-ff-sync-cron.sh --remove
+#   bash scripts/install-ff-sync-cron.sh --print-line   # rendered lines only, no markers (used by check-crontab-drift.sh)
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -21,6 +22,21 @@ STATE_DIR="$HOME/.local/share/meni-hub/ff-sync-bass-tuner-main-checkout"
 BEGIN="# BEGIN bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)"
 END="# END bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)"
 LINE="*/3 * * * * mkdir -p $STATE_DIR && $REPO_ROOT/scripts/ff-sync-main-checkout.sh >> $STATE_DIR/cron.log 2>&1"
+
+# Recurring drift check (ma-707b, mirrors tik-api's ff-sync installer) —
+# shared implementation in meniapp (ma-c616), called by absolute path since
+# this entry runs on the meni VPS, same box meniapp lives on.
+DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
+DRIFT_STATE_DIR="$HOME/.local/share/meni-hub/bass-tuner-ff-sync-crontab-drift"
+DRIFT_LINE="52 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=bass-tuner-ff-sync BEGIN_MARK=\"$BEGIN\" END_MARK=\"$END\" EXPECTED_CONTENT_CMD=\"$REPO_ROOT/scripts/install-ff-sync-cron.sh --print-line\" INSTALLER_HINT=\"scripts/install-ff-sync-cron.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
+
+LINES="$LINE
+$DRIFT_LINE"
+
+if [ "${1:-}" = "--print-line" ]; then
+  printf '%s\n' "$LINES"
+  exit 0
+fi
 
 # Shared crontab lock (ma-09c1) — same lock every fleet crontab installer
 # takes, so two installers running concurrently serialize instead of one
@@ -41,6 +57,6 @@ if [ "${1:-}" = "--remove" ]; then
   exit 0
 fi
 
-{ printf '%s\n' "$stripped"; echo "$BEGIN"; echo "$LINE"; echo "$END"; } | crontab -
+{ printf '%s\n' "$stripped"; echo "$BEGIN"; printf '%s\n' "$LINES"; echo "$END"; } | crontab -
 echo "installed:"
-crontab -l | grep -A1 "$BEGIN"
+crontab -l | grep -A2 "$BEGIN"

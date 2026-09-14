@@ -21,21 +21,25 @@
 # only thing that would have reported it was the monitor being deleted.
 # The DROPPED guard below now makes that failure loud instead of silent.
 #
-# Usage: install-monitoring-crons.sh [--dry-run] [--force]
-#   --dry-run  print the resulting crontab instead of installing it
-#   --force    install even if the guard reports a monitor would be dropped
-#              (i.e. you are deliberately unscheduling one)
+# Usage: install-monitoring-crons.sh [--dry-run] [--force] [--print-line]
+#   --dry-run    print the resulting crontab instead of installing it
+#   --force      install even if the guard reports a monitor would be dropped
+#                (i.e. you are deliberately unscheduling one)
+#   --print-line print the rendered block lines only, no markers, and exit
+#                without touching the crontab (used by check-crontab-drift.sh)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 DRY_RUN=0
 FORCE=0
+PRINT_LINE=0
 for arg in "$@"; do
   case "$arg" in
-    --dry-run) DRY_RUN=1 ;;
-    --force)   FORCE=1 ;;
-    *) echo "usage: install-monitoring-crons.sh [--dry-run] [--force]" >&2; exit 2 ;;
+    --dry-run)    DRY_RUN=1 ;;
+    --force)      FORCE=1 ;;
+    --print-line) PRINT_LINE=1 ;;
+    *) echo "usage: install-monitoring-crons.sh [--dry-run] [--force] [--print-line]" >&2; exit 2 ;;
   esac
 done
 
@@ -74,6 +78,23 @@ CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
 0 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
+
+# Recurring drift check (ma-707b) — shared implementation in meniapp
+# (ma-c616), called by absolute path since this entry runs on the meni VPS,
+# same box meniapp lives on. Appended onto $CRON_LINES itself (rather than
+# tracked separately) so it rides along with the wholesale block rewrite
+# below and the DROPPED guard's monitor-name comparison, which only matches
+# run-monitor.sh invocations and so never sees this line as a monitor.
+DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
+DRIFT_STATE_DIR="${DRIFT_STATE_DIR_OVERRIDE:-$HOME/.local/share/meni-hub/bass-tuner-monitoring-crontab-drift}"
+DRIFT_LINE="58 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=bass-tuner-monitoring BEGIN_MARK=\"$BEGIN_MARK\" END_MARK=\"$END_MARK\" EXPECTED_CONTENT_CMD=\"$REPO/scripts/install-monitoring-crons.sh --print-line\" INSTALLER_HINT=\"scripts/install-monitoring-crons.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
+CRON_LINES="$CRON_LINES
+$DRIFT_LINE"
+
+if [ "$PRINT_LINE" = "1" ]; then
+  printf '%s\n' "$CRON_LINES"
+  exit 0
+fi
 
 # crontab log-dir lint (ma-0540): these lines run through run-monitor.sh,
 # which does its own `mkdir -p ... && { ... } >> "$LOG"` INSIDE the already-
@@ -154,5 +175,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 07:00 heartbeat (daily), :22/2h stale-deploy (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
 fi
