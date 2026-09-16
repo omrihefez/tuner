@@ -53,6 +53,7 @@ FALLBACK_CERT="$REPO/scripts/check-fallback-cert.sh"
 DOMAIN_AUDIT="$REPO/scripts/audit-domains.sh"
 HEARTBEAT="$REPO/scripts/check-monitor-heartbeats.sh"
 STALE_DEPLOY="$REPO/deploy/activation-probes/probe-bt-5fb7.sh"
+TUNNEL_LIVENESS="$REPO/scripts/check-tunnel-liveness.sh"
 
 # Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
 # copy); runs on the same box as meniapp, so the absolute path always
@@ -62,9 +63,12 @@ LINT_LOGDIRS="/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh"
 BEGIN_MARK="# BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 
-# 06:05/06:10 -- ahead of the 06:17 wildcard-cert-renewal run so all three
-# TLS/domain checks land in the same pre-day-start window.
-# 07:00 heartbeat -- deliberately AFTER all three (and after the Monday
+# 06:05/06:10/06:12 -- ahead of the 06:17 wildcard-cert-renewal run so all
+# four TLS/domain checks land in the same pre-day-start window. tunnel-
+# liveness (bt-8818) sits right after domain-audit since they're the same
+# class of check (registry-derived host list, HTTP liveness) split only on
+# the Vercel/non-Vercel line domain-audit's own SKIP output draws.
+# 07:00 heartbeat -- deliberately AFTER all four (and after the Monday
 # cert-renewal run), so it reads the logs the same morning's runs just wrote
 # rather than alerting on a gap the 06:05-06:17 window was about to close.
 # stale-deploy (bt-4e2a) -- probe-bt-5fb7.sh was only ever run as one-shot
@@ -76,6 +80,7 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 # catching a stale deploy sooner narrows the window it ships broken to users.
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
+12 6 * * * $RUNNER tunnel-liveness $TUNNEL_LIVENESS
 0 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
@@ -175,5 +180,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
 fi

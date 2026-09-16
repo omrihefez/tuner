@@ -118,6 +118,18 @@ fi
 check domain-audit-selftest "audit-domains.sh (forced failure)" \
   env AUDIT_SUBS="nonexistent-bt-a942-selftest" "$REPO/scripts/audit-domains.sh"
 
+# --- 2b. check-tunnel-liveness.sh (bt-8818): the non-Vercel-host counterpart
+#         to the audit-domains.sh selftest above, same TUNNEL_HOSTS override
+#         convention as AUDIT_SUBS -- points it at a host with no pinned
+#         EXPECT_PATH/EXPECT_STATUS entry, which is a loud UNPINNED failure
+#         rather than a silent skip. See scripts/check-tunnel-liveness.test.sh
+#         for the hermetic fail-before/pass-after proof in both directions
+#         (unresolving host, wrong pinned status) -- this selftest only
+#         proves the run-monitor.sh -> ~/inbox wiring, same as the others
+#         in this file. ---
+check tunnel-liveness-selftest "check-tunnel-liveness.sh (forced failure)" \
+  env TUNNEL_HOSTS="nonexistent-bt-8818-selftest" "$REPO/scripts/check-tunnel-liveness.sh"
+
 # --- 3. renew-wildcard-cert.sh, run with HOME pointed at an empty dir so its
 #        own first FATAL check (unreadable ~/.meni/auth.env, so no Infisical
 #        login is possible) fires before
@@ -227,7 +239,7 @@ read_crontab_locked() {
 }
 
 CRON="$(read_crontab_locked)"
-for pat in "check-fallback-cert.sh" "audit-domains.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
+for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-tunnel-liveness.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
   if echo "$CRON" | grep -q "$pat"; then
     echo "OK     $pat is scheduled in crontab"
   else
@@ -271,7 +283,7 @@ if [[ "$dry_code" -ne 0 ]]; then
   FAIL=1
 else
   dry_block="$(printf '%s\n' "$dry_out" | sed -n '/# BEGIN bass-tuner-monitoring/,/# END bass-tuner-monitoring/p')"
-  for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
+  for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-tunnel-liveness.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
     if grep -qF "$pat" <<<"$dry_block"; then
       echo "OK     $pat is in install-monitoring-crons.sh's managed block"
     else
