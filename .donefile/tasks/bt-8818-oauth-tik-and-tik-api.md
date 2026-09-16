@@ -2,7 +2,7 @@
 id: bt-8818
 title: oauth, tik and tik-api-vps are live in DOMAIN.md with no liveness check in any monitor -
   audit-domains.sh derives Vercel-only hosts and skips the rest
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,27 @@ created: 2026-09-16
 filed:
   owner: meni-worker/board-refill-work-discov-ee818f
   at: 2026-09-16T15:44:52Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-16T16:21:10Z
+done:
+  at: 2026-09-16T16:28:36Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: e288ade3a9f0248fc67acf47db51198dd1a2faf8
+    verified: 2026-09-16T16:28:36Z
+  - type: test
+    cmd: bash /home/omri/projects/bass-tuner/scripts/check-tunnel-liveness.test.sh
+    exit: 0
+    at: 2026-09-16T16:28:34Z
+    log: evidence/bt-8818-2026-09-16T16-28-34Z-test.txt
+    sha256: fb9cdef5445cb052fb2c32a06a169bee3a6bd5576ae16525a722ff4288ebbf78
+    bytes: 1125
+  - type: live
+    cmd: bash /home/omri/projects/bass-tuner/scripts/check-tunnel-liveness.sh
+    exit: 0
+    at: 2026-09-16T16:28:34Z
+    log: evidence/bt-8818-2026-09-16T16-28-34Z-live.txt
+    sha256: e444de9981d52b381ce9eacb28a846765da0526d919cab55b2fef9fe8254f4fa
+    bytes: 433
 ---
 
 Found by the periodic discovery sweep, 2026-09-16, measured against `~/meni/DOMAIN.md` (§1), `~/meni/config/health-registry.json`, `~/meni/bin/check-public-surfaces.sh` and `scripts/audit-domains.sh`.
@@ -36,3 +54,4 @@ EVIDENCE must fail before and pass after, in both directions: point one entry at
 
 ## Log
 - 2026-09-16 claimed by capacity-engine
+- 2026-09-16 done by capacity-engine/worker — commit e288ade3a9f0, test `bash /home/omri/projects/bass-tuner/scripts/check-tunnel-liveness.test.sh` exit 0 (log: evidence/bt-8818-2026-09-16T16-28-34Z-test.txt), live `bash /home/omri/projects/bass-tuner/scripts/check-tunnel-liveness.sh` exit 0 (log: evidence/bt-8818-2026-09-16T16-28-34Z-live.txt)

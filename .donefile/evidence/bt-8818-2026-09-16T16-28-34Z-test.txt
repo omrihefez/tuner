@@ -1,0 +1,16 @@
+$ bash /home/omri/projects/bass-tuner/scripts/check-tunnel-liveness.test.sh
+
+1. all pinned hosts answering as expected -> exit 0, Vercel host and tombstoned row excluded
+  ok — clean pass: exit 0, only non-Vercel live hosts checked
+2. a host that does not resolve (curl -> 000) fails the run — BEFORE: passes cleanly when it resolves
+  ok — BEFORE: oauth resolving with its pinned status passes (rc=0)
+  ok — AFTER: a host that stops resolving fails the run (exit 1), DOWN line names it
+3. a host answering the WRONG pinned status fails the run — BEFORE: matching status passes
+  ok — BEFORE: house answering its pinned status (307) passes (rc=0)
+  ok — AFTER: a host drifting off its pinned status fails the run (exit 1), CHANGED line names expected vs actual
+4. a registry host with no pinned EXPECT_PATH/EXPECT_STATUS entry fails loudly instead of being silently skipped
+  ok — an unpinned host is a loud failure, not a silent gap
+5. an unreadable DOMAIN.md fails loudly instead of running an empty check
+  ok — missing DOMAIN.md refuses to run rather than silently checking nothing
+
+PASS (7 assertions)
