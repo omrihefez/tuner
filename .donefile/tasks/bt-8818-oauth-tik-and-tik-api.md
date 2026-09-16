@@ -2,7 +2,7 @@
 id: bt-8818
 title: oauth, tik and tik-api-vps are live in DOMAIN.md with no liveness check in any monitor -
   audit-domains.sh derives Vercel-only hosts and skips the rest
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-09-16
 filed:
   owner: meni-worker/board-refill-work-discov-ee818f
   at: 2026-09-16T15:44:52Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-16T16:21:10Z
 ---
 
 Found by the periodic discovery sweep, 2026-09-16, measured against `~/meni/DOMAIN.md` (§1), `~/meni/config/health-registry.json`, `~/meni/bin/check-public-surfaces.sh` and `scripts/audit-domains.sh`.
@@ -30,3 +33,6 @@ NOTE ON SCOPE, so this does not get built in the wrong repo. `check-public-surfa
 DONE WHEN: a monitor in this repo, installed through `scripts/install-monitoring-crons.sh` with a crontab-drift guard like the other four, checks that each non-Vercel-hosted 🟢 live host in DOMAIN.md answers with the status it is known to answer with — pinned per host, the same idiom check-public-surfaces.sh uses, not a blanket non-5xx rule. Host list derived from DOMAIN.md, not typed in, so the next tunnel surface is covered without anyone remembering.
 
 EVIDENCE must fail before and pass after, in both directions: point one entry at a host that does not resolve and show the monitor exits non-zero; pin one entry to the wrong expected status and show it exits non-zero. A monitor only ever seen passing is indistinguishable from one that cannot fire.
+
+## Log
+- 2026-09-16 claimed by capacity-engine
