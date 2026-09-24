@@ -2,7 +2,7 @@
 id: bt-a7a3
 title: lib/domain-registry.sh is duplicated into meniapp with nothing asserting the copies agree — a
   comment is the only guard
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-09-24
 filed:
   owner: meni-worker/board-refill-work-discov-dde22f
   at: 2026-09-24T17:08:16Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-24T17:16:31Z
 ---
 
 `scripts/lib/domain-registry.sh` exists in TWO separate git repos with no shared
@@ -79,3 +82,6 @@ cannot fire, because the two copies agree right now.
 
 Write the evidence command against `/home/omri/projects/bass-tuner`, not a
 worktree path — the re-run happens after the worktree is gone.
+
+## Log
+- 2026-09-24 claimed by capacity-engine
