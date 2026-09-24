@@ -2,7 +2,7 @@
 id: bt-a7a3
 title: lib/domain-registry.sh is duplicated into meniapp with nothing asserting the copies agree — a
   comment is the only guard
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,30 @@ created: 2026-09-24
 filed:
   owner: meni-worker/board-refill-work-discov-dde22f
   at: 2026-09-24T17:08:16Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-24T17:16:31Z
+done:
+  at: 2026-09-24T17:23:30Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: da9d5270845e44b2482a068d0bde6ae167839907
+    verified: 2026-09-24T17:23:30Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/lib/domain-registry.test.sh
+    exit: 0
+    at: 2026-09-24T17:23:29Z
+    log: evidence/bt-a7a3-2026-09-24T17-23-29Z-test.txt
+    sha256: 789f8a4dd1164fbc4349e767f591c1e8919958338db8de2bd7e330b94d241a6e
+    bytes: 153
+  - type: note
+    value: "Added scripts/lib/domain-registry.test.sh comparing only the derive_registry_hosts()
+      function body (not the whole file, since header prose deliberately differs per-repo). Verified
+      fail-before/pass-after: ran unmodified (OK), then against a meniapp copy with one
+      function-body line mutated via DOMAIN_REGISTRY_MENIAPP_COPY override (FAIL, diff shown), then
+      confirmed a whole-file diff between the two repos IS red today as the task predicted. Also
+      verified graceful SKIP (exit 0, not silent pass) when the meniapp copy path is unreadable.
+      Pushed via promote/bt-a7a3-domain-registry-guard (bass-tuner enforces the same main-push
+      branch-name guard as trips-hub/capacity-engine/donefile/kidai; not yet noted in the fleet
+      doc's 4-repo table)."
 ---
 
 `scripts/lib/domain-registry.sh` exists in TWO separate git repos with no shared
@@ -85,3 +106,4 @@ worktree path — the re-run happens after the worktree is gone.
 
 ## Log
 - 2026-09-24 claimed by capacity-engine
+- 2026-09-24 done by capacity-engine/worker — commit da9d5270845e, test `cd /home/omri/projects/bass-tuner && bash scripts/lib/domain-registry.test.sh` exit 0 (log: evidence/bt-a7a3-2026-09-24T17-23-29Z-test.txt)

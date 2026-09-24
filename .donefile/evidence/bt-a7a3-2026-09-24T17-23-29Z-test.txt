@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/lib/domain-registry.test.sh
+
+OK: derive_registry_hosts() body is identical in bass-tuner and meniapp
