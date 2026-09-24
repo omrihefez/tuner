@@ -1,0 +1,2 @@
+$ N=$(find /home/omri/inbox/meni-board-queue -maxdepth 1 -name 'bt-f5e6-add-bass-tuner-to-guard-table.md' -printf x | wc -c); [ "$N" = "1" ] && grep -q 'PER CLONE ONLY' /home/omri/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md && grep -q 'bass-tuner' /home/omri/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md
+

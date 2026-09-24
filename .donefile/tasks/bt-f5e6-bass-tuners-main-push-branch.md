@@ -2,7 +2,7 @@
 id: bt-f5e6
 title: bass-tuner's main-push branch-guard isn't listed in the fleet CLAUDE.md's 4-repo table
   (trips-hub, capacity-engine, donefile, kidai)
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -12,9 +12,27 @@ filed:
   owner: capacity-engine
   at: 2026-09-24T17:26:28Z
 reported: 2026-09-24
-claim:
-  owner: capacity-engine
-  at: 2026-09-24T17:42:48Z
+done:
+  at: 2026-09-24T17:46:20Z
+  by: capacity-engine/worker
+evidence:
+  - type: test
+    cmd: N=$(find /home/omri/inbox/meni-board-queue -maxdepth 1 -name
+      'bt-f5e6-add-bass-tuner-to-guard-table.md' -printf x | wc -c); [ "$N" = "1" ] && grep -q 'PER
+      CLONE ONLY' /home/omri/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md && grep
+      -q 'bass-tuner' /home/omri/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md
+    exit: 0
+    at: 2026-09-24T17:46:19Z
+    log: evidence/bt-f5e6-2026-09-24T17-46-19Z-test.txt
+    sha256: 643ced063ab276951529c740588cb24dbe907355be3b0edbb6e2701be3ddf4ac
+    bytes: 344
+  - type: note
+    value: "Finding is real, verified fresh 2026-09-24: bass-tuner's .git/hooks/pre-push (core.hooksPath
+      unset) has the same default_branch()/is_allowed_default_branch() guard as
+      trips-hub/capacity-engine/donefile/kidai, belongs in the donefile/kidai 'PER CLONE ONLY' row,
+      and is absent from child-CLAUDE.md's guard table (lines 608-615, 625). Cannot commit to ~/meni
+      myself; queued the exact 3-block replacement for Main at
+      ~/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md per the ma-e203 convention."
 ---
 
 Named in the finding: claude.md
@@ -33,3 +51,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-24 claimed by capacity-engine
+- 2026-09-24 done by capacity-engine/worker — test `N=$(find /home/omri/inbox/meni-board-queue -maxdepth 1 -name 'bt-f5e6-add-bass-tuner-to-guard-table.md' -printf x | wc -c); [ "$N" = "1" ] && grep -q 'PER CLONE ONLY' /home/omri/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md && grep -q 'bass-tuner' /home/omri/inbox/meni-board-queue/bt-f5e6-add-bass-tuner-to-guard-table.md` exit 0 (log: evidence/bt-f5e6-2026-09-24T17-46-19Z-test.txt)
