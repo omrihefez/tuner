@@ -2,7 +2,7 @@
 id: bt-f5e6
 title: bass-tuner's main-push branch-guard isn't listed in the fleet CLAUDE.md's 4-repo table
   (trips-hub, capacity-engine, donefile, kidai)
-status: open
+status: claimed
 priority: p3
 tags:
   - monitoring
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-24T17:26:28Z
 reported: 2026-09-24
+claim:
+  owner: capacity-engine
+  at: 2026-09-24T17:42:48Z
 ---
 
 Named in the finding: claude.md
@@ -27,3 +30,6 @@ Named file 'claude.md' actually lives in /home/omri/meni — a real repo, but de
 That task's report closed DONE (commit da9d5270845e44b2482a068d0bde6ae167839907).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-24 claimed by capacity-engine
