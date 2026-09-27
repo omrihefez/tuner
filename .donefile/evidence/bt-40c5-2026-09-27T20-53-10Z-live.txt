@@ -1,0 +1,2 @@
+$ curl -sI https://bass.omrihefez.com/ | grep -qi '^permissions-policy: camera=(), microphone=(self), geolocation=()'
+

@@ -2,7 +2,7 @@
 id: bt-40c5
 title: bass.omrihefez.com sends no Permissions-Policy header although the app calls getUserMedia -
   needs microphone=(self), camera=(), geolocation=()
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -11,9 +11,28 @@ created: 2026-09-27
 filed:
   owner: meni-worker/board-refill-work-discov-f62872
   at: 2026-09-27T17:41:40Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-27T20:43:29Z
+done:
+  at: 2026-09-27T20:53:46Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: d302286
+    verified: 2026-09-27T20:53:46Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && npm test
+    exit: 0
+    at: 2026-09-27T20:53:10Z
+    log: evidence/bt-40c5-2026-09-27T20-53-10Z-test.txt
+    sha256: bced1d368e34f8690e34706edcf34e3d2f139c119c7ea10935ee25c61dbc24ab
+    bytes: 36460
+  - type: live
+    cmd: "curl -sI https://bass.omrihefez.com/ | grep -qi '^permissions-policy: camera=(),
+      microphone=(self), geolocation=()'"
+    exit: 0
+    at: 2026-09-27T20:53:10Z
+    log: evidence/bt-40c5-2026-09-27T20-53-10Z-live.txt
+    sha256: 3b9c2cedb3e01d7685da16bc1a110f3d7787d97c902ca09e626f36f93cb970a5
+    bytes: 119
 ---
 
 `bass.omrihefez.com` is a microphone app and it sends no `Permissions-Policy` header,
@@ -78,3 +97,4 @@ Filed by the periodic discovery sweep, 2026-09-27.
 
 ## Log
 - 2026-09-27 claimed by capacity-engine
+- 2026-09-27 done by capacity-engine/worker — commit d302286, test `cd /home/omri/projects/bass-tuner && npm test` exit 0 (log: evidence/bt-40c5-2026-09-27T20-53-10Z-test.txt), live `curl -sI https://bass.omrihefez.com/ | grep -qi '^permissions-policy: camera=(), microphone=(self), geolocation=()'` exit 0 (log: evidence/bt-40c5-2026-09-27T20-53-10Z-live.txt)
