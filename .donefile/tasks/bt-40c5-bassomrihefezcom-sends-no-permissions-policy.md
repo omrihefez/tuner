@@ -2,7 +2,7 @@
 id: bt-40c5
 title: bass.omrihefez.com sends no Permissions-Policy header although the app calls getUserMedia -
   needs microphone=(self), camera=(), geolocation=()
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -11,6 +11,9 @@ created: 2026-09-27
 filed:
   owner: meni-worker/board-refill-work-discov-f62872
   at: 2026-09-27T17:41:40Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-27T20:43:29Z
 ---
 
 `bass.omrihefez.com` is a microphone app and it sends no `Permissions-Policy` header,
@@ -72,3 +75,6 @@ plus, on the deployed build:
     curl -sI https://bass.omrihefez.com/
 
 Filed by the periodic discovery sweep, 2026-09-27.
+
+## Log
+- 2026-09-27 claimed by capacity-engine
