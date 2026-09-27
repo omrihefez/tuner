@@ -74,3 +74,33 @@ documented exemption, kept); it DOES report a 401 missing `no-store`; and it cov
 compose/bass/meni/planner's Permissions-Policy gap so df-024f becomes assertable.
 Test both sides — a header probe that flags every refusal rebuilds the noise problem
 bt-a2c2 was careful to avoid.
+
+## Log
+- 2026-09-27 2026-09-27 21:06 — CORRECTION TO THIS TASK'S OWN PREMISE, from the sweeping worker, verified by me at the source. There are THREE layers, not two, and the one I filed this on is NOT why hc-d30f survived.
+
+I wrote that the 401/307 exemption was the reason. It is not. `missing_security_headers` is called at exactly ONE site — scripts/audit-domains.sh:115, inside the SUBS (Vercel) loop. The non-Vercel loop is lines 101-103 and its entire body is a single echo:
+
+    for h in "${OTHER_LIVE[@]}"; do
+      echo "SKIP   $h.omrihefez.com -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply"
+    done
+
+So the baseline's scope is Vercel-hosted hosts. Every self-hosted surface on this box is not exempted — it is never reached. house-control among them, which means hc-d30f had no coverage from ANY direction: its own 45 test files assert no header, and the one cross-repo script that could have was out of scope for it.
+
+WHY THAT HID, and it is the same shape as the exemption: the SKIP line states a reason that is TRUE for Deployment-Protection and silent about headers. A reader sees a host skipped for a stated reason and gets no cue that a second check also did not run. A justification correct for one class, load-bearing for two.
+
+THE THREE LAYERS, each needing its own fix:
+  1. root-only probing -> assert per (host, PATH). `/` is house-control's 307 that skips the headers.
+  2. the 401/307 exemption is right for framing/sniffing headers, wrong for Cache-Control:
+     no-store on a refusal body. (Still true, still worth splitting — just not hc-d30f's cause.)
+  3. the baseline never runs on non-Vercel hosts AT ALL. The OTHER_LIVE loop must actually call
+     the check, and its SKIP text must name only what it really skips. Neither 1 nor 2 touches this.
+
+DESIGN CONSTRAINTS FOR LAYER 3, from the registry rows, so a naive extension does not fire on correct behaviour:
+    brain        second-brain   answers a bare '404 page not found' to every unauthenticated request BY
+                                DESIGN (auth_wall, deliberately indistinguishable from an unused subdomain)
+    oauth        apartment      INTENTIONALLY public, no auth wall
+Both are correct and would look like drift. The two that genuinely want the baseline are `house` and `meniapp-api`; `tik-api`/`tik-api-vps` are financial backends and want it too but were not assessed here.
+
+FOLDED IN rather than filed separately: the meniapp hub sets x-content-type-options on only 3 of api.ts's responses, so /health and most JSON endpoints send none. That is an INSTANCE of layer 3 — meniapp-api being unchecked is precisely why nobody noticed — so it belongs in this done-when as the first host layer 3 catches, not as an independent p3. (It was raised as a FOLLOW-UP line twice and harvested neither time.)
+
+DONE WHEN, superseding the version above: the check runs on non-Vercel hosts; it fails on house-control's current `/` (307, no headers) and on meniapp-api's /health (no nosniff); it does NOT flag brain's by-design 404 or oauth's intentional openness; a sibling 401 missing x-frame-options is still not reported; a 401 missing no-store IS; and the SKIP text for any host still skipped names every check being skipped, not one of them.
