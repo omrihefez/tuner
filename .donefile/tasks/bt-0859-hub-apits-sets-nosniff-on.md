@@ -1,7 +1,7 @@
 ---
 id: bt-0859
 title: hub api.ts sets nosniff on only one route, not globally
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-27T19:03:58Z
 reported: 2026-09-27
+claim:
+  owner: capacity-engine
+  at: 2026-09-27T19:41:17Z
 ---
 
 Named in the finding: api.ts
@@ -29,3 +32,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-27 blocker bt-d173 closed 2026-09-27T18:57:09Z — recheck whether this can proceed now.
+- 2026-09-27 claimed by capacity-engine
