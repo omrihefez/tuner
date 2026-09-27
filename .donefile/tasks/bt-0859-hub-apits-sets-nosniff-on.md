@@ -26,3 +26,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit 05a2c35855f462681688c280de268c2785f4419c).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-27 blocker bt-d173 closed 2026-09-27T18:57:09Z — recheck whether this can proceed now.
