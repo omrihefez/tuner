@@ -69,6 +69,108 @@ missing_security_headers() {
   echo "${missing[*]}"
 }
 
+# NON-VERCEL PER-(HOST,PATH) BASELINE (bt-d173).
+#
+# Layer this task's own log corrected: missing_security_headers() above is
+# called from exactly ONE site, the SUBS (Vercel) loop below. The OTHER_LIVE
+# loop's entire body used to be a single SKIP echo — no header check of any
+# kind ever ran against a non-Vercel host. That is the real reason hc-d30f
+# (house-control shipping zero security headers on its auth-redirect) had no
+# cross-repo coverage from either direction: house-control's own tests assert
+# no header, and this script — the one place that could have — was
+# structurally out of scope for it. Root-only probing would ALSO have missed
+# it even if in scope: house-control's `/` IS the 307 that (before the fix)
+# skipped the headers, so a per-host check needs a per-PATH check too.
+#
+# NONVERCEL_CHECK_PATHS is a deliberate opt-in list, not "check every
+# non-Vercel host" — the registry (~/meni/DOMAIN.md §1) has two hosts whose
+# CORRECT behaviour would misread as drift under this baseline: `brain`
+# answers a bare 404 to every unauthenticated request by design (its auth
+# wall), and `oauth` is intentionally public with no auth wall at all. Two
+# more (`tik-api`, `tik-api-vps`) are financial backends whose expected
+# posture has not been assessed — opting them in blind risks the identical
+# false-positive-noise failure in the other direction. `house` and
+# `meniapp-api` are the two the task actually wants baselined.
+declare -A NONVERCEL_CHECK_PATHS=(
+  [house]="/ /login"
+  [meniapp-api]="/health"
+)
+declare -A NONVERCEL_HEADER_SKIP_REASON=(
+  [brain]="by-design auth wall answers a bare 404 to every unauthenticated request; correct behaviour, not drift"
+  [oauth]="intentionally public with no auth wall by design; correct behaviour, not drift"
+)
+
+# is_refusal_or_redirect_code <status code>
+#   401/403 (auth refusal) or 307/308 (auth redirect, e.g. house-control's
+#   `/` -> `/login`): a body here is either absent or a refusal, so the
+#   FRAMING/SNIFFING headers stay exempt (nothing to protect from framing —
+#   same reasoning as the SUBS loop's 401/307/308 exemption above) but
+#   Cache-Control: no-store is checked instead, because that exemption runs
+#   BACKWARDS for cache headers: a cacheable refusal body can be replayed to
+#   a different viewer or outlive the auth decision that produced it
+#   (hc-d30f's sharper half) — the absence matters MORE on a refusal, not
+#   less.
+is_refusal_or_redirect_code() {
+  case "$1" in
+    401 | 403 | 307 | 308) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# check_nonvercel_path <host incl. .omrihefez.com> <path>
+#   Fetches <host><path> and asserts the baseline appropriate to what came
+#   back, updating the shared FAIL flag. Never touches missing_security_
+#   headers()/REQUIRED_HEADERS — those stay scoped to the SUBS loop so its
+#   existing behaviour and tests are untouched.
+check_nonvercel_path() {
+  local host="$1" path="$2"
+  local resp code ctype label="$host$path"
+  resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$host$path")
+  code=$(echo "$resp" | head -1 | awk '{print $2}')
+  ctype=$(echo "$resp" | grep -i '^content-type:' | head -1 | tr -d '\r')
+
+  if is_refusal_or_redirect_code "$code"; then
+    if echo "$resp" | grep -qi '^cache-control:.*no-store'; then
+      echo "OK     $label -> $code (Cache-Control: no-store present on refusal/redirect)"
+    else
+      echo "DRIFT  $label -> $code missing Cache-Control: no-store on a refusal/redirect body (replayable/cacheable refusal, hc-d30f class)"
+      FAIL=1
+    fi
+    return
+  fi
+
+  if [[ "$code" == "200" ]]; then
+    local missing=()
+    # nosniff protects against MIME-sniffing on ANY 200 body, JSON API
+    # included — checked regardless of content-type.
+    echo "$resp" | grep -qi '^x-content-type-options:' || missing+=("x-content-type-options")
+    # CSP/X-Frame-Options/Referrer-Policy protect a DOCUMENT from being
+    # framed/leaked on navigation — meaningless on a bare JSON API response,
+    # so gated on an HTML content-type. Flagging them on e.g.
+    # meniapp-api's /health would rebuild the noise problem bt-a2c2 was
+    # careful to avoid: a real gap (no nosniff) buried under headers that
+    # were never applicable there in the first place.
+    if echo "$ctype" | grep -qi 'text/html'; then
+      echo "$resp" | grep -qi '^content-security-policy:' \
+        || echo "$resp" | grep -qi '^content-security-policy-report-only:' \
+        || missing+=("content-security-policy")
+      echo "$resp" | grep -qi '^x-frame-options:' || missing+=("x-frame-options")
+      echo "$resp" | grep -qi '^referrer-policy:' || missing+=("referrer-policy")
+    fi
+    if [ "${#missing[@]}" -gt 0 ]; then
+      local IFS=,
+      echo "DRIFT  $label -> $code missing security headers: ${missing[*]}"
+      FAIL=1
+    else
+      echo "OK     $label -> $code (security headers present)"
+    fi
+    return
+  fi
+
+  echo "CHECK  $label -> $code (unexpected status for a baselined non-Vercel path)"
+  FAIL=1
+}
+
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -99,7 +201,17 @@ fi
 FAIL=0
 
 for h in "${OTHER_LIVE[@]}"; do
-  echo "SKIP   $h.omrihefez.com -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply"
+  host="$h.omrihefez.com"
+  if [ -n "${NONVERCEL_CHECK_PATHS[$h]:-}" ]; then
+    echo "SKIP   $host -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply (security-header baseline IS checked below, per path)"
+    read -r -a paths <<<"${NONVERCEL_CHECK_PATHS[$h]}"
+    for p in "${paths[@]}"; do
+      check_nonvercel_path "$host" "$p"
+    done
+  else
+    reason="${NONVERCEL_HEADER_SKIP_REASON[$h]:-security-header baseline not yet assessed for this host}"
+    echo "SKIP   $host -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply; security-header baseline also skipped: $reason"
+  fi
 done
 
 for d in "${SUBS[@]}"; do
