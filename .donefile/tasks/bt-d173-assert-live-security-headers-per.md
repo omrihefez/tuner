@@ -2,7 +2,7 @@
 id: bt-d173
 title: Assert live security headers per (host, path) in audit-domains.sh — the 401/307 exemption is
   right for framing headers and wrong for Cache-Control, which is why hc-d30f survived it
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -12,6 +12,9 @@ created: 2026-09-27
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-09-27T18:00:13Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-27T18:41:19Z
 ---
 
 ## What to build
@@ -104,3 +107,4 @@ Both are correct and would look like drift. The two that genuinely want the base
 FOLDED IN rather than filed separately: the meniapp hub sets x-content-type-options on only 3 of api.ts's responses, so /health and most JSON endpoints send none. That is an INSTANCE of layer 3 — meniapp-api being unchecked is precisely why nobody noticed — so it belongs in this done-when as the first host layer 3 catches, not as an independent p3. (It was raised as a FOLLOW-UP line twice and harvested neither time.)
 
 DONE WHEN, superseding the version above: the check runs on non-Vercel hosts; it fails on house-control's current `/` (307, no headers) and on meniapp-api's /health (no nosniff); it does NOT flag brain's by-design 404 or oauth's intentional openness; a sibling 401 missing x-frame-options is still not reported; a 401 missing no-store IS; and the SKIP text for any host still skipped names every check being skipped, not one of them.
+- 2026-09-27 claimed by capacity-engine
