@@ -2,7 +2,7 @@
 id: bt-135b
 title: assess tik-api/tik-api-vps's intended security-header posture (financial backends, currently
   SKIPped as "not yet assessed" in audit-domains.sh)
-status: merged
+status: done
 priority: p3
 tags:
   - security
@@ -17,6 +17,9 @@ activation: "no restart needed: cron (10 6 * * * scripts/run-monitor.sh domain-a
   manually and verified live"
 merged:
   at: 2026-09-27T20:24:02Z
+  by: capacity-engine/worker
+done:
+  at: 2026-09-27T20:26:28Z
   by: capacity-engine/worker
 evidence:
   - type: commit
@@ -43,6 +46,18 @@ evidence:
       added X-Content-Type-Options: nosniff middleware, commit 01297ec on tik-api master, already
       deployed live via its own ff-sync+rebuild cron and confirmed) and updated audit-domains.sh
       here to check tik-api/tik-api-vps at /health instead of defaulting to 'not yet assessed'."
+  - type: commit
+    value: 2c7c0bc
+    verified: 2026-09-27T20:26:28Z
+  - type: live
+    cmd: 'n=0; for h in tik-api tik-api-vps; do curl -fsS -D - -o /dev/null --max-time 10
+      "https://$h.omrihefez.com/health" | grep -qi "^x-content-type-options: nosniff" && n=$((n+1));
+      done; [ "$n" = 2 ]'
+    exit: 0
+    at: 2026-09-27T20:26:28Z
+    log: evidence/bt-135b-2026-09-27T20-26-28Z-live.txt
+    sha256: 74595b19e090f5e0c7d3c643f1e97e58323a8cb058a99229fda924adf3d461db
+    bytes: 197
 ---
 
 Named in the finding: tik-api/tik-api-vps, audit-domains.sh
@@ -65,3 +80,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 - 2026-09-27 released by capacity-engine
 - 2026-09-27 claimed by capacity-engine
 - 2026-09-27 merged by capacity-engine/worker — commit 2c7c0bc, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-135b-2026-09-27T20-23-53Z-test.txt) — activation-gated, --live evidence exists but none exited 0 (got: 1) — rerun --live once the surface is actually activated
+- 2026-09-27 promoted merged -> done by capacity-engine/worker — commit 2c7c0bc, live `n=0; for h in tik-api tik-api-vps; do curl -fsS -D - -o /dev/null --max-time 10 "https://$h.omrihefez.com/health" | grep -qi "^x-content-type-options: nosniff" && n=$((n+1)); done; [ "$n" = 2 ]` exit 0 (log: evidence/bt-135b-2026-09-27T20-26-28Z-live.txt)

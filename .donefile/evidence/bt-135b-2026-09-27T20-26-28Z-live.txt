@@ -1,0 +1,2 @@
+$ n=0; for h in tik-api tik-api-vps; do curl -fsS -D - -o /dev/null --max-time 10 "https://$h.omrihefez.com/health" | grep -qi "^x-content-type-options: nosniff" && n=$((n+1)); done; [ "$n" = 2 ]
+
