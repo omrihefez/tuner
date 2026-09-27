@@ -2,7 +2,7 @@
 id: bt-135b
 title: assess tik-api/tik-api-vps's intended security-header posture (financial backends, currently
   SKIPped as "not yet assessed" in audit-domains.sh)
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-27T19:04:05Z
 reported: 2026-09-27
+claim:
+  owner: capacity-engine
+  at: 2026-09-27T20:00:15Z
 ---
 
 Named in the finding: tik-api/tik-api-vps, audit-domains.sh
@@ -30,3 +33,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-27 blocker bt-d173 closed 2026-09-27T18:57:09Z — recheck whether this can proceed now.
+- 2026-09-27 claimed by capacity-engine
