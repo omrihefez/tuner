@@ -2,7 +2,7 @@
 id: bt-d173
 title: Assert live security headers per (host, path) in audit-domains.sh — the 401/307 exemption is
   right for framing headers and wrong for Cache-Control, which is why hc-d30f survived it
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -12,9 +12,32 @@ created: 2026-09-27
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-09-27T18:00:13Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-27T18:41:19Z
+done:
+  at: 2026-09-27T18:57:09Z
+  by: capacity-engine/worker
+  waived: no service/daemon to restart — audit-domains.sh is a standalone script re-read fresh from
+    disk on every invocation (cron entry '10 6 * * * ... audit-domains.sh', or run by hand); merging
+    to main IS the activation, there is no separate deploy step
+evidence:
+  - type: commit
+    value: 05a2c35855f462681688c280de268c2785f4419c
+    verified: 2026-09-27T18:57:09Z
+  - type: test
+    cmd: bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-09-27T18:57:05Z
+    log: evidence/bt-d173-2026-09-27T18-57-05Z-test.txt
+    sha256: 8672ecd0fbbb5d33eb70b672081b36f42f613e5e33b1c8c62d98d01819ddc3c5
+    bytes: 3157
+  - type: note
+    value: "layer-3 gap was the real cause (see task log correction), not the original 401/307-exemption
+      framing. Non-Vercel OTHER_LIVE hosts now get a real per-(host,path) check: house+meniapp-api
+      checked, brain/oauth explicitly exempt by design, tik-api/tik-api-vps default to a named
+      not-yet-assessed SKIP. Framing headers stay exempt on 401/307/308; Cache-Control:no-store is
+      checked there instead (inverted exemption). Live run today found a real drift: meniapp-api's
+      /health is missing x-content-type-options. house-control's hc-d30f was already fixed before
+      this landed, so live house paths report OK; tests 9/10 hermetically prove the check fails on
+      the pre-fix shape and passes on the fixed shape."
 ---
 
 ## What to build
@@ -108,3 +131,4 @@ FOLDED IN rather than filed separately: the meniapp hub sets x-content-type-opti
 
 DONE WHEN, superseding the version above: the check runs on non-Vercel hosts; it fails on house-control's current `/` (307, no headers) and on meniapp-api's /health (no nosniff); it does NOT flag brain's by-design 404 or oauth's intentional openness; a sibling 401 missing x-frame-options is still not reported; a 401 missing no-store IS; and the SKIP text for any host still skipped names every check being skipped, not one of them.
 - 2026-09-27 claimed by capacity-engine
+- 2026-09-27 done by capacity-engine/worker — commit 05a2c35855f4, test `bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-d173-2026-09-27T18-57-05Z-test.txt) (evidence waived: no service/daemon to restart — audit-domains.sh is a standalone script re-read fresh from disk on every invocation (cron entry '10 6 * * * ... audit-domains.sh', or run by hand); merging to main IS the activation, there is no separate deploy step)
