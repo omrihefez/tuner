@@ -1,0 +1,2 @@
+$ test ! -e /home/omri/projects/bass-tuner/api.ts && node /home/omri/projects/donefile/dist/cli.js show ma-7c75 | grep -q "status: open"
+
