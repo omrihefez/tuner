@@ -11,9 +11,12 @@
 # reason hc-d30f (house-control shipping zero security headers on its
 # auth-redirect) had no cross-repo coverage. NONVERCEL_CHECK_PATHS/
 # NONVERCEL_HEADER_SKIP_REASON in audit-domains.sh are hardcoded to the real
-# registry labels (`house`, `meniapp-api` checked; `brain`/`oauth` explicitly
-# exempt by design; anything else defaults to "not yet assessed"), so the
-# fixtures below use those exact bare labels rather than test-only stand-ins.
+# registry labels (`house`, `meniapp-api`, and — since bt-135b assessed them
+# — `tik-api`/`tik-api-vps` all checked; `brain`/`oauth` explicitly exempt by
+# design; anything else still defaults to "not yet assessed", exercised in
+# test 13b below with a synthetic stand-in since no real host is left
+# unclassified), so the fixtures below otherwise use those exact bare
+# labels rather than test-only stand-ins.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$HERE/audit-domains.sh"
@@ -151,11 +154,12 @@ grep -q "^OK     authed.omrihefez.com -> 401" <<<"$out" || fail "expected the 40
 grep -q "^DRIFT  authed" <<<"$out" && fail "a 401 host must never be flagged for missing security headers, got: $out"
 ok "report-only CSP satisfies the baseline and a 401 host is correctly exempt"
 
-# --- bt-d173: layer-3 non-Vercel per-(host,path) baseline ---
+# --- bt-d173/bt-135b: layer-3 non-Vercel per-(host,path) baseline ---
 # A dedicated small registry: one Vercel host (bass, so SUBS isn't empty)
-# plus the full non-Vercel cast — the two checked hosts (house, meniapp-api)
-# and the three that must stay SKIPped for stated, differing reasons (brain,
-# oauth, tik-api).
+# plus the full non-Vercel cast — the four checked hosts (house, meniapp-api,
+# tik-api, tik-api-vps — bt-135b assessed the latter two as the same JSON-API
+# class as meniapp-api, not a brain/oauth-style exemption) and the two that
+# must stay SKIPped for stated, differing reasons (brain, oauth).
 FIXTURE2="$TMP/DOMAIN2.md"
 FIXTURE_MAP2="$TMP/responses2.tsv"
 cat >"$FIXTURE2" <<'EOF'
@@ -166,25 +170,31 @@ cat >"$FIXTURE2" <<'EOF'
 | `meniapp-api` | worker orchestration | meniapp | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-d173) |
 | `brain` | Second Brain | second-brain | Cloudflare Tunnel | explicit | 🟢 live | by-design 404 auth wall — must stay SKIPped |
 | `oauth` | OAuth catcher | apartment | Cloudflare Tunnel | explicit | 🟢 live | intentionally public — must stay SKIPped |
-| `tik-api` | TIK API | tik | Cloudflare Tunnel | explicit | 🟢 live | not yet assessed — must stay SKIPped, default reason |
+| `tik-api` | TIK API | tik | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-135b) |
+| `tik-api-vps` | TIK API VPS origin | tik | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-135b) |
 EOF
 run2() { CURL_FIXTURE_MAP="$FIXTURE_MAP2" DOMAIN_MD="$FIXTURE2" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
 BASS_OK() { printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS"; }
 HOUSE_LOGIN_OK() { printf 'house.omrihefez.com\t/login\t200\t\tcontent-type: text/html|%s\n' "$FULL_HEADERS"; }
+TIK_API_HEALTH_OK() { printf 'tik-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n'; }
+TIK_API_VPS_HEALTH_OK() { printf 'tik-api-vps.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n'; }
 
-echo "9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT, and brain/oauth/tik-api never get curled at all"
+echo "9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT, and brain/oauth never get curled at all"
 : >"$FIXTURE_MAP2"
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"   # framing headers present, but NO cache-control — the hc-d30f shape
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
 printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (house's / is missing no-store), got $rc: $out"
 grep -q "^DRIFT  house.omrihefez.com/ -> 307 missing Cache-Control: no-store" <<<"$out" || fail "expected the hc-d30f-class DRIFT line for house's /, got: $out"
 grep -qE "^(OK|DRIFT|CHECK) +brain" <<<"$out" && fail "brain must never be curled/checked, got: $out"
 grep -qE "^(OK|DRIFT|CHECK) +oauth" <<<"$out" && fail "oauth must never be curled/checked, got: $out"
-grep -qE "^(OK|DRIFT|CHECK) +tik-api" <<<"$out" && fail "tik-api must never be curled/checked, got: $out"
-ok "the check FAILS on the exact pre-fix hc-d30f shape (framing headers present, cache header absent), and the three exempt/unassessed hosts are never curled"
+grep -q "^OK     tik-api.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api/health to be curled and pass given full headers, got: $out"
+grep -q "^OK     tik-api-vps.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api-vps/health to be curled and pass given full headers, got: $out"
+ok "the check FAILS on the exact pre-fix hc-d30f shape (framing headers present, cache header absent), brain/oauth are never curled, and tik-api/tik-api-vps ARE curled and pass"
 
 echo "10. bt-d173: the SAME check PASSES once Cache-Control: no-store is added — proves this is a real fail/pass check, not a check that only ever passes"
 : >"$FIXTURE_MAP2"
@@ -192,6 +202,8 @@ BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
 printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once no-store is present (the hc-d30f fix shape), got $rc: $out"
 grep -q "^OK     house.omrihefez.com/ -> 307 (Cache-Control: no-store present" <<<"$out" || fail "expected house's / to read OK once fixed, got: $out"
@@ -204,11 +216,29 @@ BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
 printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (meniapp-api missing nosniff), got $rc: $out"
 grep -q "^DRIFT  meniapp-api.omrihefez.com/health -> 200 missing security headers: x-content-type-options$" <<<"$out" \
   || fail "expected DRIFT naming ONLY x-content-type-options as missing (no csp/x-frame-options/referrer-policy noise on a JSON API), got: $out"
 ok "a JSON API missing nosniff is DRIFT, named precisely, with no false noise from framing headers that don't apply to it"
+
+echo "11b. bt-135b: tik-api's /health (JSON) missing x-content-type-options is DRIFT — the exact live finding measured on tik-api.omrihefez.com before the fix in the tik-api repo — and tik-api-vps (same origin) is checked independently"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n' >>"$FIXTURE_MAP2"
+printf 'tik-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json\n' >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (tik-api missing nosniff), got $rc: $out"
+grep -q "^DRIFT  tik-api.omrihefez.com/health -> 200 missing security headers: x-content-type-options$" <<<"$out" \
+  || fail "expected DRIFT naming ONLY x-content-type-options as missing for tik-api, got: $out"
+grep -q "^OK     tik-api-vps.omrihefez.com/health -> 200" <<<"$out" \
+  || fail "expected tik-api-vps to still read OK independently of tik-api's drift, got: $out"
+ok "tik-api missing nosniff is DRIFT (the pre-fix shape), and tik-api-vps is checked as its own row, not coupled to tik-api's result"
 
 echo "12. bt-d173: a 401 on a checked non-Vercel host is exempt from framing headers but NOT from Cache-Control: no-store (mirrors the SUBS-loop 401 exemption, inverted for cache)"
 : >"$FIXTURE_MAP2"
@@ -216,6 +246,8 @@ BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t401\t\t\n' >>"$FIXTURE_MAP2"   # zero headers at all, including no-store
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
 printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1, got $rc: $out"
 line="$(grep "^DRIFT  house.omrihefez.com/ " <<<"$out")"
@@ -224,17 +256,33 @@ grep -q "missing Cache-Control: no-store" <<<"$line" || fail "expected a 401 mis
 grep -qi "x-frame-options\|content-security-policy\|referrer-policy" <<<"$line" && fail "a 401 must never be checked for framing headers, got: $line"
 ok "a 401 refusal is checked for Cache-Control: no-store and never for framing headers — matches the task's own done-when"
 
-echo "13. bt-d173: SKIP text for an exempt/unassessed host names its OWN reason, not a copy of another host's"
+echo "13. bt-d173/bt-135b: SKIP text for an exempt host names its OWN reason, not a copy of another host's; a host with no stated reason falls through to the default (still-live code path — no real registry host currently exercises it, so this one row is a deliberate stand-in, not a real label)"
 : >"$FIXTURE_MAP2"
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t401\t\tcache-control: no-store\n' >>"$FIXTURE_MAP2"
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
 printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 grep -q "^SKIP   brain.omrihefez.com.*by-design auth wall" <<<"$out" || fail "expected brain's SKIP reason to name its by-design 404 auth wall, got: $out"
 grep -q "^SKIP   oauth.omrihefez.com.*intentionally public" <<<"$out" || fail "expected oauth's SKIP reason to name it as intentionally public, got: $out"
-grep -q "^SKIP   tik-api.omrihefez.com.*not yet assessed" <<<"$out" || fail "expected tik-api to fall through to the default not-yet-assessed reason, got: $out"
-ok "each SKIPped host states its own actual reason — the SKIP text does not collapse three different causes into one line"
+grep -q "^OK     tik-api.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api to now be actively checked, not SKIPped, got: $out"
+ok "each SKIPped host states its own actual reason — the SKIP text does not collapse two different causes into one line, and tik-api is no longer in the SKIP set at all"
+
+echo "13b. the still-live default-reason fallback (no real registry host currently exercises it, since tik-api's assessment resolved the last unclassified one) fires for a host in neither dict"
+: >"$TMP/DOMAIN3.md"
+cat >"$TMP/DOMAIN3.md" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+| `not-yet-triaged` | stand-in for a future untriaged non-Vercel host | some-repo | Cloudflare Tunnel | explicit | 🟢 live | deliberately absent from both NONVERCEL_* dicts |
+EOF
+: >"$TMP/responses3.tsv"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$TMP/responses3.tsv"
+out="$(CURL_FIXTURE_MAP="$TMP/responses3.tsv" DOMAIN_MD="$TMP/DOMAIN3.md" CURL_CMD="$CURL_STUB" bash "$SCRIPT")"
+grep -q "^SKIP   not-yet-triaged.omrihefez.com.*not yet assessed" <<<"$out" || fail "expected the default fallback reason for an unclassified host, got: $out"
+ok "a host in neither NONVERCEL_CHECK_PATHS nor NONVERCEL_HEADER_SKIP_REASON still gets the default not-yet-assessed reason, not a crash or a false OK"
 
 echo
 echo "PASS ($pass assertions)"

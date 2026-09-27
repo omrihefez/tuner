@@ -86,14 +86,25 @@ missing_security_headers() {
 # non-Vercel host" — the registry (~/meni/DOMAIN.md §1) has two hosts whose
 # CORRECT behaviour would misread as drift under this baseline: `brain`
 # answers a bare 404 to every unauthenticated request by design (its auth
-# wall), and `oauth` is intentionally public with no auth wall at all. Two
-# more (`tik-api`, `tik-api-vps`) are financial backends whose expected
-# posture has not been assessed — opting them in blind risks the identical
-# false-positive-noise failure in the other direction. `house` and
-# `meniapp-api` are the two the task actually wants baselined.
+# wall), and `oauth` is intentionally public with no auth wall at all.
+#
+# `tik-api`/`tik-api-vps` (bt-135b): assessed — both are the SAME FastAPI
+# origin (tik-api-tunnel.service on the VPS answers both hostnames; the
+# `-vps` name is the cutover/rollback pair for `tik-api`, not a separate
+# app), a pure JSON API with no HTML page ever served (docs disabled in
+# prod) and every route auth-gated except `/health`. That puts them in the
+# SAME class as `meniapp-api`, not `brain`/`oauth`: nosniff still matters on
+# a bare JSON body, so they get the per-path baseline rather than a
+# by-design exemption. Root ("/") is a bare 404 with no baseline applicable
+# (same as the check-domains layer above) so it is deliberately NOT in the
+# path list — only `/health`, the one 200 either host ever serves
+# unauthenticated. Confirmed live and fixed in the tik-api repo: nosniff was
+# entirely absent before this task.
 declare -A NONVERCEL_CHECK_PATHS=(
   [house]="/ /login"
   [meniapp-api]="/health"
+  [tik-api]="/health"
+  [tik-api-vps]="/health"
 )
 declare -A NONVERCEL_HEADER_SKIP_REASON=(
   [brain]="by-design auth wall answers a bare 404 to every unauthenticated request; correct behaviour, not drift"
