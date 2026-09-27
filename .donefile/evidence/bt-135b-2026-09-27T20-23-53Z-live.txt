@@ -1,0 +1,2 @@
+$ bash /home/omri/projects/bass-tuner/scripts/audit-domains.sh 2>&1 | grep -E "^OK     tik-api(-vps)?\.omrihefez\.com/health -> 200" | wc -l | grep -qx 2
+

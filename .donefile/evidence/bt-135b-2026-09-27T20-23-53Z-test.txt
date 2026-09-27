@@ -1,0 +1,34 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+
+1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked
+  ok — meniapp is derived and checked, not missing
+2. a tombstoned row is never audited
+  ok — tombstoned row excluded
+3. a non-Vercel live host (Cloudflare Tunnel) is SKIPped from the Vercel Deployment-Protection gate, and separately gets its own per-path baseline (bt-d173), not the old bare-echo
+  ok — Cloudflare-Tunnel host is named via SKIP for the Vercel gate, and its own security-header baseline runs and reports separately
+4. a genuine Vercel Deployment-Protection redirect still fails loudly (bt-417b class)
+  ok — the original bt-417b drift detection still fires
+5. AUDIT_SUBS overrides the DOMAIN.md derivation entirely (test-monitoring.sh's bt-a942 self-test relies on this to force a failure)
+  ok — AUDIT_SUBS bypasses DOMAIN_MD entirely (even an unreadable one), so the self-test sabotage still works
+6. an unreadable DOMAIN.md fails loudly instead of running an empty/stale audit
+  ok — missing DOMAIN.md refuses to run rather than silently checking nothing
+7. bt-a2c2: a 200 host with NO security headers at all (the compose.omrihefez.com shape) is reported as DRIFT, not OK
+  ok — a 200 response with zero security headers is DRIFT, and this is exactly the shape the discovery run measured live on compose.omrihefez.com
+8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely
+  ok — report-only CSP satisfies the baseline and a 401 host is correctly exempt
+9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT, and brain/oauth never get curled at all
+  ok — the check FAILS on the exact pre-fix hc-d30f shape (framing headers present, cache header absent), brain/oauth are never curled, and tik-api/tik-api-vps ARE curled and pass
+10. bt-d173: the SAME check PASSES once Cache-Control: no-store is added — proves this is a real fail/pass check, not a check that only ever passes
+  ok — the check flips to OK the moment the fix is present — this is the same probe, not a different one for each side
+11. bt-d173: meniapp-api's /health (JSON) missing x-content-type-options is DRIFT — the exact live finding this task's own 'done when' names — and CSP/X-Frame-Options/Referrer-Policy are NOT required on it (content-type gate avoids the JSON-API noise problem)
+  ok — a JSON API missing nosniff is DRIFT, named precisely, with no false noise from framing headers that don't apply to it
+11b. bt-135b: tik-api's /health (JSON) missing x-content-type-options is DRIFT — the exact live finding measured on tik-api.omrihefez.com before the fix in the tik-api repo — and tik-api-vps (same origin) is checked independently
+  ok — tik-api missing nosniff is DRIFT (the pre-fix shape), and tik-api-vps is checked as its own row, not coupled to tik-api's result
+12. bt-d173: a 401 on a checked non-Vercel host is exempt from framing headers but NOT from Cache-Control: no-store (mirrors the SUBS-loop 401 exemption, inverted for cache)
+  ok — a 401 refusal is checked for Cache-Control: no-store and never for framing headers — matches the task's own done-when
+13. bt-d173/bt-135b: SKIP text for an exempt host names its OWN reason, not a copy of another host's; a host with no stated reason falls through to the default (still-live code path — no real registry host currently exercises it, so this one row is a deliberate stand-in, not a real label)
+  ok — each SKIPped host states its own actual reason — the SKIP text does not collapse two different causes into one line, and tik-api is no longer in the SKIP set at all
+13b. the still-live default-reason fallback (no real registry host currently exercises it, since tik-api's assessment resolved the last unclassified one) fires for a host in neither dict
+  ok — a host in neither NONVERCEL_CHECK_PATHS nor NONVERCEL_HEADER_SKIP_REASON still gets the default not-yet-assessed reason, not a crash or a false OK
+
+PASS (15 assertions)
