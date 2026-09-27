@@ -34,6 +34,7 @@ const REQUIRED_HEADERS = {
   "Referrer-Policy": "no-referrer",
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Resource-Policy": "same-origin",
+  "Permissions-Policy": "microphone=(self)",
 };
 
 test("vercel.json has a catch-all header rule", () => {
@@ -65,6 +66,23 @@ test("catch-all rule sets a Content-Security-Policy with the required directives
   ]) {
     assert.ok(csp.includes(directive), `expected CSP to include "${directive}", got "${csp}"`);
   }
+});
+
+test("Permissions-Policy allows microphone (the app's own capability) but denies camera and geolocation", () => {
+  // bt-40c5: the app calls getUserMedia({ audio: true }) (tuner.js) but never
+  // touches camera or geolocation, so an inherited/default-allow policy grants
+  // capabilities the page has no use for. `microphone=()` (empty allowlist)
+  // would refuse getUserMedia in the page itself and silently break the tuner
+  // — that's the one wrong value that must never regress silently.
+  const rule = findRule(CATCH_ALL_SOURCE);
+  const value = headerValue(rule, "Permissions-Policy");
+  assert.ok(value, "missing Permissions-Policy header on the catch-all rule");
+  assert.ok(
+    value.includes("microphone=(self)"),
+    `expected microphone=(self) (NOT an empty allowlist, which would break getUserMedia), got "${value}"`
+  );
+  assert.ok(value.includes("camera=()"), `expected camera=(), got "${value}"`);
+  assert.ok(value.includes("geolocation=()"), `expected geolocation=(), got "${value}"`);
 });
 
 test("sw.js has a no-store Cache-Control rule so a deploy is always reachable", () => {
