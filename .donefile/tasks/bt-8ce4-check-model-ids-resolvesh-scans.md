@@ -2,7 +2,7 @@
 id: bt-8ce4
 title: check-model-ids-resolve.sh scans only /home/omri/projects/* so every Gemini model ID in
   ~/meni/bin is invisible to the 2026-10-20 retirement guard
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -12,6 +12,9 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-c54ec0
   at: 2026-09-29T17:38:07Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-29T17:47:15Z
 ---
 
 `scripts/check-model-ids-resolve.sh` is the fleet's only guard that a hardcoded Gemini
@@ -77,3 +80,6 @@ Filed by the periodic discovery sweep, 2026-09-29.
 
 
 cross-board: names a file under 'vidsmith' at /home/omri/projects/vidsmith — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-09-29 claimed by capacity-engine
