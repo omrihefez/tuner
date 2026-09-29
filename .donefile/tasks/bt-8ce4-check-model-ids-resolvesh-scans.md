@@ -2,7 +2,7 @@
 id: bt-8ce4
 title: check-model-ids-resolve.sh scans only /home/omri/projects/* so every Gemini model ID in
   ~/meni/bin is invisible to the 2026-10-20 retirement guard
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -12,9 +12,20 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-c54ec0
   at: 2026-09-29T17:38:07Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-29T17:53:37Z
+done:
+  at: 2026-09-29T17:58:00Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 378b55f251af62dd23c314f4700feeca9f96c33f
+    verified: 2026-09-29T17:58:00Z
+  - type: test
+    cmd: bash scripts/check-model-ids-resolve.test.sh
+    exit: 0
+    at: 2026-09-29T17:57:59Z
+    log: evidence/bt-8ce4-2026-09-29T17-57-59Z-test.txt
+    sha256: 664295152e9e2ff6ce0e77f0cf75255c2b54607d9d1170e4dd37420cbf598a13
+    bytes: 1883
 ---
 
 `scripts/check-model-ids-resolve.sh` is the fleet's only guard that a hardcoded Gemini
@@ -161,3 +172,4 @@ constraint inherited from a brief is a pointer to a source, not the source.
 - 2026-09-29 priority: 'p2' -> 'p3'
 - 2026-09-29 released by capacity-engine
 - 2026-09-29 claimed by capacity-engine
+- 2026-09-29 done by capacity-engine/worker — commit 378b55f251af, test `bash scripts/check-model-ids-resolve.test.sh` exit 0 (log: evidence/bt-8ce4-2026-09-29T17-57-59Z-test.txt)
