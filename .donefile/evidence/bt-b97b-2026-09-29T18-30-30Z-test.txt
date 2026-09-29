@@ -1,0 +1,2 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/install-monitoring-crons.sh --print-line | grep -q "run-monitor.sh permissions-policy .*check-permissions-policy.sh"
+

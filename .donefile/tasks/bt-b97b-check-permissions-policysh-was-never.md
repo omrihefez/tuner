@@ -2,7 +2,7 @@
 id: bt-b97b
 title: check-permissions-policy.sh was never added to install-monitoring-crons.sh CRON_LINES, so the
   header drift monitor bt-40c5 shipped has never run once
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -11,9 +11,34 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-c54ec0
   at: 2026-09-29T17:38:18Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-29T18:19:39Z
+done:
+  at: 2026-09-29T18:30:31Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 9d9db52
+    verified: 2026-09-29T18:30:31Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/install-monitoring-crons.sh --print-line |
+      grep -q "run-monitor.sh permissions-policy .*check-permissions-policy.sh"
+    exit: 0
+    at: 2026-09-29T18:30:30Z
+    log: evidence/bt-b97b-2026-09-29T18-30-30Z-test.txt
+    sha256: 320a77516175c5ae0e189cf8f0b703209de1f491bf1818a3b820e7cbb009015e
+    bytes: 170
+  - type: live
+    cmd: crontab -l | grep -q "16 6 \* \* \* .*permissions-policy .*check-permissions-policy.sh"
+    exit: 0
+    at: 2026-09-29T18:30:30Z
+    log: evidence/bt-b97b-2026-09-29T18-30-30Z-live.txt
+    sha256: ca0f45fc4870af606ff1f39a8a55449fc3889b3a21ab17797df1364a9f3a8fee
+    bytes: 91
+  - type: note
+    value: Wired check-permissions-policy.sh into install-monitoring-crons.sh CRON_LINES at 06:16,
+      installed for real (crontab -l confirms it live). Added a completeness guard (UNREGISTERED,
+      symmetric to the existing DROPPED guard) that refuses to install if any scripts/check-*.sh
+      with its own .test.sh companion is missing from $CRON_LINES; verified it fails (exit 1,
+      refuses install) with the line removed and passes with it present.
 ---
 
 `scripts/check-permissions-policy.sh` was added by bt-40c5 (commit d302286, 2026-09-27)
@@ -99,3 +124,4 @@ check-monitor-heartbeats.sh cannot see its absence either (that is the original 
 
 Same shape as [[feedback_shipped_is_not_deployed_verify_live]]: the artifact changed, the
 installed state did not.
+- 2026-09-29 done by capacity-engine/worker — commit 9d9db52, test `cd /home/omri/projects/bass-tuner && bash scripts/install-monitoring-crons.sh --print-line | grep -q "run-monitor.sh permissions-policy .*check-permissions-policy.sh"` exit 0 (log: evidence/bt-b97b-2026-09-29T18-30-30Z-test.txt), live `crontab -l | grep -q "16 6 \* \* \* .*permissions-policy .*check-permissions-policy.sh"` exit 0 (log: evidence/bt-b97b-2026-09-29T18-30-30Z-live.txt)

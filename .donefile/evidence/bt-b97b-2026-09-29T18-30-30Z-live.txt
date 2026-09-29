@@ -1,0 +1,2 @@
+$ crontab -l | grep -q "16 6 \* \* \* .*permissions-policy .*check-permissions-policy.sh"
+
