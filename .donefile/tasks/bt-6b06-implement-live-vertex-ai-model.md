@@ -22,3 +22,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed DONE (commit 5f379be).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-29 blocker bt-2492 closed 2026-09-29T07:56:22Z — recheck whether this can proceed now.
