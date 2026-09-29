@@ -53,9 +53,16 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 declare -A MAX_AGE_HOURS=(
   [fallback-cert]=30    # daily 06:05
   [domain-audit]=30     # daily 06:10
+  [tunnel-liveness]=30  # daily 06:12 (bt-8818)
   [cert-renewal]=192    # weekly Mon 06:17 (7d + 1d slack)
   [stale-deploy]=6      # every 2h at :22 (bt-4e2a) -- 3x cadence for slack
   [model-ids]=30        # daily 06:14 (bt-5abe)
+  # NOTE: does NOT include "heartbeat" itself (this script's own run) --
+  # that was tried and rejected in bt-6492: a self-referential entry only
+  # reports once the watcher has already run, so it can never catch "the
+  # watcher didn't run at all". That case is covered by a SEPARATE script
+  # on a SEPARATE scheduler instead: check-heartbeat-liveness.sh, run by
+  # systemd/bass-tuner-heartbeat-watchdog.timer (install-heartbeat-watchdog.sh).
 )
 
 MENI_NOTIFY="$HOME/meni/bin/meni-notify"
