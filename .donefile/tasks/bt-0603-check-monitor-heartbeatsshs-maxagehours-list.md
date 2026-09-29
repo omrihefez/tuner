@@ -2,7 +2,7 @@
 id: bt-0603
 title: check-monitor-heartbeats.sh's MAX_AGE_HOURS list is missing tunnel-liveness and heartbeat
   itself, not just model-ids (which I added)
-status: claimed
+status: done
 priority: p3
 tags:
   - observability
@@ -11,9 +11,27 @@ filed:
   owner: capacity-engine
   at: 2026-09-29T06:40:35Z
 reported: 2026-09-29
-claim:
-  owner: capacity-engine
-  at: 2026-09-29T07:23:02Z
+done:
+  at: 2026-09-29T07:27:59Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: aa7383b748bdc36c0599f1db45a32a26f810250c
+    verified: 2026-09-29T07:27:59Z
+  - type: test
+    cmd: bash scripts/test-monitoring.sh
+    exit: 0
+    at: 2026-09-29T07:27:51Z
+    log: evidence/bt-0603-2026-09-29T07-27-51Z-test.txt
+    sha256: ad6fd9b6dc055966d8ebde0c4c69ccf0add1da9ea13632e9c317da591dccd789
+    bytes: 3461
+  - type: note
+    value: "tunnel-liveness was genuinely missing from MAX_AGE_HOURS (bt-8818 added the monitor+cron but
+      never registered it here) -- added, verified with a before/after run showing UNKNOWN -> STALE
+      detection. 'heartbeat itself' is NOT missing: it was deliberately excluded per bt-6492
+      (self-referential entry can't catch 'never ran at all') and is covered by the separate
+      check-heartbeat-liveness.sh + systemd watchdog timer instead -- documented that in a comment
+      so this doesn't get re-filed."
 ---
 
 Named in the finding: check-monitor-heartbeats.sh
@@ -38,3 +56,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-29 claimed by capacity-engine
+- 2026-09-29 done by capacity-engine/worker — commit aa7383b748bd, test `bash scripts/test-monitoring.sh` exit 0 (log: evidence/bt-0603-2026-09-29T07-27-51Z-test.txt)
