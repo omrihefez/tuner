@@ -2,7 +2,7 @@
 id: bt-5abe
 title: No monitor anywhere checks that a hardcoded AI model ID still resolves — four repos carried
   live gemini-2.5 strings past a 2026-10-20 cutoff for seven weeks with nothing watching
-status: open
+status: claimed
 priority: p2
 tags:
   - observability
@@ -11,6 +11,9 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-7a770f
   at: 2026-09-29T05:39:25Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-29T06:02:59Z
 ---
 
 Nothing in the fleet asserts that a hardcoded AI model ID still resolves. Swept 2026-09-29 across meniapp/scripts, iac/scripts, bass-tuner/scripts, kidai/src and second-brain/scripts: no script calls the `v1beta/models` list endpoint, and no test or monitor anywhere checks a configured model ID against the provider. So a model retirement is invisible until a user-visible failure.
@@ -31,3 +34,4 @@ EVIDENCE REQUIRED: the monitor must be SEEN RED. Point it at a model ID that doe
 ## Log
 - 2026-09-29 claimed by capacity-engine
 - 2026-09-29 released by capacity-engine
+- 2026-09-29 claimed by capacity-engine
