@@ -2,7 +2,7 @@
 id: bt-b97b
 title: check-permissions-policy.sh was never added to install-monitoring-crons.sh CRON_LINES, so the
   header drift monitor bt-40c5 shipped has never run once
-status: claimed
+status: open
 priority: p3
 tags:
   - monitoring
@@ -11,9 +11,6 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-c54ec0
   at: 2026-09-29T17:38:18Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-29T18:11:33Z
 ---
 
 `scripts/check-permissions-policy.sh` was added by bt-40c5 (commit d302286, 2026-09-27)
@@ -78,3 +75,4 @@ Filed by the periodic discovery sweep, 2026-09-29.
 
 ## Log
 - 2026-09-29 claimed by capacity-engine
+- 2026-09-29 released by capacity-engine
