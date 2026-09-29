@@ -81,16 +81,52 @@ MODEL_ID_REGEX='gemini-([0-9]+(\.[0-9]+)?-[a-z]+(-[a-z]+)*|(flash|pro)-latest)'
 # fixed string because this box has already grown three different spellings
 # of "this is a worktree dir" (verified live 2026-09-29: *-worktrees,
 # meniapp-wt, and a bare top-level "worktrees").
+#
+# EXTRA_ROOTS below is bt-8ce4: /home/omri/projects/*/ is one hardcoded glob,
+# so anything outside it was invisible to this guard by construction -- the
+# same single-root defect the board census was widened for three times
+# (ce-1ff6 added ~/meni, ce-bea1 added ~/tik-api, ce-e7d7 added -L for
+# symlinked subtrees). Each of these three was verified live 2026-09-29 to
+# actually contain a gemini-* model string today (not speculative coverage):
+# ~/meni/bin/gemini_call.py, ~/tik-api/llm/gemini.py, and
+# ~/apartment/sonos/sonos.py:425. None of the three is itself a symlink or
+# contains a worktree-pattern subdir, so no extra filtering is needed for
+# them beyond what already applies to /home/omri/projects entries.
+#
+# Deliberately NOT added, decided explicitly rather than left unconsidered:
+#   ~/compose      -- a live app repo, but grepped clean of every LLM-provider
+#                      name (openai/anthropic/gemini/claude-*/gpt-*), not just
+#                      Gemini -- it does not call an LLM at all today.
+#   ~/study        -- not a live application: exam/course material
+#                      (sn2526a) with no LLM-provider string anywhere in it.
+# Neither is a repo this fleet ships or operates, unlike meni/tik-api/apartment.
+# If either ever grows a real model call, add it here the same way.
+#
+# PROJECTS_GLOB_ROOT and EXTRA_ROOTS are separately overridable (not just the
+# combined MODEL_SCAN_ROOTS escape hatch above) so the companion test can
+# exercise this DEFAULT-CONSTRUCTION logic itself -- the worktree-suffix
+# filter and the extra-roots merge -- against a throwaway fixture tree,
+# rather than only ever testing the MODEL_SCAN_ROOTS bypass that skips this
+# code entirely.
+PROJECTS_GLOB_ROOT="${MODEL_PROJECTS_ROOT:-/home/omri/projects}"
+if [[ -n "${MODEL_EXTRA_ROOTS:-}" ]]; then
+  read -ra EXTRA_ROOTS <<<"$MODEL_EXTRA_ROOTS"
+else
+  EXTRA_ROOTS=(/home/omri/meni /home/omri/tik-api /home/omri/apartment)
+fi
 if [[ -n "${MODEL_SCAN_ROOTS:-}" ]]; then
   read -ra SCAN_ROOTS <<<"$MODEL_SCAN_ROOTS"
 else
   SCAN_ROOTS=()
-  for _d in /home/omri/projects/*/; do
+  for _d in "$PROJECTS_GLOB_ROOT"/*/; do
     _name="$(basename "$_d")"
     case "$_name" in
       *-worktrees|*-wt|worktrees) continue ;;
     esac
     SCAN_ROOTS+=("$_d")
+  done
+  for _d in "${EXTRA_ROOTS[@]}"; do
+    [[ -d "$_d" ]] && SCAN_ROOTS+=("$_d/")
   done
   unset _d _name
 fi
@@ -116,6 +152,17 @@ fi
 #     swapped, changed the result). --exclude MUST come after --include
 #     below, or --include='*.sh' re-admits a file that also matched
 #     --exclude='*.test.*'.
+#   - ~/meni/state/children.json (in scope once ~/meni was added to
+#     EXTRA_ROOTS, bt-8ce4) is a pool of WORKER SESSION NAMES, not model
+#     config -- and per this repo's own naming convention (set_identity
+#     names a worker from its task title) it contains entries like
+#     "two-gemini-2-5-model-str-6a02c2", whose slug-shaped digits happen to
+#     match MODEL_ID_REGEX as "gemini-25-model-strings". That string will
+#     never resolve against the API and isn't a model ID anyone calls --
+#     exact same false-discovery class as the .donefile task-title text
+#     already excluded above, just one file instead of one directory.
+#     Verified live 2026-09-29: this is the only false positive introduced
+#     by widening SCAN_ROOTS to ~/meni, ~/tik-api and ~/apartment.
 discovered="$(
   grep -rhnE "$MODEL_ID_REGEX" \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist \
@@ -126,6 +173,7 @@ discovered="$(
     --include='*.sh' --include='*.py' --include='*.ts' --include='*.tsx' \
     --include='*.js' --include='*.mjs' --include='*.json' \
     --exclude='*.test.*' --exclude='test_*' --exclude='*_test.py' \
+    --exclude='children.json' \
     "${SCAN_ROOTS[@]}" 2>/dev/null \
   | grep -vE '^[0-9]+:[[:space:]]*(#|//|\*([^/]|$))' \
   | grep -oE "$MODEL_ID_REGEX" \
@@ -147,7 +195,17 @@ discovered="$(
 #   discovered and verified to resolve). Confirmed live 2026-09-29: the bare
 #   "gemini-3.1-pro" 404s against the API and always will, since nothing ever
 #   sends it there.
-MODEL_ID_IGNORE_DEFAULT="gemini-3.1-pro"
+#
+#   gemini-2.5-flash-preview-image (bt-8ce4, ~/meni/bin/billing_killswitch.py's
+#   TOKEN_USD_PER_M table, now in scope via EXTRA_ROOTS above) -- that file's
+#   own "THE NAME TRAP" comment (measured 2026-09-02, just above the table)
+#   says outright: calls go to models/gemini-2.5-flash-image, but Cloud
+#   Monitoring labels that same traffic model=gemini-2.5-flash-preview-image,
+#   and the table is deliberately keyed on the METRIC label, not the API
+#   path, because keying on the API name once already priced a month at 0.00.
+#   It is a metric label, never sent to the API, and will 404 forever --
+#   confirmed live 2026-09-29.
+MODEL_ID_IGNORE_DEFAULT="gemini-3.1-pro gemini-2.5-flash-preview-image"
 IGNORE_LIST="${MODEL_ID_IGNORE:-$MODEL_ID_IGNORE_DEFAULT}"
 if [[ -n "$IGNORE_LIST" ]]; then
   declare -A _ignore=()

@@ -120,5 +120,30 @@ if grep -q "gemini-2.5-flash:" <<<"$out"; then
 fi
 ok "a healthy model and a retired model discovered together are reported separately, not lumped as one verdict"
 
+echo "8. DEFAULT ROOT WIDENING (bt-8ce4): with NO MODEL_SCAN_ROOTS override, the default root list covers MODEL_EXTRA_ROOTS (a fixture standing in for ~/meni/~/tik-api/~/apartment) as well as MODEL_PROJECTS_ROOT/*, and still filters worktree-suffixed dirs under the projects root"
+DEFAULT_TMP="$(mktemp -d)"
+PROJ_ROOT="$DEFAULT_TMP/projects"
+EXTRA_ROOT="$DEFAULT_TMP/meni-like"
+mkdir -p "$PROJ_ROOT/repo-a/scripts" "$PROJ_ROOT/some-worktrees/scripts" "$EXTRA_ROOT/bin"
+echo 'X = "gemini-2.5-flash"' >"$PROJ_ROOT/repo-a/scripts/ok.py"
+echo 'Y = "gemini-9.9-flash-wideningtest"' >"$EXTRA_ROOT/bin/tool.py"
+echo 'Z = "gemini-9.9-flash-shouldnotappear"' >"$PROJ_ROOT/some-worktrees/scripts/ignored.py"
+: >"$FIXTURE_MAP"
+printf 'gemini-2.5-flash\t200\n' >>"$FIXTURE_MAP"
+printf 'gemini-9.9-flash-wideningtest\t200\n' >>"$FIXTURE_MAP"
+out="$(
+  MODEL_PROJECTS_ROOT="$PROJ_ROOT" MODEL_EXTRA_ROOTS="$EXTRA_ROOT" \
+  CURL_FIXTURE_MAP="$FIXTURE_MAP" CURL_CMD="$CURL_STUB" \
+  GEMINI_API_KEY="fake-key-for-test" \
+  bash "$SCRIPT" 2>&1
+)"; rc=$?
+rm -rf "$DEFAULT_TMP"
+[ "$rc" -eq 0 ] || fail "expected exit 0 (both fixture models resolve), got $rc: $out"
+grep -q "gemini-9.9-flash-wideningtest" <<<"$out" || fail "expected the MODEL_EXTRA_ROOTS-only model ID to be discovered via the DEFAULT root list with no MODEL_SCAN_ROOTS override -- this is the bt-8ce4 root-widening regression, got: $out"
+if grep -q "gemini-9.9-flash-shouldnotappear" <<<"$out"; then
+  fail "a model ID inside a *-worktrees-suffixed dir under the projects root must still be filtered even after widening, got: $out"
+fi
+ok "the default root list (no MODEL_SCAN_ROOTS override) includes MODEL_EXTRA_ROOTS and still filters worktree-suffixed dirs under the projects root"
+
 echo
 echo "PASS ($pass assertions)"
