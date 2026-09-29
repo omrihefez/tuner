@@ -3,7 +3,7 @@ id: bt-2492
 title: this monitor only covers the public generativelanguage.googleapis.com surface; second-brain's
   vision_*.py scripts call Vertex AI's Gemini surface (GCP SA auth, not an API key) and are not
   checked
-status: open
+status: claimed
 priority: p3
 tags:
   - observability
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-29T06:40:41Z
 reported: 2026-09-29
+claim:
+  owner: capacity-engine
+  at: 2026-09-29T07:52:07Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): vision_sample_stratified.py:20 says gemini-3.1-flash-lite "only resolves via locations/global" — a Vertex-only model discovered by this monitor would false-DRIFT against the public API
@@ -24,3 +27,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed DONE (commit 5c4246c6f26f46d21211e936ab2716a4607f07f1).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-29 claimed by capacity-engine
