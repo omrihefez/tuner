@@ -2,7 +2,7 @@
 id: bt-5abe
 title: No monitor anywhere checks that a hardcoded AI model ID still resolves — four repos carried
   live gemini-2.5 strings past a 2026-10-20 cutoff for seven weeks with nothing watching
-status: open
+status: claimed
 priority: p2
 tags:
   - observability
@@ -11,6 +11,9 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-7a770f
   at: 2026-09-29T05:39:25Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-29T05:57:28Z
 ---
 
 Nothing in the fleet asserts that a hardcoded AI model ID still resolves. Swept 2026-09-29 across meniapp/scripts, iac/scripts, bass-tuner/scripts, kidai/src and second-brain/scripts: no script calls the `v1beta/models` list endpoint, and no test or monitor anywhere checks a configured model ID against the provider. So a model retirement is invisible until a user-visible failure.
@@ -27,3 +30,6 @@ DONE WHEN a monitor exists that:
 5. FAILS CLOSED and distinguishes cannot-run from fail. An unset or invalid API key must not read as "all models resolve". This is the specific trap that iac-7254 was filed for and that iac-da6a's block reason was rewritten to fix; both are in-repo precedent worth reading before writing the exit-code logic.
 
 EVIDENCE REQUIRED: the monitor must be SEEN RED. Point it at a model ID that does not exist and confirm it alerts; point it at a valid one and confirm it clears. Paste both runs. A monitor only ever observed passing is indistinguishable from one that cannot fire — and that is not hypothetical here: bt-b130 and the `renew-wildcard-cert.sh` history in run-monitor.sh:5-8 are both cases on this exact board where a check ran green while the thing it watched was broken.
+
+## Log
+- 2026-09-29 claimed by capacity-engine
