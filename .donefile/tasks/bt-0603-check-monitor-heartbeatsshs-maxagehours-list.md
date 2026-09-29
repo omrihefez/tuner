@@ -2,7 +2,7 @@
 id: bt-0603
 title: check-monitor-heartbeats.sh's MAX_AGE_HOURS list is missing tunnel-liveness and heartbeat
   itself, not just model-ids (which I added)
-status: open
+status: claimed
 priority: p3
 tags:
   - observability
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-29T06:40:35Z
 reported: 2026-09-29
+claim:
+  owner: capacity-engine
+  at: 2026-09-29T07:23:02Z
 ---
 
 Named in the finding: check-monitor-heartbeats.sh
@@ -32,3 +35,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit 5c4246c6f26f46d21211e936ab2716a4607f07f1).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-09-29 claimed by capacity-engine
