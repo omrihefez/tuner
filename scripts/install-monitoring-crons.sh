@@ -54,6 +54,7 @@ DOMAIN_AUDIT="$REPO/scripts/audit-domains.sh"
 HEARTBEAT="$REPO/scripts/check-monitor-heartbeats.sh"
 STALE_DEPLOY="$REPO/deploy/activation-probes/probe-bt-5fb7.sh"
 TUNNEL_LIVENESS="$REPO/scripts/check-tunnel-liveness.sh"
+MODEL_IDS="$REPO/scripts/check-model-ids-resolve.sh"
 
 # Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
 # copy); runs on the same box as meniapp, so the absolute path always
@@ -78,9 +79,16 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 # every 2h (offset :22 to dodge the 06:05-07:00 window and the top-of-hour
 # rush of other boxes' crons) rather than daily -- it's cheap (one curl) and
 # catching a stale deploy sooner narrows the window it ships broken to users.
+# model-ids (bt-5abe) -- :14, after tunnel-liveness and before the 07:00
+# heartbeat, same pre-day-start window as the other TLS/domain checks. Once
+# daily is enough: a provider retirement is announced weeks ahead (the
+# Oct 20 2026 Gemini 2.5 notice that motivated this task was 21 days'
+# notice), so same-day detection has no value over next-morning detection,
+# and it costs one live API call per discovered model ID.
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
 12 6 * * * $RUNNER tunnel-liveness $TUNNEL_LIVENESS
+14 6 * * * $RUNNER model-ids $MODEL_IDS
 0 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
@@ -180,5 +188,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
 fi
