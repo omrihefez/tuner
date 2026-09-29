@@ -55,6 +55,7 @@ HEARTBEAT="$REPO/scripts/check-monitor-heartbeats.sh"
 STALE_DEPLOY="$REPO/deploy/activation-probes/probe-bt-5fb7.sh"
 TUNNEL_LIVENESS="$REPO/scripts/check-tunnel-liveness.sh"
 MODEL_IDS="$REPO/scripts/check-model-ids-resolve.sh"
+PERMISSIONS_POLICY="$REPO/scripts/check-permissions-policy.sh"
 
 # Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
 # copy); runs on the same box as meniapp, so the absolute path always
@@ -85,10 +86,18 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 # Oct 20 2026 Gemini 2.5 notice that motivated this task was 21 days'
 # notice), so same-day detection has no value over next-morning detection,
 # and it costs one live API call per discovered model ID.
+# permissions-policy (bt-40c5, wired up by bt-b97b) -- :16, last of the
+# pre-day-start window, right before the Monday 06:17 cert-renewal run. It
+# shipped alongside the header fix itself but was never added here, so it
+# had never run once; a header drift (e.g. microphone=() instead of
+# microphone=(self)) would have silently broken getUserMedia with nothing to
+# notice. Once daily is enough -- this only drifts if a deploy changes
+# vercel.json's header block, not on its own.
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
 12 6 * * * $RUNNER tunnel-liveness $TUNNEL_LIVENESS
 14 6 * * * $RUNNER model-ids $MODEL_IDS
+16 6 * * * $RUNNER permissions-policy $PERMISSIONS_POLICY
 0 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
@@ -166,6 +175,57 @@ if [ -n "$DROPPED" ]; then
     exit 1
   fi
   echo "[install-monitoring-crons] --force given: unscheduling the above." >&2
+fi
+
+# Guard (bt-b97b): symmetric to the DROPPED guard above, but for the
+# opposite failure -- a monitor script that exists in scripts/, has its own
+# regression test proving it works (a bt-40c5-style scripts/<name>.test.sh
+# companion), and was simply never added to $CRON_LINES, so it has never run
+# on a schedule. The heartbeat monitor can't catch this: it alerts on a
+# registered monitor's log going stale, but an unregistered monitor writes
+# no log at all, so there is no heartbeat to go stale. This is exactly how
+# check-permissions-policy.sh (bt-40c5) shipped and sat unscheduled for two
+# days before bt-b97b found it by hand.
+#
+# Deliberately excluded, not an oversight:
+#   check-heartbeat-liveness.sh -- must NEVER be crontab-scheduled; it exists
+#     precisely because that scheduler can silently fail, and runs on the
+#     separate bass-tuner-heartbeat-watchdog.timer instead (test-monitoring.sh
+#     asserts its absence from crontab for the same reason).
+# Globbed from $REPO, not $SCRIPT_DIR -- like every path above, this must
+# resolve to the canonical checkout regardless of whether this installer
+# itself is running from the main checkout or a throwaway task worktree,
+# otherwise the paths here never match the $REPO-rooted paths in
+# $CRON_LINES and the guard false-positives on every entry.
+UNREGISTERED_EXCLUDE="check-heartbeat-liveness"
+UNREGISTERED=""
+for script in "$REPO"/scripts/check-*.sh; do
+  base="$(basename "$script" .sh)"
+  [ -f "$REPO/scripts/${base}.test.sh" ] || continue
+  case " $UNREGISTERED_EXCLUDE " in
+    *" $base "*) continue ;;
+  esac
+  case "$CRON_LINES" in
+    *"$script"*) ;;
+    *) UNREGISTERED="$(printf '%s\n%s' "$UNREGISTERED" "$script")" ;;
+  esac
+done
+UNREGISTERED="$(printf '%s\n' "$UNREGISTERED" | sed '/^$/d')"
+
+if [ -n "$UNREGISTERED" ]; then
+  {
+    echo "[install-monitoring-crons] these monitor scripts have their own regression test"
+    echo "  (scripts/<name>.test.sh) proving they work, but are absent from \$CRON_LINES,"
+    echo "  so they have never run on a schedule:"
+    printf '%s\n' "$UNREGISTERED" | sed 's/^/      /'
+    echo "  Add them to \$CRON_LINES, or to \$UNREGISTERED_EXCLUDE above if they are"
+    echo "  deliberately not cron-scheduled -- or re-run with --force to install anyway."
+  } >&2
+  if [ "$FORCE" != "1" ]; then
+    echo "[install-monitoring-crons] refusing to install (no --force); crontab unchanged." >&2
+    exit 1
+  fi
+  echo "[install-monitoring-crons] --force given: installing without these registered." >&2
 fi
 
 STRIPPED_CRON="$(printf '%s\n' "$CURRENT_CRON" | sed "\\|^$BEGIN_MARK\$|,\\|^$END_MARK\$|d")"
