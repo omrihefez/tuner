@@ -2,7 +2,7 @@
 id: bt-8ce4
 title: check-model-ids-resolve.sh scans only /home/omri/projects/* so every Gemini model ID in
   ~/meni/bin is invisible to the 2026-10-20 retirement guard
-status: claimed
+status: open
 priority: p3
 tags:
   - monitoring
@@ -12,9 +12,6 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-c54ec0
   at: 2026-09-29T17:38:07Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-29T17:47:15Z
 ---
 
 `scripts/check-model-ids-resolve.sh` is the fleet's only guard that a hardcoded Gemini
@@ -159,3 +156,4 @@ actual GCP sunset notice has been read to confirm exact scope/date" -- the task
 named scope as the thing to verify, and a date was quoted instead. A dated
 constraint inherited from a brief is a pointer to a source, not the source.
 - 2026-09-29 priority: 'p2' -> 'p3'
+- 2026-09-29 released by capacity-engine
