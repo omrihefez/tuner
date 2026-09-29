@@ -2,7 +2,7 @@
 id: bt-5abe
 title: No monitor anywhere checks that a hardcoded AI model ID still resolves — four repos carried
   live gemini-2.5 strings past a 2026-10-20 cutoff for seven weeks with nothing watching
-status: claimed
+status: done
 priority: p2
 tags:
   - observability
@@ -11,9 +11,41 @@ created: 2026-09-29
 filed:
   owner: meni-worker/board-refill-work-discov-7a770f
   at: 2026-09-29T05:39:25Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-29T06:02:59Z
+done:
+  at: 2026-09-29T06:35:48Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 5c4246c6f26f46d21211e936ab2716a4607f07f1
+    verified: 2026-09-29T06:35:48Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-model-ids-resolve.test.sh
+    exit: 0
+    at: 2026-09-29T06:35:43Z
+    log: evidence/bt-5abe-2026-09-29T06-35-43Z-test.txt
+    sha256: 12a7c7a6bd60588ecec6d44291c21bf62388f0b2ed759b3c3b65037b21c2283e
+    bytes: 1492
+  - type: live
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/run-monitor.sh model-ids
+      scripts/check-model-ids-resolve.sh
+    exit: 0
+    at: 2026-09-29T06:35:43Z
+    log: evidence/bt-5abe-2026-09-29T06-35-43Z-live.txt
+    sha256: bf046c6a0935338e1d9a514cc337d36ec7f3ba1b84f04859aafe8ee18c8f71a9
+    bytes: 113
+  - type: note
+    value: "New monitor scripts/check-model-ids-resolve.sh: discovers Gemini model IDs by shape (not a
+      hand-maintained list) across local repo checkouts, asserts resolution via a live GET to the
+      public Generative Language API, fails closed (distinct exit codes for CANNOT RUN/DRIFT/OK).
+      Hermetic test (7 assertions) covers discovery precision, both fail/pass directions, auth
+      failure, zero-discovery, per-model reporting. SEEN RED live: pointed at a fabricated model ID,
+      got DRIFT exit 1 against the real API. SEEN GREEN live: 12 real fleet model IDs (gemini-2.5-*,
+      gemini-3.1-*, gemini-3-*, gemini-flash-latest) all resolve, exit 0. Wired into run-monitor.sh
+      via install-monitoring-crons.sh (06:14 daily, installed live) and check-monitor-heartbeats.sh.
+      Two real bugs found and fixed mid-task: GNU grep's --include/--exclude order-dependence was
+      letting the test file's own fixture strings leak into discovery, and a comm(1) collation
+      mismatch was corrupting the ignore-list filter -- both caught by noticing a stale-but-real
+      false alarm rather than trusting a clean run."
 ---
 
 Nothing in the fleet asserts that a hardcoded AI model ID still resolves. Swept 2026-09-29 across meniapp/scripts, iac/scripts, bass-tuner/scripts, kidai/src and second-brain/scripts: no script calls the `v1beta/models` list endpoint, and no test or monitor anywhere checks a configured model ID against the provider. So a model retirement is invisible until a user-visible failure.
@@ -35,3 +67,4 @@ EVIDENCE REQUIRED: the monitor must be SEEN RED. Point it at a model ID that doe
 - 2026-09-29 claimed by capacity-engine
 - 2026-09-29 released by capacity-engine
 - 2026-09-29 claimed by capacity-engine
+- 2026-09-29 done by capacity-engine/worker — commit 5c4246c6f26f, test `cd /home/omri/projects/bass-tuner && bash scripts/check-model-ids-resolve.test.sh` exit 0 (log: evidence/bt-5abe-2026-09-29T06-35-43Z-test.txt), live `cd /home/omri/projects/bass-tuner && bash scripts/run-monitor.sh model-ids scripts/check-model-ids-resolve.sh` exit 0 (log: evidence/bt-5abe-2026-09-29T06-35-43Z-live.txt)

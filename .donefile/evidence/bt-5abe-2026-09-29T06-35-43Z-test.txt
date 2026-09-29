@@ -1,0 +1,18 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-model-ids-resolve.test.sh
+
+1. DISCOVERY SHAPE: a real model-ID-shaped string is found, but a GCP project id and a service-account name that merely start with 'gemini-' are not
+  ok — the shape regex discovers a real model ID and skips the project-id/service-account lookalikes
+2. BEFORE: a model ID that 404s against the provider is real DRIFT, not a clean pass
+  ok — a retired/nonexistent model ID is caught as DRIFT (exit 1)
+3. AFTER: the same check against the same model ID once it resolves clears — proves this is a real fail/pass probe, not a check that can only ever fail
+  ok — the check flips to OK once the provider actually answers 200
+4. an invalid/rejected API key (401/403) is CANNOT RUN, never read as 'every model resolves'
+  ok — an invalid API key exits 2 (CANNOT RUN), distinct from both OK (0) and DRIFT (1)
+5. no API key at all (and no readable vault auth file) is also CANNOT RUN, not a silent pass
+  ok — a missing API key with no vault fallback exits 2 (CANNOT RUN), not 0
+6. zero discovered model IDs is CANNOT RUN — a monitor that silently checks nothing must not read as a clean pass
+  ok — discovering 0 model IDs exits 2 rather than trivially passing
+7. two discovered model IDs, one healthy and one retired — reported per-model, not all-or-nothing
+  ok — a healthy model and a retired model discovered together are reported separately, not lumped as one verdict
+
+PASS (7 assertions)

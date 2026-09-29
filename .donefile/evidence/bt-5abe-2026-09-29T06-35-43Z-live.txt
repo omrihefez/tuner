@@ -1,0 +1,2 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/run-monitor.sh model-ids scripts/check-model-ids-resolve.sh
+
