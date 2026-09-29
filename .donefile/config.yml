@@ -34,6 +34,13 @@ repos:
   compose:
     path: /home/omri/compose
     integration_branch: main
+  # bt-6b06 (2026-09-29): this board's Vertex AI model-resolution finding is
+  # about second-brain's vision_*.py Gemini calls -- auto-filed here from a
+  # bass-tuner session's FOLLOW-UP line (this task really belongs on
+  # second-brain's own `sb-` board; see bt-6b06's closing note), but the fix
+  # landed in second-brain and this alias is what lets bt-6b06 cite it — same
+  # cross-repo-evidence need as the aliases above.
+  second-brain: /home/omri/projects/second-brain
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
