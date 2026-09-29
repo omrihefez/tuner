@@ -95,15 +95,40 @@ else
   unset _d _name
 fi
 
+# Two more classes of false "discovery", both hit live scanning the real
+# fleet (2026-09-29):
+#   - a comment discussing a model ID as PROSE, not code: kidai's
+#     spend-guard.ts:47 says outright, inside a /** */ block, 'a key like
+#     "gemini-3.1-flash" would be a prefix of "gemini-3.1-flash-image"' --
+#     that bare string is never assigned or called anywhere, only quoted in
+#     the comment illustrating a DIFFERENT bug. Filtered by dropping lines
+#     whose first non-whitespace character is a comment marker (#, //, or a
+#     JSDoc/block-comment continuation *) before extracting matches -- a
+#     heuristic, not a real parser, but it covers bash/python/JS/TS/JSDoc,
+#     which is everything --include lists below.
+#   - a *.test.* file's own deliberately-fake example strings (this script's
+#     OWN companion test uses "gemini-9.9-flash-doesnotexist" as a fixture)
+#     getting swept up as if they were live config the moment the test file
+#     itself lands in the scanned tree. Excluded by filename/dir pattern --
+#     but GNU grep applies --include/--exclude in COMMAND-LINE ORDER, last
+#     match for a given file wins (verified live 2026-09-29 against the real
+#     /usr/bin/grep binary, GNU grep 3.11: identical flags, only the order
+#     swapped, changed the result). --exclude MUST come after --include
+#     below, or --include='*.sh' re-admits a file that also matched
+#     --exclude='*.test.*'.
 discovered="$(
-  grep -rhoE "$MODEL_ID_REGEX" \
+  grep -rhnE "$MODEL_ID_REGEX" \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist \
     --exclude-dir=build --exclude-dir=.next --exclude-dir=__pycache__ \
     --exclude-dir=.venv --exclude-dir=venv \
     --exclude-dir=.donefile --exclude-dir=snapshots --exclude-dir=bench \
+    --exclude-dir=test --exclude-dir=tests \
     --include='*.sh' --include='*.py' --include='*.ts' --include='*.tsx' \
     --include='*.js' --include='*.mjs' --include='*.json' \
+    --exclude='*.test.*' --exclude='test_*' --exclude='*_test.py' \
     "${SCAN_ROOTS[@]}" 2>/dev/null \
+  | grep -vE '^[0-9]+:[[:space:]]*(#|//|\*([^/]|$))' \
+  | grep -oE "$MODEL_ID_REGEX" \
   | sort -u
 )"
 
@@ -125,7 +150,15 @@ discovered="$(
 MODEL_ID_IGNORE_DEFAULT="gemini-3.1-pro"
 IGNORE_LIST="${MODEL_ID_IGNORE:-$MODEL_ID_IGNORE_DEFAULT}"
 if [[ -n "$IGNORE_LIST" ]]; then
-  discovered="$(comm -23 <(printf '%s\n' "$discovered") <(printf '%s\n' $IGNORE_LIST | sort -u))"
+  declare -A _ignore=()
+  for _m in $IGNORE_LIST; do _ignore["$_m"]=1; done
+  _filtered=""
+  while IFS= read -r _m; do
+    [[ -z "$_m" || -n "${_ignore[$_m]:-}" ]] && continue
+    _filtered+="$_m"$'\n'
+  done <<<"$discovered"
+  discovered="${_filtered%$'\n'}"
+  unset _ignore _m _filtered
 fi
 
 if [[ -z "$discovered" ]]; then
