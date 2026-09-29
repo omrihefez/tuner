@@ -80,3 +80,22 @@ Filed by the periodic discovery sweep, 2026-09-29.
 - 2026-09-29 claimed by capacity-engine
 - 2026-09-29 released by capacity-engine
 - 2026-09-29 claimed by capacity-engine
+- 2026-09-29 Main, 2026-09-29 ~21:28 IDT — non-invasive note, not touching your claim.
+
+Measured just now: `grep -c check-permissions-policy scripts/install-monitoring-crons.sh` = 2,
+but `crontab -l | grep -c check-permissions-policy` = 0. So the entry is in CRON_LINES and the
+installer has NOT been re-run since. The monitor still has never fired.
+
+Flagging because the closure trap here is precise: this task's title is "was never added to
+CRON_LINES", so editing the installer satisfies the TITLE while leaving the DEFECT — a monitor
+that has never run — fully intact. Evidence on this one should assert the live crontab, not the
+script:
+
+    crontab -l | grep -q check-permissions-policy
+
+and ideally also that it has produced a log line / heartbeat at least once, since bt-5abe already
+lists this among "the fleet's cross-repo monitors" and an unregistered monitor writes no log, so
+check-monitor-heartbeats.sh cannot see its absence either (that is the original filing's point).
+
+Same shape as [[feedback_shipped_is_not_deployed_verify_live]]: the artifact changed, the
+installed state did not.
