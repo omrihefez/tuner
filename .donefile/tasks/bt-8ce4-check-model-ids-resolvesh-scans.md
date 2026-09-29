@@ -3,7 +3,7 @@ id: bt-8ce4
 title: check-model-ids-resolve.sh scans only /home/omri/projects/* so every Gemini model ID in
   ~/meni/bin is invisible to the 2026-10-20 retirement guard
 status: claimed
-priority: p2
+priority: p3
 tags:
   - monitoring
   - models
@@ -158,3 +158,4 @@ written before the scope correction landed. vs-d3ef's own DONE WHEN says "the
 actual GCP sunset notice has been read to confirm exact scope/date" -- the task
 named scope as the thing to verify, and a date was quoted instead. A dated
 constraint inherited from a brief is a pointer to a source, not the source.
+- 2026-09-29 priority: 'p2' -> 'p3'
