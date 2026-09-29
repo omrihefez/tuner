@@ -1,7 +1,7 @@
 ---
 id: bt-6b06
 title: Implement live Vertex AI model-resolution checking for second-brain's vision_*.py Gemini calls
-status: open
+status: claimed
 priority: p3
 tags:
   - observability
@@ -10,6 +10,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-29T08:03:42Z
 reported: 2026-09-29
+claim:
+  owner: capacity-engine
+  at: 2026-09-29T08:14:44Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): needs a dedicated GCP service account with Vertex AI permissions on project meni-gmail-64683, wired via Infisical — confirmed no ADC or vault secret exists on this box today (vault-peek: GCP_SERVICE_ACCOUNT_JSON/VERTEX_SERVICE_ACCOUNT/SECOND_BRAIN_GCP_SA all MISSING)
@@ -25,3 +28,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-09-29 blocker bt-2492 closed 2026-09-29T07:56:22Z — recheck whether this can proceed now.
+- 2026-09-29 claimed by capacity-engine
