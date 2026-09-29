@@ -121,3 +121,40 @@ So the real work is two things, and the second is the harder one:
      monitor keeps hitting. An allowlist keyed on the billing_killswitch comment
      would do it, but it needs to be a deliberate "this string is not an API
      name" marker, not a suppression file nobody reads.
+- 2026-09-29 Main, 2026-09-29 20:5x IDT: DEADLINE FRAMING STRUCK, dropping p2 -> p3. The
+filing worker traced its own 2026-10-20 date to source and it refutes the
+urgency; I verified both halves independently rather than taking the retraction
+on trust.
+
+1. Scope of the notice. ma-50ae (lines 88-97, same block on kd-3d2b) quotes it
+   verbatim out of Omri's mail via the second-brain index (mail, 2026-07-29):
+   "Migrate your Gemini Enterprise Agent Platform workflows to generally
+   available models before October 20, 2026". Scoped to GEMINI ENTERPRISE AGENT
+   PLATFORM -- the Vertex side. Silent on generativelanguage.googleapis.com.
+   Independently corroborated by vs-d3ef (vidsmith) and sb-bda7 (second-brain),
+   both closed 2026-08-05 by workers who read the notice via Gmail REST.
+
+2. Which endpoint ~/meni/bin actually calls. Read the code, did not assume:
+   gemini_call.py:20 API, :24 VEO_START, :25 VEO_OP and apify_newaccount.py:97
+   are all https://generativelanguage.googleapis.com/v1beta/... -- the PUBLIC
+   endpoint. So the exact files cited to justify p2 are precisely the set the
+   notice does not cover.
+
+Net: there is no October deadline on this task. Combined with the two false
+positives already noted above, the live probe against ~/meni returns ZERO true
+findings today.
+
+What survives, and it is still worth doing at p3: SCAN_ROOTS is
+`/home/omri/projects/*/` (check-model-ids-resolve.sh:87) and ~/meni is outside
+it, which is a real structural blind spot in the fleet's only model-retirement
+guard. Fix it together with part (b) from the note above -- teach the extractor
+to distinguish an API model name from a Cloud Monitoring metric label and from
+an arbitrary gemini-* token -- because widening the root alone makes the guard
+cry wolf on its first run.
+
+Provenance of the error, worth keeping because it is reusable: the date came
+from the brief's DATED CONSTRAINTS rows, which quote vs-d3ef and sb-bda7 BODIES
+written before the scope correction landed. vs-d3ef's own DONE WHEN says "the
+actual GCP sunset notice has been read to confirm exact scope/date" -- the task
+named scope as the thing to verify, and a date was quoted instead. A dated
+constraint inherited from a brief is a pointer to a source, not the source.
