@@ -83,3 +83,41 @@ cross-board: names a file under 'vidsmith' at /home/omri/projects/vidsmith — c
 
 ## Log
 - 2026-09-29 claimed by capacity-engine
+- 2026-09-29 Main, 2026-09-29 evening: the STRUCTURAL claim is confirmed -- SCAN_ROOTS is
+`/home/omri/projects/*/` and nothing else (check-model-ids-resolve.sh:87), so
+~/meni/bin is genuinely outside the guard. Fix that.
+
+But I ran the guard against ~/meni for live evidence before touching it, and
+the exposure list in this task does not survive the probe. Do NOT just widen
+SCAN_ROOTS -- as written it would ship two FALSE alarms and zero true findings:
+
+  MODEL_SCAN_ROOTS="/home/omri/meni/" bash scripts/check-model-ids-resolve.sh
+  -> DRIFT 2: gemini-2.5-flash-preview-image:404, gemini-25-model-strings:404
+
+1. `gemini-25-model-strings` is not a model ID at all. It is a WORKER SESSION
+   NAME in state/children.json:2802. The ID-extraction regex over-matches any
+   `gemini-*` token in any file.
+2. `gemini-2.5-flash-preview-image` 404s BY DESIGN. It appears only as a price
+   table KEY in bin/billing_killswitch.py:133-134, and the ⚠️ comment directly
+   above it (:96-100, "THE NAME TRAP, measured 2026-09-02") says why: calls go
+   to `models/gemini-2.5-flash-image`, but Cloud Monitoring labels that same
+   traffic `model = gemini-2.5-flash-preview-image`, and keying on the API name
+   "matches nothing and prices the month at 0.00 -- the August failure shape
+   exactly". It is a METRIC label. It will never resolve against the
+   Generative Language API, and it must not be "fixed" to a name that does.
+
+Also: the two defaults this task names as the headline risk -- gemini_call.py:59
+`model="gemini-2.5-pro-preview-tts"` and :212 `model="gemini-2.5-flash"` -- both
+still RESOLVE today. They are real defaults and the line numbers are right, but
+they are not currently broken, so the 21-days-to-2026-10-20 urgency is a
+forecast, not a measurement. I did not find the retirement notice itself; this
+script has no hardcoded date and works purely by live probe.
+
+So the real work is two things, and the second is the harder one:
+  a. widen the roots to cover ~/meni (and say why ~/meni was ever excluded).
+  b. give the extractor a way to tell an API model name from a metric label and
+     from an arbitrary `gemini-*` string, or the widened guard cries wolf on its
+     first run and gets ignored -- which is the failure mode this whole class of
+     monitor keeps hitting. An allowlist keyed on the billing_killswitch comment
+     would do it, but it needs to be a deliberate "this string is not an API
+     name" marker, not a suppression file nobody reads.
