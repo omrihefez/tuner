@@ -28,3 +28,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed DONE (commit 8c91290af49ec651a55aa623a0420c857049d736).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-01 blocker bt-b75b closed 2026-09-30T21:01:49Z — recheck whether this can proceed now.
