@@ -2,7 +2,7 @@
 id: bt-b75b
 title: audit-domains.sh never asserts Strict-Transport-Security on any non-Vercel host — three live
   tunnel hosts are missing it today
-status: open
+status: claimed
 priority: p2
 tags:
   - security
@@ -11,6 +11,9 @@ created: 2026-09-30
 filed:
   owner: meni-worker/board-refill-work-discov-6571ae
   at: 2026-09-30T19:45:35Z
+claim:
+  owner: capacity-engine
+  at: 2026-09-30T20:45:43Z
 ---
 
 `scripts/audit-domains.sh` asserts `Strict-Transport-Security` on Vercel hosts only. Every Cloudflare-Tunnel host in `~/meni/DOMAIN.md` §1 gets a liveness check and a partial header check, and HSTS is in neither branch.
@@ -49,3 +52,6 @@ VERIFY (from the main checkout, never a worktree)
     cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.sh
 
 Filed by the periodic discovery sweep, 2026-09-30.
+
+## Log
+- 2026-09-30 claimed by capacity-engine
