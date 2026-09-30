@@ -1,0 +1,2 @@
+$ bash scripts/audit-domains.sh 2>&1 | grep -E 'brain\.omrihefez\.com/|oauth\.omrihefez\.com/health' | grep -c 'Strict-Transport-Security present' | grep -qx 2
+
