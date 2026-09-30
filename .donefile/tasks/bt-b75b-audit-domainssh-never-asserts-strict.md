@@ -2,7 +2,7 @@
 id: bt-b75b
 title: audit-domains.sh never asserts Strict-Transport-Security on any non-Vercel host — three live
   tunnel hosts are missing it today
-status: merged
+status: done
 priority: p2
 tags:
   - security
@@ -16,6 +16,9 @@ activation: cd /home/omri/projects/bass-tuner && git pull --ff-only origin main 
 merged:
   at: 2026-09-30T21:01:11Z
   by: capacity-engine/worker
+done:
+  at: 2026-09-30T21:01:49Z
+  by: capacity-engine/worker
 evidence:
   - type: commit
     value: 8c91290af49ec651a55aa623a0420c857049d736
@@ -27,6 +30,15 @@ evidence:
     log: evidence/bt-b75b-2026-09-30T21-01-02Z-test.txt
     sha256: 71a39d1ecf6aad9844d48c74cb692f184f1c2fc3361a51f0ed0dafd04b37ca79
     bytes: 5786
+  - type: live
+    cmd: git -C /home/omri/projects/bass-tuner merge-base --is-ancestor
+      8c91290af49ec651a55aa623a0420c857049d736 HEAD && grep -q '^check_hsts()'
+      /home/omri/projects/bass-tuner/scripts/audit-domains.sh
+    exit: 0
+    at: 2026-09-30T21:01:49Z
+    log: evidence/bt-b75b-2026-09-30T21-01-49Z-live.txt
+    sha256: 93a8045e1828dce1dfa4a9617fc3a015385a955c0fa62cd80f644502163bd1cc
+    bytes: 195
 ---
 
 `scripts/audit-domains.sh` asserts `Strict-Transport-Security` on Vercel hosts only. Every Cloudflare-Tunnel host in `~/meni/DOMAIN.md` §1 gets a liveness check and a partial header check, and HSTS is in neither branch.
@@ -69,3 +81,4 @@ Filed by the periodic discovery sweep, 2026-09-30.
 ## Log
 - 2026-09-30 claimed by capacity-engine
 - 2026-10-01 merged by capacity-engine/worker — commit 8c91290af49e, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-b75b-2026-09-30T21-01-02Z-test.txt) — activation-gated, needs --live "<cmd>" evidence proving the deployed/running surface picked up the change (activation: cd /home/omri/projects/bass-tuner && git pull --ff-only origin main (fast-forwarded the main checkout the cron job (10 6 * * *) runs from disk — no service, no restart))
+- 2026-10-01 promoted merged -> done by capacity-engine/worker — live `git -C /home/omri/projects/bass-tuner merge-base --is-ancestor 8c91290af49ec651a55aa623a0420c857049d736 HEAD && grep -q '^check_hsts()' /home/omri/projects/bass-tuner/scripts/audit-domains.sh` exit 0 (log: evidence/bt-b75b-2026-09-30T21-01-49Z-live.txt)

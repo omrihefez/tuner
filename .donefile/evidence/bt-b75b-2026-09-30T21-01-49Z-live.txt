@@ -1,0 +1,2 @@
+$ git -C /home/omri/projects/bass-tuner merge-base --is-ancestor 8c91290af49ec651a55aa623a0420c857049d736 HEAD && grep -q '^check_hsts()' /home/omri/projects/bass-tuner/scripts/audit-domains.sh
+
