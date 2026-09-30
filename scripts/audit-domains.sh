@@ -111,6 +111,22 @@ declare -A NONVERCEL_HEADER_SKIP_REASON=(
   [oauth]="intentionally public with no auth wall by design; correct behaviour, not drift"
 )
 
+# STRICT-TRANSPORT-SECURITY (bt-b75b): both skip reasons above are about
+# BODY semantics (a 404 auth wall, a public-by-design page) — neither is a
+# reason to also exempt HSTS, which is a transport-level header set (or not)
+# regardless of what the body looks like. So the skip is narrowed rather
+# than reused: `brain`/`oauth` stay OUT of NONVERCEL_CHECK_PATHS (their
+# 404/public bodies must never be scored against the CSP/XFO/nosniff/
+# Cache-Control baseline meant for a real app response), but each still
+# gets ONE unauthenticated path probed for HSTS alone, via check_hsts_at()
+# below. `brain`: `/` (its by-design 404, verified live 2026-08-23 per
+# DOMAIN.md). `oauth`: `/health`, its one real 200 (DOMAIN.md: "`/health`
+# -> 200 `ok` is a liveness probe only").
+declare -A NONVERCEL_HSTS_ONLY_PATH=(
+  [brain]="/"
+  [oauth]="/health"
+)
+
 # is_refusal_or_redirect_code <status code>
 #   401/403 (auth refusal) or 307/308 (auth redirect, e.g. house-control's
 #   `/` -> `/login`): a body here is either absent or a refusal, so the
@@ -126,6 +142,39 @@ is_refusal_or_redirect_code() {
     401 | 403 | 307 | 308) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+# check_hsts <label> <raw response headers> <status code>
+#   Asserts Strict-Transport-Security alone, as its OWN DRIFT/OK line,
+#   independent of every other header check (bt-b75b). Deliberately NOT
+#   folded into missing_security_headers()/the 200-branch `missing` array
+#   below or the refusal/redirect Cache-Control check above: those are
+#   gated on status code (200) or content-type (text/html) for reasons that
+#   are real for CSP/X-Frame-Options/Referrer-Policy (nothing to frame or
+#   leak on a bare JSON/401/404 body) but do NOT apply to HSTS — it is a
+#   transport directive the browser must honour for the ORIGIN regardless
+#   of what any single response's body or status is, so it is asserted on
+#   every baselined call site unconditionally.
+check_hsts() {
+  local label="$1" resp="$2" code="$3"
+  if echo "$resp" | grep -qi '^strict-transport-security:'; then
+    echo "OK     $label -> $code (Strict-Transport-Security present)"
+  else
+    echo "DRIFT  $label -> $code missing Strict-Transport-Security"
+    FAIL=1
+  fi
+}
+
+# check_hsts_at <host incl. .omrihefez.com> <path>
+#   Curls <host><path> for the sole purpose of feeding check_hsts() — used
+#   for NONVERCEL_HSTS_ONLY_PATH hosts (bt-b75b) that are otherwise exempt
+#   from the full non-Vercel baseline for reasons that don't apply to HSTS.
+check_hsts_at() {
+  local host="$1" path="$2"
+  local resp code label="$host$path"
+  resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$host$path")
+  code=$(echo "$resp" | head -1 | awk '{print $2}')
+  check_hsts "$label" "$resp" "$code"
 }
 
 # check_nonvercel_path <host incl. .omrihefez.com> <path>
@@ -147,6 +196,7 @@ check_nonvercel_path() {
       echo "DRIFT  $label -> $code missing Cache-Control: no-store on a refusal/redirect body (replayable/cacheable refusal, hc-d30f class)"
       FAIL=1
     fi
+    check_hsts "$label" "$resp" "$code"
     return
   fi
 
@@ -175,6 +225,7 @@ check_nonvercel_path() {
     else
       echo "OK     $label -> $code (security headers present)"
     fi
+    check_hsts "$label" "$resp" "$code"
     return
   fi
 
@@ -221,7 +272,12 @@ for h in "${OTHER_LIVE[@]}"; do
     done
   else
     reason="${NONVERCEL_HEADER_SKIP_REASON[$h]:-security-header baseline not yet assessed for this host}"
-    echo "SKIP   $host -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply; security-header baseline also skipped: $reason"
+    if [ -n "${NONVERCEL_HSTS_ONLY_PATH[$h]:-}" ]; then
+      echo "SKIP   $host -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply; body-shaped security-header baseline skipped: $reason (Strict-Transport-Security IS still checked below — transport-level, not body-shaped)"
+      check_hsts_at "$host" "${NONVERCEL_HSTS_ONLY_PATH[$h]}"
+    else
+      echo "SKIP   $host -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply; security-header baseline also skipped: $reason"
+    fi
   fi
 done
 
