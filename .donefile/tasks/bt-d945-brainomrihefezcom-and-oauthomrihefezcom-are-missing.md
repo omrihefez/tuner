@@ -1,7 +1,7 @@
 ---
 id: bt-d945
 title: brain.omrihefez.com and oauth.omrihefez.com are missing Strict-Transport-Security in production
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -10,6 +10,9 @@ filed:
   owner: capacity-engine
   at: 2026-09-30T21:05:50Z
 reported: 2026-09-30
+claim:
+  owner: capacity-engine
+  at: 2026-09-30T23:33:43Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): confirmed live 2026-10-01 — brain's 404 and oauth's /health 200 both carry zero HSTS; fix belongs in second-brain and apartment repos respectively, not bass-tuner (this task was detection-only)
@@ -31,3 +34,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-01 blocker bt-b75b closed 2026-09-30T21:01:49Z — recheck whether this can proceed now.
+- 2026-10-01 claimed by capacity-engine
