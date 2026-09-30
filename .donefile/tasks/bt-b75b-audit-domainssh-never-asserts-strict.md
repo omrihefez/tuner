@@ -2,7 +2,7 @@
 id: bt-b75b
 title: audit-domains.sh never asserts Strict-Transport-Security on any non-Vercel host — three live
   tunnel hosts are missing it today
-status: claimed
+status: merged
 priority: p2
 tags:
   - security
@@ -11,9 +11,22 @@ created: 2026-09-30
 filed:
   owner: meni-worker/board-refill-work-discov-6571ae
   at: 2026-09-30T19:45:35Z
-claim:
-  owner: capacity-engine
-  at: 2026-09-30T20:45:43Z
+activation: cd /home/omri/projects/bass-tuner && git pull --ff-only origin main (fast-forwarded the
+  main checkout the cron job (10 6 * * *) runs from disk — no service, no restart)
+merged:
+  at: 2026-09-30T21:01:11Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 8c91290af49ec651a55aa623a0420c857049d736
+    verified: 2026-09-30T21:01:11Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-09-30T21:01:02Z
+    log: evidence/bt-b75b-2026-09-30T21-01-02Z-test.txt
+    sha256: 71a39d1ecf6aad9844d48c74cb692f184f1c2fc3361a51f0ed0dafd04b37ca79
+    bytes: 5786
 ---
 
 `scripts/audit-domains.sh` asserts `Strict-Transport-Security` on Vercel hosts only. Every Cloudflare-Tunnel host in `~/meni/DOMAIN.md` §1 gets a liveness check and a partial header check, and HSTS is in neither branch.
@@ -55,3 +68,4 @@ Filed by the periodic discovery sweep, 2026-09-30.
 
 ## Log
 - 2026-09-30 claimed by capacity-engine
+- 2026-10-01 merged by capacity-engine/worker — commit 8c91290af49e, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-b75b-2026-09-30T21-01-02Z-test.txt) — activation-gated, needs --live "<cmd>" evidence proving the deployed/running surface picked up the change (activation: cd /home/omri/projects/bass-tuner && git pull --ff-only origin main (fast-forwarded the main checkout the cron job (10 6 * * *) runs from disk — no service, no restart))
