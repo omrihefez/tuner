@@ -42,6 +42,14 @@
 # label, now pinned at "/") so tests 1/4/7/8 exercise the real
 # VERCEL_CHECK_PATHS entry rather than a path the script can never actually
 # see.
+#
+# bt-4164 added Permissions-Policy to the baseline (7 of 10 live hosts send
+# it as of 2026-10-01). FULL_HEADERS below now carries one so every existing
+# "full baseline" fixture (tests 1-23) stays OK rather than spuriously
+# DRIFTing on the new header — tests 27/28 exercise the check itself
+# failing-then-passing, and tests 29/30 exercise the PERMISSIONS_POLICY_EXEMPT
+# carve-out for the two hosts (compose/cp-8845, meni+arch-preview/ar-3426)
+# still measured absent, on both the SUBS-loop and check_nonvercel_path sides.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$HERE/audit-domains.sh"
@@ -53,7 +61,7 @@ ok() { echo "  ok — $*"; pass=$((pass + 1)); }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 FIXTURE="$TMP/DOMAIN.md"
 FIXTURE_MAP="$TMP/responses.tsv"   # host<TAB>path<TAB>code<TAB>location<TAB>extra-headers (| separated "name: value")
-FULL_HEADERS="content-security-policy: default-src 'self'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains"
+FULL_HEADERS="content-security-policy: default-src 'self'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|strict-transport-security: max-age=31536000; includeSubDomains"
 
 cat >"$FIXTURE" <<'EOF'
 | Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
@@ -173,7 +181,7 @@ ok "a 200 response with zero security headers is DRIFT, and this is exactly the 
 
 echo "8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely"
 : >"$FIXTURE_MAP"
-printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
@@ -449,7 +457,7 @@ ok "the pinned-path check flips to OK the moment the fix is present"
 
 echo "20. bt-3ba1 (FAILING shape, SUBS-root HSTS side): a Vercel host missing Strict-Transport-Security at the ROOT is now DRIFT — before this task check_hsts() was never called from the SUBS loop at all, so this was silently OK"
 : >"$FIXTURE_MAP4"
-printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer\n' >>"$FIXTURE_MAP4"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()\n' >>"$FIXTURE_MAP4"
 printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
 MENI_LOGIN "$FULL_HEADERS" >>"$FIXTURE_MAP4"
 out="$(run4)"; rc=$?
@@ -521,7 +529,7 @@ cat >"$FIXTURE6" <<'EOF'
 | `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
 EOF
 run6() { CURL_FIXTURE_MAP="$FIXTURE_MAP6" DOMAIN_MD="$FIXTURE6" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
-BASS_HSTS() { printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: %s\n' "$1"; }
+BASS_HSTS() { printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|strict-transport-security: %s\n' "$1"; }
 
 echo "24. bt-8c53 (FAILING shape, pre-fix this was OK): max-age=0 actively instructs the browser to forget the HSTS pin — a presence-only check reported it OK regardless"
 : >"$FIXTURE_MAP6"
@@ -549,6 +557,66 @@ out="$(run6)"; rc=$?
 grep -q "^OK     bass.omrihefez.com -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected bass's HSTS line to read OK with the full value shown, got: $out"
 ok "the same probe flips to OK once both the floor and includeSubDomains are satisfied — not a check only ever seen failing"
+
+# --- bt-4164: Permissions-Policy admitted to the baseline, presence only ---
+# 7 of 10 live hosts send it as of 2026-10-01 (measured in the task body);
+# it is now the estate norm per bt-a2c2's own admission test. Checked for
+# PRESENCE, not an exact value, because the senders legitimately disagree on
+# the value itself. The two hosts still measured absent (compose, meni +
+# arch-preview) carry a named, dated exemption (PERMISSIONS_POLICY_EXEMPT)
+# pointing at the task that already tracks each, not a silent skip.
+
+echo "27. bt-4164 (FAILING shape, SUBS side): bass with the full baseline minus Permissions-Policy is DRIFT, naming permissions-policy precisely — confirmed red against the parent commit (pre-bt-4164), which has no such check at all"
+: >"$FIXTURE_MAP6"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (bass missing permissions-policy), got $rc: $out"
+grep -q "^DRIFT  bass.omrihefez.com -> 200 missing security headers: permissions-policy$" <<<"$out" \
+  || fail "expected a DRIFT line naming ONLY permissions-policy as missing, got: $out"
+ok "a 200 Vercel host with every other header present but no Permissions-Policy is DRIFT — the exact bt-4164 gap, not a check only ever seen passing"
+
+echo "28. bt-4164 (PASSING shape, same probe): the SAME bass row flips to OK once Permissions-Policy is added — proves this is a real fail/pass check"
+: >"$FIXTURE_MAP6"
+BASS_HSTS "max-age=31536000; includeSubDomains" >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once permissions-policy is present, got $rc: $out"
+grep -q "^OK     bass.omrihefez.com -> 200 (security headers present)" <<<"$out" \
+  || fail "expected bass to read OK once permissions-policy is present (BASS_HSTS already includes it), got: $out"
+ok "the same probe flips to OK the moment Permissions-Policy is added back"
+
+echo "29. bt-4164 (SUBS-side exemption): compose, PERMISSIONS_POLICY_EXEMPT'd per cp-8845, stays OK despite sending no Permissions-Policy — named via SKIP, not a silent pass"
+FIXTURE7="$TMP/DOMAIN7.md"
+FIXTURE_MAP7="$TMP/responses7.tsv"
+cat >"$FIXTURE7" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+| `compose` | Compose | compose | Vercel | explicit | 🟢 live | sends no Permissions-Policy today, tracked on cp-8845 |
+EOF
+run7() { CURL_FIXTURE_MAP="$FIXTURE_MAP7" DOMAIN_MD="$FIXTURE7" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
+: >"$FIXTURE_MAP7"
+BASS_OK >>"$FIXTURE_MAP7"
+printf 'compose.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP7"
+out="$(run7)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (compose is exempted, not DRIFT), got $rc: $out"
+grep -q "^OK     compose.omrihefez.com -> 200 (security headers present)" <<<"$out" \
+  || fail "expected compose to read OK despite missing permissions-policy, got: $out"
+grep -q "^SKIP   compose.omrihefez.com -> permissions-policy baseline not applicable: exempted per cp-8845 2026-10-01" <<<"$out" \
+  || fail "expected a SKIP line naming compose's exemption and the task that tracks it, got: $out"
+ok "compose's exemption suppresses the DRIFT but is named via SKIP, not silently dropped — this would catch a dangling exemption the moment cp-8845 closes and nobody removed the entry, because the SKIP line would then say so loudly next to a host that actually sends the header"
+
+echo "30. bt-4164 (check_nonvercel_path-side exemption): meni, PERMISSIONS_POLICY_EXEMPT'd per ar-3426, stays OK on its pinned /login path despite sending no Permissions-Policy"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP4"
+out="$(run4)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (meni/login is exempted, not DRIFT), got $rc: $out"
+grep -q "^OK     meni.omrihefez.com/login -> 200 (security headers present)" <<<"$out" \
+  || fail "expected meni/login to read OK despite missing permissions-policy, got: $out"
+grep -q "^SKIP   meni.omrihefez.com/login -> permissions-policy baseline not applicable: exempted per ar-3426 2026-10-01" <<<"$out" \
+  || fail "expected a SKIP line naming meni's exemption and the task that tracks it, got: $out"
+ok "the same exemption works on the check_nonvercel_path side (meni's VERCEL_CHECK_PATHS-pinned /login), keyed off the same PERMISSIONS_POLICY_EXEMPT map — arch-preview shares meni's ar-3426 entry and is not re-tested separately, same map lookup"
 
 echo
 echo "PASS ($pass assertions)"

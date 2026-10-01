@@ -53,11 +53,37 @@
 # posture silently diverged from its siblings."
 REQUIRED_HEADERS=(x-frame-options x-content-type-options referrer-policy)
 
-# missing_security_headers <raw response headers>
+# PERMISSIONS-POLICY (bt-4164): added to the baseline on the same admission
+# test bt-a2c2 set above — "what the siblings actually send, not an
+# aspirational list". MEASURED LIVE 2026-10-01: 7 of 10 hosts now send it
+# (bass, kidai, meniapp, planner, tik, trips, house); it is the estate norm.
+# Checked for PRESENCE only, never an exact value — the seven senders
+# legitimately disagree on the value itself (`microphone=(self)` on
+# bass/meniapp because they use the mic, `geolocation=(self)` on trips,
+# `interest-cohort=()` on kidai-only), so a single expected string would
+# create false DRIFT on four compliant hosts. Per-host exact values are
+# scripts/check-permissions-policy.sh's job, not this one.
+#
+# PERMISSIONS_POLICY_EXEMPT: the two hosts still measured absent today, each
+# with the task that already tracks it and the date of this admission — a
+# named, dated exemption, not a silent skip, so this baseline doesn't turn
+# permanently red while those tasks are open. Remove the entry (not just
+# flip it) once the sibling task lands and the host sends the header live;
+# the host then falls through to the real check like everyone else.
+declare -A PERMISSIONS_POLICY_EXEMPT=(
+  [compose]="cp-8845 2026-10-01"
+  [meni]="ar-3426 2026-10-01"
+  [arch-preview]="ar-3426 2026-10-01"
+)
+
+# missing_security_headers <raw response headers> <permissions-policy exemption, if any>
 #   Prints a comma-separated list of missing baseline header names (empty if
-#   none are missing).
+#   none are missing). The second arg is the caller's
+#   PERMISSIONS_POLICY_EXEMPT lookup result for this host (empty string =
+#   not exempt) — kept out of this function's own host-lookup so it stays a
+#   pure header-list check, same as before bt-4164.
 missing_security_headers() {
-  local resp="$1" missing=()
+  local resp="$1" pp_exempt="${2:-}" missing=()
   echo "$resp" | grep -qi '^content-security-policy:' \
     || echo "$resp" | grep -qi '^content-security-policy-report-only:' \
     || missing+=("content-security-policy")
@@ -65,6 +91,9 @@ missing_security_headers() {
   for h in "${REQUIRED_HEADERS[@]}"; do
     echo "$resp" | grep -qi "^${h}:" || missing+=("$h")
   done
+  if [ -z "$pp_exempt" ]; then
+    echo "$resp" | grep -qi '^permissions-policy:' || missing+=("permissions-policy")
+  fi
   local IFS=,
   echo "${missing[*]}"
 }
@@ -261,10 +290,13 @@ check_hsts_at() {
 #   Fetches <host><path> and asserts the baseline appropriate to what came
 #   back, updating the shared FAIL flag. Never touches missing_security_
 #   headers()/REQUIRED_HEADERS — those stay scoped to the SUBS loop so its
-#   existing behaviour and tests are untouched.
+#   existing behaviour and tests are untouched; its own inline
+#   CSP/X-Frame-Options/Referrer-Policy/Permissions-Policy checks below are
+#   the html-gated set for THIS loop, kept separate on purpose.
 check_nonvercel_path() {
   local host="$1" path="$2"
   local resp code ctype label="$host$path"
+  local pp_exempt="${PERMISSIONS_POLICY_EXEMPT[${host%.omrihefez.com}]:-}"
   resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$host$path")
   code=$(echo "$resp" | head -1 | awk '{print $2}')
   ctype=$(echo "$resp" | grep -i '^content-type:' | head -1 | tr -d '\r')
@@ -297,6 +329,13 @@ check_nonvercel_path() {
         || missing+=("content-security-policy")
       echo "$resp" | grep -qi '^x-frame-options:' || missing+=("x-frame-options")
       echo "$resp" | grep -qi '^referrer-policy:' || missing+=("referrer-policy")
+      if echo "$resp" | grep -qi '^permissions-policy:'; then
+        :
+      elif [ -n "$pp_exempt" ]; then
+        echo "SKIP   $label -> permissions-policy baseline not applicable: exempted per $pp_exempt (not a silent skip — tracked separately, bt-4164)"
+      else
+        missing+=("permissions-policy")
+      fi
     fi
     if [ "${#missing[@]}" -gt 0 ]; then
       local IFS=,
@@ -372,7 +411,11 @@ for d in "${SUBS[@]}"; do
     FAIL=1
     check_hsts "$host" "$resp" "$code"
   elif [[ "$code" == "200" ]]; then
-    missing="$(missing_security_headers "$resp")"
+    pp_exempt="${PERMISSIONS_POLICY_EXEMPT[$d]:-}"
+    missing="$(missing_security_headers "$resp" "$pp_exempt")"
+    if [ -n "$pp_exempt" ] && ! echo "$resp" | grep -qi '^permissions-policy:'; then
+      echo "SKIP   $host -> permissions-policy baseline not applicable: exempted per $pp_exempt (not a silent skip — tracked separately, bt-4164)"
+    fi
     if [ -n "$missing" ]; then
       echo "DRIFT  $host -> $code missing security headers: $missing"
       FAIL=1
