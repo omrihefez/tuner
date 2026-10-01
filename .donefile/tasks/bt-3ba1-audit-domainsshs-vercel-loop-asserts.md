@@ -2,7 +2,7 @@
 id: bt-3ba1
 title: audit-domains.sh's Vercel loop asserts no headers at all on a 307/401 host and never checks
   HSTS on any Vercel host
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,25 @@ created: 2026-10-01
 filed:
   owner: meni-worker/board-refill-work-discov-edb20d
   at: 2026-10-01T08:07:38Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-01T08:15:06Z
+done:
+  at: 2026-10-01T08:34:02Z
+  by: capacity-engine/worker
+  waived: "scripts/audit-domains.sh is a cron-invoked monitoring script (10 6 * * * via
+    test-monitoring.sh's crontab), not Vercel-served app-surface content -- it is tagged 'security'
+    only because the finding was a security-header gap, not because it ships anything through the
+    bass-tuner Vercel deploy. Nothing to activate: cron reads the committed file fresh on its next
+    scheduled run, already verified live against the real registry (exit 0) in this session."
+evidence:
+  - type: commit
+    value: 79a00b3ebb347dc3b88c91bc8d03a902e4c67a57
+    verified: 2026-10-01T08:34:02Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-01T08:33:51Z
+    log: evidence/bt-3ba1-2026-10-01T08-33-51Z-test.txt
+    sha256: 7e310bf0cedfff68b50ace6144476ab7105823582211e8b6c8b375eaa09bc024
+    bytes: 7808
 ---
 
 `scripts/audit-domains.sh` has two header-checking loops and they have drifted far apart. The
@@ -73,3 +89,4 @@ Filed by the periodic discovery sweep, 2026-10-01.
 
 ## Log
 - 2026-10-01 claimed by capacity-engine
+- 2026-10-01 done by capacity-engine/worker — commit 79a00b3ebb34, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-3ba1-2026-10-01T08-33-51Z-test.txt) (evidence waived: scripts/audit-domains.sh is a cron-invoked monitoring script (10 6 * * * via test-monitoring.sh's crontab), not Vercel-served app-surface content -- it is tagged 'security' only because the finding was a security-header gap, not because it ships anything through the bass-tuner Vercel deploy. Nothing to activate: cron reads the committed file fresh on its next scheduled run, already verified live against the real registry (exit 0) in this session.)
