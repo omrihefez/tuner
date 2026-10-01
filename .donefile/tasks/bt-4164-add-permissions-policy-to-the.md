@@ -2,7 +2,7 @@
 id: bt-4164
 title: Add permissions-policy to the audit-domains.sh baseline — 7 of 10 live hosts now send it, and
   it is the one header the estate has had to chase by hand twice
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -11,9 +11,24 @@ created: 2026-10-01
 filed:
   owner: meni-worker/board-refill-work-discov-edb20d
   at: 2026-10-01T08:07:59Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-01T09:05:35Z
+done:
+  at: 2026-10-01T09:18:51Z
+  by: capacity-engine/worker
+  waived: scripts/audit-domains.sh/test.sh are an ops/monitoring audit script, not Vercel-served app
+    surface (no HTML/CSS/JS/manifest.json/sw.js/vercel.json touched) — the 'security' tag matched by
+    heuristic only, per this board's own config.yml note on tasks under a listed tag that don't
+    actually touch the deployed surface
+evidence:
+  - type: commit
+    value: 7db6e10b0f797b207bf4a154aebb9c139ccc851c
+    verified: 2026-10-01T09:18:51Z
+  - type: test
+    cmd: bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-01T09:18:38Z
+    log: evidence/bt-4164-2026-10-01T09-18-38Z-test.txt
+    sha256: 96c903af5bca0ec4ec0fe8dc7f45f963d3978545ac7fd14e90a38f7d6fd327b0
+    bytes: 9989
 ---
 
 `REQUIRED_HEADERS` in `scripts/audit-domains.sh` (line 54) is:
@@ -74,3 +89,4 @@ Filed by the periodic discovery sweep, 2026-10-01.
 
 ## Log
 - 2026-10-01 claimed by capacity-engine
+- 2026-10-01 done by capacity-engine/worker — commit 7db6e10b0f79, test `bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-4164-2026-10-01T09-18-38Z-test.txt) (evidence waived: scripts/audit-domains.sh/test.sh are an ops/monitoring audit script, not Vercel-served app surface (no HTML/CSS/JS/manifest.json/sw.js/vercel.json touched) — the 'security' tag matched by heuristic only, per this board's own config.yml note on tasks under a listed tag that don't actually touch the deployed surface)
