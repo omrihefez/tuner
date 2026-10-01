@@ -173,7 +173,7 @@ ok "a 200 response with zero security headers is DRIFT, and this is exactly the 
 
 echo "8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely"
 : >"$FIXTURE_MAP"
-printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
@@ -206,10 +206,10 @@ EOF
 run2() { CURL_FIXTURE_MAP="$FIXTURE_MAP2" DOMAIN_MD="$FIXTURE2" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
 BASS_OK() { printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS"; }
 HOUSE_LOGIN_OK() { printf 'house.omrihefez.com\t/login\t200\t\tcontent-type: text/html|%s\n' "$FULL_HEADERS"; }
-TIK_API_HEALTH_OK() { printf 'tik-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000\n'; }
-TIK_API_VPS_HEALTH_OK() { printf 'tik-api-vps.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000\n'; }
-BRAIN_HSTS_OK() { printf 'brain.omrihefez.com\t/\t404\t\tstrict-transport-security: max-age=31536000\n'; }
-OAUTH_HSTS_OK() { printf 'oauth.omrihefez.com\t/health\t200\t\tstrict-transport-security: max-age=31536000\n'; }
+TIK_API_HEALTH_OK() { printf 'tik-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
+TIK_API_VPS_HEALTH_OK() { printf 'tik-api-vps.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
+BRAIN_HSTS_OK() { printf 'brain.omrihefez.com\t/\t404\t\tstrict-transport-security: max-age=31536000; includeSubDomains\n'; }
+OAUTH_HSTS_OK() { printf 'oauth.omrihefez.com\t/health\t200\t\tstrict-transport-security: max-age=31536000; includeSubDomains\n'; }
 
 echo "9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT, and brain/oauth never get the BODY-shaped baseline (bt-b75b: they DO now get their own HSTS-only check)"
 : >"$FIXTURE_MAP2"
@@ -224,8 +224,8 @@ OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (house's / is missing no-store), got $rc: $out"
 grep -q "^DRIFT  house.omrihefez.com/ -> 307 missing Cache-Control: no-store" <<<"$out" || fail "expected the hc-d30f-class DRIFT line for house's /, got: $out"
-grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security present)" <<<"$out" || fail "expected brain's HSTS-only check to run and pass, got: $out"
-grep -q "^OK     oauth.omrihefez.com/health -> 200 (Strict-Transport-Security present)" <<<"$out" || fail "expected oauth's HSTS-only check to run and pass, got: $out"
+grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" || fail "expected brain's HSTS-only check to run and pass, got: $out"
+grep -q "^OK     oauth.omrihefez.com/health -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" || fail "expected oauth's HSTS-only check to run and pass, got: $out"
 grep -qE "brain\.omrihefez\.com.*(Cache-Control|security headers)" <<<"$out" && fail "brain must never get the body-shaped baseline (Cache-Control/CSP/XFO/nosniff/referrer-policy), got: $out"
 grep -qE "oauth\.omrihefez\.com.*(Cache-Control|security headers)" <<<"$out" && fail "oauth must never get the body-shaped baseline, got: $out"
 grep -q "^OK     tik-api.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api/health to be curled and pass given full headers, got: $out"
@@ -237,7 +237,7 @@ echo "10. bt-d173: the SAME check PASSES once Cache-Control: no-store is added �
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
-printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
@@ -363,14 +363,14 @@ echo "15. bt-b75b (PASSING shape, same probe): the SAME meniapp-api row flips to
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
-printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
 OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once Strict-Transport-Security is present, got $rc: $out"
-grep -q "^OK     meniapp-api.omrihefez.com/health -> 200 (Strict-Transport-Security present)" <<<"$out" \
+grep -q "^OK     meniapp-api.omrihefez.com/health -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected meniapp-api/health's dedicated HSTS line to flip to OK, got: $out"
 ok "the same probe flips to OK the moment Strict-Transport-Security is added — this is the fail/pass pair for the check_nonvercel_path side of bt-b75b"
 
@@ -395,14 +395,14 @@ echo "17. bt-b75b: the SAME brain probe flips to OK once Strict-Transport-Securi
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
 HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
-printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
 OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once brain sends Strict-Transport-Security, got $rc: $out"
-grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security present)" <<<"$out" \
+grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected brain's HSTS line to flip to OK, got: $out"
 ok "the brain/oauth-side probe is the same fail/pass pair, not a check only ever seen passing"
 
@@ -465,7 +465,7 @@ printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MA
 MENI_LOGIN "$FULL_HEADERS" >>"$FIXTURE_MAP4"
 out="$(run4)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once bass sends Strict-Transport-Security, got $rc: $out"
-grep -q "^OK     bass.omrihefez.com -> 200 (Strict-Transport-Security present)" <<<"$out" \
+grep -q "^OK     bass.omrihefez.com -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected bass's HSTS line to flip to OK, got: $out"
 ok "the SUBS-root HSTS probe is the same fail/pass pair, not a check only ever seen passing"
 
@@ -502,9 +502,53 @@ out="$(CURL_FIXTURE_MAP="$FIXTURE_MAP5" DOMAIN_MD="$TMP/DOMAIN5-tuner.md" CURL_C
 grep -q "^SKIP   tuner.omrihefez.com -> pinned-path baseline not applicable:" <<<"$out" \
   || fail "expected tuner's alias-skip reason, not a silent OK or an UNPINNED failure, got: $out"
 grep -q "^UNPINNED tuner" <<<"$out" && fail "a reviewed alias must never be flagged UNPINNED, got: $out"
-grep -q "^OK     tuner.omrihefez.com -> 308 (Strict-Transport-Security present)" <<<"$out" \
+grep -q "^OK     tuner.omrihefez.com -> 308 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected tuner's root response to still get check_hsts() despite the body-baseline skip, got: $out"
 ok "a reviewed cross-host alias redirect is named via its own SKIP reason, never UNPINNED, and still gets the unconditional root HSTS check"
+
+# --- bt-8c53: check_hsts() asserts the VALUE, not just presence ---
+# Before this task, check_hsts() only tested that the header NAME was
+# present — max-age=0 (which actively tells the browser to FORGET the HSTS
+# pin) and a value missing includeSubDomains both printed OK. Confirmed
+# against the parent commit (79a00b3, pre bt-8c53): test 24's exact fixture
+# prints "OK bass.omrihefez.com -> 200 (Strict-Transport-Security present)"
+# there, not DRIFT.
+FIXTURE6="$TMP/DOMAIN6.md"
+FIXTURE_MAP6="$TMP/responses6.tsv"
+cat >"$FIXTURE6" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+EOF
+run6() { CURL_FIXTURE_MAP="$FIXTURE_MAP6" DOMAIN_MD="$FIXTURE6" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
+BASS_HSTS() { printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: %s\n' "$1"; }
+
+echo "24. bt-8c53 (FAILING shape, pre-fix this was OK): max-age=0 actively instructs the browser to forget the HSTS pin — a presence-only check reported it OK regardless"
+: >"$FIXTURE_MAP6"
+BASS_HSTS "max-age=0" >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (max-age=0 is below the floor), got $rc: $out"
+grep -q "^DRIFT  bass.omrihefez.com -> 200 Strict-Transport-Security max-age=0 below floor 31536000" <<<"$out" \
+  || fail "expected a DRIFT line naming the sub-floor max-age, got: $out"
+ok "max-age=0 is DRIFT, not OK — the exact gap this task was filed over"
+
+echo "25. bt-8c53 (companion shape): max-age clears the floor but includeSubDomains is absent — compose's exact live shape measured 2026-10-01"
+: >"$FIXTURE_MAP6"
+BASS_HSTS "max-age=63072000" >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (missing includeSubDomains), got $rc: $out"
+grep -q "^DRIFT  bass.omrihefez.com -> 200 Strict-Transport-Security missing includeSubDomains" <<<"$out" \
+  || fail "expected a DRIFT line naming the missing includeSubDomains directive, got: $out"
+ok "a high max-age with no includeSubDomains is still DRIFT — compose's own live gap, not a hypothetical"
+
+echo "26. bt-8c53 (PASSING shape, same probe): max-age at the floor plus includeSubDomains together are OK"
+: >"$FIXTURE_MAP6"
+BASS_HSTS "max-age=31536000; includeSubDomains" >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once max-age clears the floor and includeSubDomains is present, got $rc: $out"
+grep -q "^OK     bass.omrihefez.com -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
+  || fail "expected bass's HSTS line to read OK with the full value shown, got: $out"
+ok "the same probe flips to OK once both the floor and includeSubDomains are satisfied — not a check only ever seen failing"
 
 echo
 echo "PASS ($pass assertions)"

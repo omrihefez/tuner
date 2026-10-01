@@ -201,13 +201,47 @@ is_refusal_or_redirect_code() {
 #   transport directive the browser must honour for the ORIGIN regardless
 #   of what any single response's body or status is, so it is asserted on
 #   every baselined call site unconditionally.
+#
+#   bt-8c53: presence alone used to be enough, so `max-age=0` — which
+#   actively tells the browser to forget the pin — and a header missing
+#   includeSubDomains both read as OK. Now the VALUE is asserted:
+#     - max-age must parse and be >= 31536000 (one year). That floor is the
+#       LOWEST value any live host sends today (bass/meni/house); two hosts
+#       run 63072000 but that's not made the floor, since raising it later
+#       is free while a host that needs to run lower would have to fight
+#       this check to even deploy.
+#     - includeSubDomains must be present.
+#   preload is deliberately NOT asserted: six live hosts send it and three
+#   don't, and adding it to a host is a one-way trip onto the browser
+#   preload list — that's a call for a human to make per host, not a
+#   default this audit should silently require or silently ignore.
 check_hsts() {
   local label="$1" resp="$2" code="$3"
-  if echo "$resp" | grep -qi '^strict-transport-security:'; then
-    echo "OK     $label -> $code (Strict-Transport-Security present)"
-  else
+  local hsts_max_age_floor=31536000
+  local line value max_age
+
+  line=$(echo "$resp" | grep -i '^strict-transport-security:' | head -1)
+  if [ -z "$line" ]; then
     echo "DRIFT  $label -> $code missing Strict-Transport-Security"
     FAIL=1
+    return
+  fi
+
+  value="${line#*:}"
+  value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/\r$//')"
+  max_age=$(echo "$value" | grep -oi 'max-age=[0-9]*' | head -1 | cut -d= -f2)
+
+  if [ -z "$max_age" ]; then
+    echo "DRIFT  $label -> $code Strict-Transport-Security has no max-age: $value"
+    FAIL=1
+  elif [ "$max_age" -lt "$hsts_max_age_floor" ]; then
+    echo "DRIFT  $label -> $code Strict-Transport-Security max-age=$max_age below floor $hsts_max_age_floor: $value"
+    FAIL=1
+  elif ! echo "$value" | grep -qi 'includesubdomains'; then
+    echo "DRIFT  $label -> $code Strict-Transport-Security missing includeSubDomains: $value"
+    FAIL=1
+  else
+    echo "OK     $label -> $code (Strict-Transport-Security: $value)"
   fi
 }
 
