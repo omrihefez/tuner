@@ -2,7 +2,7 @@
 id: bt-8c53
 title: check_hsts() accepts max-age=0 as OK — it tests header presence, never the value, so
   compose's missing includeSubDomains reads clean
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-01
 filed:
   owner: meni-worker/board-refill-work-discov-edb20d
   at: 2026-10-01T08:07:49Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-01T08:44:22Z
 ---
 
 `check_hsts()` in `scripts/audit-domains.sh` (lines 158-166) tests only that the header NAME is
@@ -69,3 +72,6 @@ but closing only this one leaves compose's value still unchecked in practice.
     cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
 
 Filed by the periodic discovery sweep, 2026-10-01.
+
+## Log
+- 2026-10-01 claimed by capacity-engine
