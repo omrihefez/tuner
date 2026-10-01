@@ -29,6 +29,19 @@
 # value so tests 1-8 and the "good" fixtures in 9-13 (which are about other
 # headers) don't spuriously go DRIFT; tests 14/15 exercise the HSTS check
 # itself failing-then-passing.
+#
+# bt-3ba1 closed the matching gap on the Vercel (SUBS) side: that loop never
+# called check_hsts() at all, and a 307/308/401 Vercel host (no page served
+# at "/") was asserted on nothing whatsoever. check_hsts() is now called
+# unconditionally for every SUBS host (tests 18/19 below), and
+# VERCEL_CHECK_PATHS pins a real page to probe on the five 307/401 hosts
+# measured live (tests 20/21), with an UNPINNED failure (test 22) for any
+# Vercel host that answers 307/308/401 with no pinned path — the SUBS-side
+# mirror of check-tunnel-liveness.sh's UNPINNED idiom. The shared FIXTURE
+# registry's old `authed` stand-in is renamed `planner` (a real registry
+# label, now pinned at "/") so tests 1/4/7/8 exercise the real
+# VERCEL_CHECK_PATHS entry rather than a path the script can never actually
+# see.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$HERE/audit-domains.sh"
@@ -50,7 +63,7 @@ cat >"$FIXTURE" <<'EOF'
 | `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
 | `meniapp` | Meni app | meniapp | Vercel | wildcard | 🟢 live | the ma-20c5 gap: real Vercel host missing from the old array |
 | `meniapp-api` | worker orchestration | meniapp | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, must SKIP the Vercel gate AND get its own per-path baseline (bt-d173) |
-| `authed` | auth-gated app | some-repo | Vercel | wildcard | 🟢 live | 401 host, header baseline exempt |
+| `planner` | auth-gated app | some-repo | Vercel | wildcard | 🟢 live | 401 host, VERCEL_CHECK_PATHS pins "/" (bt-3ba1) |
 EOF
 
 CURL_STUB="$TMP/curl-stub.sh"
@@ -87,13 +100,18 @@ run() { CURL_FIXTURE_MAP="$FIXTURE_MAP" DOMAIN_MD="$FIXTURE" CURL_CMD="$CURL_STU
 # give it a clean full-baseline row unless the test is specifically about
 # that check.
 MENIAPP_API_HEALTH_OK() { printf 'meniapp-api.omrihefez.com\t/health\t200\t\t%s\n' "$FULL_HEADERS"; }
+# planner (bt-3ba1): a real VERCEL_CHECK_PATHS entry pinned at "/" itself —
+# its 401 already carries the full header set live, so this fixture gives it
+# just what check_nonvercel_path()'s refusal-code branch checks (Cache-
+# Control: no-store + HSTS), matching the measured live shape.
+PLANNER_OK() { printf 'planner.omrihefez.com\t/\t401\t\tcache-control: no-store|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
 
 echo "1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked"
 : >"$FIXTURE_MAP"
 printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
-printf 'authed.omrihefez.com\t/\t401\t\n' >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0, got $rc: $out"
 grep -q "OK     meniapp.omrihefez.com -> 200" <<<"$out" || fail "expected meniapp to be actively checked, got: $out"
@@ -115,7 +133,7 @@ echo "4. a genuine Vercel Deployment-Protection redirect still fails loudly (bt-
 printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t307\thttps://vercel.com/login\n' >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
-printf 'authed.omrihefez.com\t/\t401\t\n' >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 on a vercel.com login redirect, got $rc: $out"
 grep -q "^DRIFT  meniapp.omrihefez.com" <<<"$out" || fail "expected a DRIFT line for the gated host, got: $out"
@@ -142,7 +160,7 @@ echo "7. bt-a2c2: a 200 host with NO security headers at all (the compose.omrihe
 printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\n' >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
-printf 'authed.omrihefez.com\t/\t401\t\n' >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 when a 200 host is missing its whole security-header baseline, got $rc: $out"
 grep -q "^DRIFT  meniapp.omrihefez.com -> 200 missing security headers:" <<<"$out" || fail "expected a DRIFT line naming the missing headers, got: $out"
@@ -155,15 +173,15 @@ ok "a 200 response with zero security headers is DRIFT, and this is exactly the 
 
 echo "8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely"
 : >"$FIXTURE_MAP"
-printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer\n' >>"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
-printf 'authed.omrihefez.com\t/\t401\t\n' >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 (report-only CSP counts, 401 is exempt), got $rc: $out"
 grep -q "^OK     bass.omrihefez.com -> 200" <<<"$out" || fail "expected report-only CSP to satisfy the CSP check, got: $out"
-grep -q "^OK     authed.omrihefez.com -> 401" <<<"$out" || fail "expected the 401 host to be OK despite carrying zero security headers, got: $out"
-grep -q "^DRIFT  authed" <<<"$out" && fail "a 401 host must never be flagged for missing security headers, got: $out"
+grep -q "^OK     planner.omrihefez.com -> 401" <<<"$out" || fail "expected the 401 host to be OK given its pinned-path baseline, got: $out"
+grep -q "^DRIFT  planner" <<<"$out" && fail "a 401 host with a satisfied pinned-path baseline must not be flagged, got: $out"
 ok "report-only CSP satisfies the baseline and a 401 host is correctly exempt"
 
 # --- bt-d173/bt-135b: layer-3 non-Vercel per-(host,path) baseline ---
@@ -387,6 +405,106 @@ out="$(run2)"; rc=$?
 grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security present)" <<<"$out" \
   || fail "expected brain's HSTS line to flip to OK, got: $out"
 ok "the brain/oauth-side probe is the same fail/pass pair, not a check only ever seen passing"
+
+# --- bt-3ba1: the Vercel (SUBS) loop gets the same HSTS + per-path coverage
+# the non-Vercel loop already has. Before this task the SUBS loop never
+# called check_hsts() at all, and a 307/308/401 Vercel host (no page served
+# at "/") was asserted on literally nothing — this is the exact live shape
+# measured 2026-10-01 for meni/arch-preview/trips/tik (307 -> /login) and
+# planner (401). A dedicated small registry: bass (vercel, 200, keeps SUBS
+# non-empty) plus `meni` (vercel, 307 at "/" -> /login, VERCEL_CHECK_PATHS
+# pins /login).
+FIXTURE4="$TMP/DOMAIN4.md"
+FIXTURE_MAP4="$TMP/responses4.tsv"
+cat >"$FIXTURE4" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+| `meni` | Meni app | meniapp | Vercel | wildcard | 🟢 live | 307 at / -> /login, VERCEL_CHECK_PATHS pins /login (bt-3ba1) |
+EOF
+run4() { CURL_FIXTURE_MAP="$FIXTURE_MAP4" DOMAIN_MD="$FIXTURE4" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
+MENI_LOGIN() { printf 'meni.omrihefez.com\t/login\t200\t\t%s\n' "$1"; }
+
+echo "18. bt-3ba1 (FAILING shape): meni's 307-redirect root is asserted on nothing by itself (header baseline not applicable at /), but its VERCEL_CHECK_PATHS-pinned /login path is now checked — missing x-frame-options there is DRIFT"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP4"
+out="$(run4)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (meni's /login missing x-frame-options), got $rc: $out"
+grep -q "^DRIFT  meni.omrihefez.com/login -> 200 missing security headers: x-frame-options$" <<<"$out" \
+  || fail "expected the pinned /login path to be checked and DRIFT on a missing header, got: $out"
+ok "a Vercel host's root redirect alone proves nothing — the pinned /login path is what actually catches the missing header"
+
+echo "19. bt-3ba1 (PASSING shape, same probe): the SAME meni /login flips to OK once x-frame-options is present — proves the per-path check is a real fail/pass check, not one only ever seen passing"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+MENI_LOGIN "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+out="$(run4)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once /login carries the full baseline, got $rc: $out"
+grep -q "^OK     meni.omrihefez.com/login -> 200 (security headers present)" <<<"$out" \
+  || fail "expected meni's /login to read OK once fixed, got: $out"
+ok "the pinned-path check flips to OK the moment the fix is present"
+
+echo "20. bt-3ba1 (FAILING shape, SUBS-root HSTS side): a Vercel host missing Strict-Transport-Security at the ROOT is now DRIFT — before this task check_hsts() was never called from the SUBS loop at all, so this was silently OK"
+: >"$FIXTURE_MAP4"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer\n' >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+MENI_LOGIN "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+out="$(run4)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (bass missing Strict-Transport-Security at root), got $rc: $out"
+grep -q "^DRIFT  bass.omrihefez.com -> 200 missing Strict-Transport-Security$" <<<"$out" \
+  || fail "expected a dedicated DRIFT line for bass's missing HSTS, got: $out"
+ok "the SUBS loop now calls check_hsts() unconditionally — a 200 Vercel host missing only HSTS is DRIFT where it used to be silently OK"
+
+echo "21. bt-3ba1 (PASSING shape, same probe): the SAME bass row flips to OK once Strict-Transport-Security is present — proves this is a real fail/pass check"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+MENI_LOGIN "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+out="$(run4)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once bass sends Strict-Transport-Security, got $rc: $out"
+grep -q "^OK     bass.omrihefez.com -> 200 (Strict-Transport-Security present)" <<<"$out" \
+  || fail "expected bass's HSTS line to flip to OK, got: $out"
+ok "the SUBS-root HSTS probe is the same fail/pass pair, not a check only ever seen passing"
+
+echo "22. bt-3ba1: a Vercel host answering 307/401/308 with NO VERCEL_CHECK_PATHS entry fails loudly as UNPINNED instead of printing a silent OK — same idiom check-tunnel-liveness.sh already uses for an unpinned non-Vercel host"
+FIXTURE5="$TMP/DOMAIN5.md"
+FIXTURE_MAP5="$TMP/responses5.tsv"
+cat >"$FIXTURE5" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+| `newapp` | stand-in for a future unpinned auth-gated Vercel host | some-repo | Vercel | wildcard | 🟢 live | deliberately absent from VERCEL_CHECK_PATHS |
+EOF
+: >"$FIXTURE_MAP5"
+BASS_OK >>"$FIXTURE_MAP5"
+printf 'newapp.omrihefez.com\t/\t401\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP5"
+out="$(CURL_FIXTURE_MAP="$FIXTURE_MAP5" DOMAIN_MD="$FIXTURE5" CURL_CMD="$CURL_STUB" bash "$SCRIPT" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (newapp has no pinned path), got $rc: $out"
+grep -q "^UNPINNED newapp.omrihefez.com -> 401" <<<"$out" \
+  || fail "expected an UNPINNED line naming the unpinned 401 Vercel host, got: $out"
+ok "an auth-gated Vercel host with no VERCEL_CHECK_PATHS entry fails loudly as UNPINNED rather than printing a silent OK"
+
+echo "23. bt-3ba1: a reviewed cross-host alias redirect (the real tuner.omrihefez.com -> bass.omrihefez.com 308, measured live 2026-10-01 running this very fix) is SKIPped from the per-path pin requirement, not flagged UNPINNED — but still gets check_hsts() on its own root response"
+: >"$FIXTURE_MAP5"
+BASS_OK >>"$FIXTURE_MAP5"
+printf 'tuner.omrihefez.com\t/\t308\thttps://bass.omrihefez.com/\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP5"
+cat >"$TMP/DOMAIN5-tuner.md" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+| `tuner` | vanity alias of bass | bass-tuner | Vercel | wildcard | 🔵 alias | 308-redirects to bass, DOMAIN.md §2 rule 3 |
+EOF
+out="$(CURL_FIXTURE_MAP="$FIXTURE_MAP5" DOMAIN_MD="$TMP/DOMAIN5-tuner.md" CURL_CMD="$CURL_STUB" bash "$SCRIPT" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (tuner is a reviewed alias, not an unpinned gap), got $rc: $out"
+grep -q "^SKIP   tuner.omrihefez.com -> pinned-path baseline not applicable:" <<<"$out" \
+  || fail "expected tuner's alias-skip reason, not a silent OK or an UNPINNED failure, got: $out"
+grep -q "^UNPINNED tuner" <<<"$out" && fail "a reviewed alias must never be flagged UNPINNED, got: $out"
+grep -q "^OK     tuner.omrihefez.com -> 308 (Strict-Transport-Security present)" <<<"$out" \
+  || fail "expected tuner's root response to still get check_hsts() despite the body-baseline skip, got: $out"
+ok "a reviewed cross-host alias redirect is named via its own SKIP reason, never UNPINNED, and still gets the unconditional root HSTS check"
 
 echo
 echo "PASS ($pass assertions)"

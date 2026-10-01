@@ -127,6 +127,52 @@ declare -A NONVERCEL_HSTS_ONLY_PATH=(
   [oauth]="/health"
 )
 
+# VERCEL PER-PATH BASELINE (bt-3ba1): same shape and spirit as
+# NONVERCEL_CHECK_PATHS above, but for the Vercel (SUBS) loop below. A
+# 307/308 (auth redirect) or 401 (auth refusal) Vercel host serves no page at
+# "/" — the SUBS loop used to treat that as reason to assert NOTHING at all,
+# which is the exact root-only-probing mistake bt-d173 already rejected for
+# the non-Vercel side (house-control's own "/" WAS the redirect that skipped
+# its headers before that fix). This map pins ONE path per such host that
+# actually serves a real response worth baselining, reusing
+# check_nonvercel_path() — host-type-agnostic despite the name, it dispatches
+# purely on status code/content-type — to run the same
+# CSP/X-Frame-Options/nosniff/Referrer-Policy/Cache-Control/HSTS checks used
+# on the non-Vercel side.
+#   meni/arch-preview/trips/tik: "/" redirects (307) to /login, which serves
+#     a real 200 HTML page — checked there.
+#   planner: "/" itself already returns 401 WITH the full header set (no
+#     separate unauthenticated page exists to redirect to) — checked at "/"
+#     again, this time through check_nonvercel_path()'s refusal-code branch
+#     (Cache-Control: no-store + HSTS) rather than the bare root-level
+#     check_hsts() every Vercel host already gets below.
+# A Vercel host that answers 307/308/401 with NO entry here is not silently
+# OK — it fails loudly as UNPINNED instead (same idiom check-tunnel-
+# liveness.sh uses for an unpinned non-Vercel host), so a new auth-gated
+# Vercel host can't quietly repeat this gap.
+declare -A VERCEL_CHECK_PATHS=(
+  [meni]="/login"
+  [arch-preview]="/login"
+  [trips]="/login"
+  [tik]="/login"
+  [planner]="/"
+)
+
+# VERCEL_ALIAS_SKIP_REASON: the UNPINNED fallback above assumes a 307/308/401
+# host has its OWN unauthenticated page sitting one hop away. `tuner` does
+# not — DOMAIN.md §2 rule 3 has it 308-redirecting to `bass`'s own canonical
+# registry row on a DIFFERENT host, which the SUBS loop already baselines in
+# full under its own name. A VERCEL_CHECK_PATHS entry would just re-curl
+# `tuner` and follow nothing (check_nonvercel_path() operates on one host, it
+# does not follow a redirect to a different hostname), so this is a real,
+# reviewed exemption, not a forgotten pin — named here by hand, same idiom as
+# NONVERCEL_HEADER_SKIP_REASON above, rather than inferred from the redirect
+# target at runtime. check_hsts() on the root response above still runs
+# regardless — this only exempts the pinned-path BODY baseline.
+declare -A VERCEL_ALIAS_SKIP_REASON=(
+  [tuner]="308-redirects to bass (bass's own canonical registry row is baselined separately); DOMAIN.md §2 rule 3 alias, no separate page exists here"
+)
+
 # is_refusal_or_redirect_code <status code>
 #   401/403 (auth refusal) or 307/308 (auth redirect, e.g. house-control's
 #   `/` -> `/login`): a body here is either absent or a refusal, so the
@@ -290,6 +336,7 @@ for d in "${SUBS[@]}"; do
   if echo "$loc" | grep -qi 'vercel\.com'; then
     echo "DRIFT  $host -> $code $loc"
     FAIL=1
+    check_hsts "$host" "$resp" "$code"
   elif [[ "$code" == "200" ]]; then
     missing="$(missing_security_headers "$resp")"
     if [ -n "$missing" ]; then
@@ -298,11 +345,25 @@ for d in "${SUBS[@]}"; do
     else
       echo "OK     $host -> $code (security headers present)"
     fi
+    check_hsts "$host" "$resp" "$code"
   elif [[ "$code" == "307" || "$code" == "401" || "$code" == "308" ]]; then
-    echo "OK     $host -> $code ${loc:+($loc)} (header baseline not applicable: no page served)"
+    echo "OK     $host -> $code ${loc:+($loc)} (header baseline not applicable at /: no page served)"
+    check_hsts "$host" "$resp" "$code"
+    if [ -n "${VERCEL_ALIAS_SKIP_REASON[$d]:-}" ]; then
+      echo "SKIP   $host -> pinned-path baseline not applicable: ${VERCEL_ALIAS_SKIP_REASON[$d]}"
+    elif [ -n "${VERCEL_CHECK_PATHS[$d]:-}" ]; then
+      read -r -a vpaths <<<"${VERCEL_CHECK_PATHS[$d]}"
+      for vp in "${vpaths[@]}"; do
+        check_nonvercel_path "$host" "$vp"
+      done
+    else
+      echo "UNPINNED $host -> $code ${loc:+($loc)} registry lists this as live Vercel but no page is served at / and nobody pinned a VERCEL_CHECK_PATHS entry for it — add one" >&2
+      FAIL=1
+    fi
   else
     echo "CHECK  $host -> $code ${loc:+($loc)}"
     FAIL=1
+    check_hsts "$host" "$resp" "$code"
   fi
 done
 
