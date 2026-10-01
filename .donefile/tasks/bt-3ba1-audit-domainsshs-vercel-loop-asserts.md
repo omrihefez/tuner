@@ -2,7 +2,7 @@
 id: bt-3ba1
 title: audit-domains.sh's Vercel loop asserts no headers at all on a 307/401 host and never checks
   HSTS on any Vercel host
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-01
 filed:
   owner: meni-worker/board-refill-work-discov-edb20d
   at: 2026-10-01T08:07:38Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-01T08:15:06Z
 ---
 
 `scripts/audit-domains.sh` has two header-checking loops and they have drifted far apart. The
@@ -67,3 +70,6 @@ caught it for either host because both answer 307 at `/`.
     cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
 
 Filed by the periodic discovery sweep, 2026-10-01.
+
+## Log
+- 2026-10-01 claimed by capacity-engine
