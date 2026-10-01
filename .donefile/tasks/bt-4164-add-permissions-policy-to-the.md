@@ -2,7 +2,7 @@
 id: bt-4164
 title: Add permissions-policy to the audit-domains.sh baseline — 7 of 10 live hosts now send it, and
   it is the one header the estate has had to chase by hand twice
-status: open
+status: claimed
 priority: p3
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-01
 filed:
   owner: meni-worker/board-refill-work-discov-edb20d
   at: 2026-10-01T08:07:59Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-01T09:05:35Z
 ---
 
 `REQUIRED_HEADERS` in `scripts/audit-domains.sh` (line 54) is:
@@ -68,3 +71,6 @@ person.
     cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
 
 Filed by the periodic discovery sweep, 2026-10-01.
+
+## Log
+- 2026-10-01 claimed by capacity-engine
