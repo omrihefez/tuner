@@ -2,7 +2,7 @@
 id: bt-8c53
 title: check_hsts() accepts max-age=0 as OK — it tests header presence, never the value, so
   compose's missing includeSubDomains reads clean
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,33 @@ created: 2026-10-01
 filed:
   owner: meni-worker/board-refill-work-discov-edb20d
   at: 2026-10-01T08:07:49Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-01T08:44:22Z
+done:
+  at: 2026-10-01T08:54:31Z
+  by: capacity-engine/worker
+  waived: tagged 'security' (an activation.tag) but the change is entirely scripts/audit-domains.sh +
+    its test suite -- an ops/monitoring script never referenced by vercel.json and not part of the
+    served PWA bundle. No deploy/activation step applies; nothing for a --live probe to hit.
+evidence:
+  - type: commit
+    value: 945da78ff49cc72ad9d0727806bcc69196390c6b
+    verified: 2026-10-01T08:54:31Z
+  - type: test
+    cmd: bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-01T08:54:19Z
+    log: evidence/bt-8c53-2026-10-01T08-54-19Z-test.txt
+    sha256: 4e8dae43e0ea3fb0a5582e9d7275d01be8a0ea9ed4d52c5b42c8cf8ae66f99e0
+    bytes: 8499
+  - type: note
+    value: "Hardened check_hsts() to parse max-age (floor 31536000, the lowest live value today) and
+      require includeSubDomains; preload deliberately left as a per-host human call, documented in
+      the comment. Added tests 24-26 (max-age=0 DRIFT, missing-includeSubDomains DRIFT, passing
+      shape) and fixed 8 existing fixtures that had max-age without includeSubDomains (would have
+      gone DRIFT under the new stricter check). Confirmed test 24's exact fixture prints OK pre-fix
+      against parent commit 79a00b3 (verified via a detached control worktree, not stash -- per this
+      repo's own shared-stash ban). Sibling note in the task body claiming the SUBS loop never calls
+      check_hsts() is STALE: bt-3ba1 (same commit 79a00b3) already fixed that earlier the same
+      sweep."
 ---
 
 `check_hsts()` in `scripts/audit-domains.sh` (lines 158-166) tests only that the header NAME is
@@ -75,3 +99,4 @@ Filed by the periodic discovery sweep, 2026-10-01.
 
 ## Log
 - 2026-10-01 claimed by capacity-engine
+- 2026-10-01 done by capacity-engine/worker — commit 945da78ff49c, test `bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-8c53-2026-10-01T08-54-19Z-test.txt) (evidence waived: tagged 'security' (an activation.tag) but the change is entirely scripts/audit-domains.sh + its test suite -- an ops/monitoring script never referenced by vercel.json and not part of the served PWA bundle. No deploy/activation step applies; nothing for a --live probe to hit.)
