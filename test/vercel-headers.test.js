@@ -85,6 +85,38 @@ test("Permissions-Policy allows microphone (the app's own capability) but denies
   assert.ok(value.includes("geolocation=()"), `expected geolocation=(), got "${value}"`);
 });
 
+test("catch-all rule's CSP reports violations instead of failing silently", () => {
+  // bt-188e: a blocked script (real attack, or a legitimate script the
+  // policy is too strict for) was invisible with neither directive set.
+  // Points at the hub's own self-hosted sink (meniapp hub kd-848c/ma-b307),
+  // same destination meniapp's own CSP already reports to, since this app
+  // has no backend of its own to receive reports.
+  const rule = findRule(CATCH_ALL_SOURCE);
+  const csp = headerValue(rule, "Content-Security-Policy");
+  assert.ok(csp, "missing Content-Security-Policy header on the catch-all rule");
+  assert.ok(
+    csp.includes("report-uri https://meniapp-api.omrihefez.com/api/csp-report"),
+    `expected CSP to include a report-uri directive, got "${csp}"`
+  );
+  assert.ok(
+    csp.includes("report-to csp-endpoint"),
+    `expected CSP to include "report-to csp-endpoint", got "${csp}"`
+  );
+});
+
+test("catch-all rule registers the report-to group via Reporting-Endpoints", () => {
+  // Modern Reporting API: registers the group name the CSP's report-to
+  // directive refers to. Browsers that don't support it ignore the header
+  // and fall back to report-uri, which is why both stay on the policy.
+  const rule = findRule(CATCH_ALL_SOURCE);
+  const value = headerValue(rule, "Reporting-Endpoints");
+  assert.ok(value, "missing Reporting-Endpoints header on the catch-all rule");
+  assert.equal(
+    value,
+    'csp-endpoint="https://meniapp-api.omrihefez.com/api/csp-report"'
+  );
+});
+
 test("sw.js has a no-store Cache-Control rule so a deploy is always reachable", () => {
   const rule = findRule("/sw.js");
   assert.ok(rule, 'expected a headers rule with source "/sw.js"');
