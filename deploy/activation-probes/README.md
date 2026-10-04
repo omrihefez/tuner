@@ -49,4 +49,4 @@ work.
 |---|---|
 | bt-5fb7 | LIVE — deployed sw.js CACHE (`tuner-v10`) matches HEAD's source; negative control against `e53825c` correctly fails |
 | bt-3143 | LIVE — deployed sw.js byte-matches HEAD's source and contains the resolved-non-ok cache fallback; negative control against `bc15aa0` correctly fails |
-| bt-bfee | pending deploy — negative control against the still-unpatched live site correctly reports FAIL (`Access-Control-Allow-Origin: *` vs `Cross-Origin-Resource-Policy: same-origin`); re-run after the fix lands on main to confirm PASS |
+| bt-bfee | LIVE — negative control against the still-unpatched site correctly reported FAIL (`Access-Control-Allow-Origin: *` vs `Cross-Origin-Resource-Policy: same-origin`); after the fix deployed to production the same probe reports PASS (`Access-Control-Allow-Origin: https://bass.omrihefez.com`) |
