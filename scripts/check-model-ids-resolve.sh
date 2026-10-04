@@ -93,14 +93,24 @@ MODEL_ID_REGEX='gemini-([0-9]+(\.[0-9]+)?-[a-z]+(-[a-z]+)*|(flash|pro)-latest)'
 # contains a worktree-pattern subdir, so no extra filtering is needed for
 # them beyond what already applies to /home/omri/projects entries.
 #
-# Deliberately NOT added, decided explicitly rather than left unconsidered:
-#   ~/compose      -- a live app repo, but grepped clean of every LLM-provider
-#                      name (openai/anthropic/gemini/claude-*/gpt-*), not just
-#                      Gemini -- it does not call an LLM at all today.
-#   ~/study        -- not a live application: exam/course material
-#                      (sn2526a) with no LLM-provider string anywhere in it.
-# Neither is a repo this fleet ships or operates, unlike meni/tik-api/apartment.
-# If either ever grows a real model call, add it here the same way.
+# ~/compose and ~/study/sn2526a (bt-57fc) are added for a DIFFERENT reason
+# than the three above: not because either currently contains a model
+# string -- as of 2026-10-05 neither does, verified by grepping both for
+# gemini-2\.5/gemini-1\.5 -- but because both are real repos with their own
+# `.donefile` BOARD (prefixes cp and sn), same as meni/tik-api/apartment,
+# and compose.omrihefez.com is a live, public app. The rationale this guard
+# was widened on three times is board coverage, not "already has a string
+# today" -- a scanner whose coverage only grows after a live miss is the
+# exact drift this file exists to stop. ~/study/sn2526a is reached through
+# the ~/study symlink, so the /home/omri/projects glob above can't see it
+# either way.
+#
+# This list is still HAND-MAINTAINED -- the next repo that grows its own
+# board beside one of these needs a human (or a future worker) to notice
+# and add it here too, same as this task had to notice compose and
+# sn2526a. A derived root set (census every `.donefile` dir under
+# /home/omri, per bt-57fc's own DONE WHEN) would not drift this way, but
+# is a larger change than this task took on.
 #
 # PROJECTS_GLOB_ROOT and EXTRA_ROOTS are separately overridable (not just the
 # combined MODEL_SCAN_ROOTS escape hatch above) so the companion test can
@@ -108,11 +118,22 @@ MODEL_ID_REGEX='gemini-([0-9]+(\.[0-9]+)?-[a-z]+(-[a-z]+)*|(flash|pro)-latest)'
 # filter and the extra-roots merge -- against a throwaway fixture tree,
 # rather than only ever testing the MODEL_SCAN_ROOTS bypass that skips this
 # code entirely.
-PROJECTS_GLOB_ROOT="${MODEL_PROJECTS_ROOT:-/home/omri/projects}"
+#
+# MODEL_ROOT_BASE (bt-57fc) is the same idea one level up: EXTRA_ROOTS'
+# literal path segments (meni, tik-api, apartment, compose, study/sn2526a)
+# are real content a hermetic test can't safely plant a fixture string
+# into, so the home-directory PREFIX they all hang off is overridable too
+# -- a test can point it at a throwaway tree shaped like the real home dir
+# and prove the DEFAULT list (no MODEL_EXTRA_ROOTS override) actually
+# contains compose/study-sn2526a-shaped entries, without touching the real
+# ~/compose or ~/study. Defaults to the literal box path, never $HOME, so
+# behaviour is unchanged for the real run regardless of what invokes it.
+MODEL_ROOT_BASE="${MODEL_ROOT_BASE:-/home/omri}"
+PROJECTS_GLOB_ROOT="${MODEL_PROJECTS_ROOT:-$MODEL_ROOT_BASE/projects}"
 if [[ -n "${MODEL_EXTRA_ROOTS:-}" ]]; then
   read -ra EXTRA_ROOTS <<<"$MODEL_EXTRA_ROOTS"
 else
-  EXTRA_ROOTS=(/home/omri/meni /home/omri/tik-api /home/omri/apartment)
+  EXTRA_ROOTS=("$MODEL_ROOT_BASE/meni" "$MODEL_ROOT_BASE/tik-api" "$MODEL_ROOT_BASE/apartment" "$MODEL_ROOT_BASE/compose" "$MODEL_ROOT_BASE/study/sn2526a")
 fi
 if [[ -n "${MODEL_SCAN_ROOTS:-}" ]]; then
   read -ra SCAN_ROOTS <<<"$MODEL_SCAN_ROOTS"

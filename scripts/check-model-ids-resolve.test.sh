@@ -145,5 +145,26 @@ if grep -q "gemini-9.9-flash-shouldnotappear" <<<"$out"; then
 fi
 ok "the default root list (no MODEL_SCAN_ROOTS override) includes MODEL_EXTRA_ROOTS and still filters worktree-suffixed dirs under the projects root"
 
+echo "9. DEFAULT EXTRA_ROOTS COVERS compose AND study/sn2526a (bt-57fc): with NEITHER MODEL_SCAN_ROOTS NOR MODEL_EXTRA_ROOTS overridden -- i.e. the REAL default EXTRA_ROOTS array, just with MODEL_ROOT_BASE standing in for /home/omri -- a model string planted under <base>/compose and <base>/study/sn2526a is discovered"
+BASE_TMP="$(mktemp -d)"
+EMPTY_PROJ="$BASE_TMP/projects"
+mkdir -p "$EMPTY_PROJ" "$BASE_TMP/compose/scripts" "$BASE_TMP/study/sn2526a/notes"
+echo 'CP = "gemini-9.9-flash-composetest"' >"$BASE_TMP/compose/scripts/ai.ts"
+echo 'SN = "gemini-9.9-flash-snboardtest"' >"$BASE_TMP/study/sn2526a/notes/ai.py"
+: >"$FIXTURE_MAP"
+printf 'gemini-9.9-flash-composetest\t200\n' >>"$FIXTURE_MAP"
+printf 'gemini-9.9-flash-snboardtest\t200\n' >>"$FIXTURE_MAP"
+out="$(
+  MODEL_ROOT_BASE="$BASE_TMP" MODEL_PROJECTS_ROOT="$EMPTY_PROJ" \
+  CURL_FIXTURE_MAP="$FIXTURE_MAP" CURL_CMD="$CURL_STUB" \
+  GEMINI_API_KEY="fake-key-for-test" \
+  bash "$SCRIPT" 2>&1
+)"; rc=$?
+rm -rf "$BASE_TMP"
+[ "$rc" -eq 0 ] || fail "expected exit 0 (both fixture models resolve), got $rc: $out"
+grep -q "gemini-9.9-flash-composetest" <<<"$out" || fail "expected the compose-shaped fixture model to be discovered via the DEFAULT EXTRA_ROOTS list (no MODEL_EXTRA_ROOTS override) -- this is the bt-57fc coverage gap, got: $out"
+grep -q "gemini-9.9-flash-snboardtest" <<<"$out" || fail "expected the study/sn2526a-shaped fixture model to be discovered via the DEFAULT EXTRA_ROOTS list (no MODEL_EXTRA_ROOTS override) -- this is the bt-57fc coverage gap, got: $out"
+ok "the default EXTRA_ROOTS list (no override) reaches a compose-shaped and a study/sn2526a-shaped root"
+
 echo
 echo "PASS ($pass assertions)"
