@@ -2,7 +2,7 @@
 id: bt-57fc
 title: check-model-ids-resolve.sh's EXTRA_ROOTS misses /home/omri/compose and ~/study/sn2526a, both
   of which have their own board - the hand-maintained-root drift bt-8ce4 fixed once
-status: claimed
+status: done
 priority: p3
 tags:
   - tooling
@@ -12,9 +12,20 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-5e7b4f
   at: 2026-10-04T22:36:20Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-04T22:59:27Z
+done:
+  at: 2026-10-04T23:13:58Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: dfaeab77f3eefaf1f7bd73138e536409a8b522c0
+    verified: 2026-10-04T23:13:58Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-model-ids-resolve.test.sh
+    exit: 0
+    at: 2026-10-04T23:13:56Z
+    log: evidence/bt-57fc-2026-10-04T23-13-56Z-test.txt
+    sha256: 6f58479432962bdb97ecd2332906921b6bcda12a2e9cdc4aae0f6a7b02b77111
+    bytes: 2342
 ---
 
 `scripts/check-model-ids-resolve.sh` builds its scan roots as one glob plus a
@@ -89,3 +100,4 @@ cross-board: names a file under 'meni' at /home/omri/meni — ~/meni is undispat
 
 ## Log
 - 2026-10-05 claimed by capacity-engine
+- 2026-10-05 done by capacity-engine/worker — commit dfaeab77f3ee, test `cd /home/omri/projects/bass-tuner && bash scripts/check-model-ids-resolve.test.sh` exit 0 (log: evidence/bt-57fc-2026-10-04T23-13-56Z-test.txt)
