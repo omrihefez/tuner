@@ -29,6 +29,7 @@ failure, not just success against HEAD.
 |---|---|
 | `probe-bt-5fb7.sh` | run against `e53825c` (an old `tuner-v6` commit, long superseded) instead of HEAD — the live CACHE (`tuner-v10`) must NOT match, and the script must report FAIL |
 | `probe-bt-3143.sh` | run against `bc15aa0` (pre-fix, no `CACHE` bump so `probe-bt-5fb7.sh` can't distinguish it) — the pre-fix ref lacks the resolved-non-ok fallback string, and the script must report FAIL |
+| `probe-bt-bfee.sh` | run against the real live `bass.omrihefez.com` before the fix deployed — still sent `Access-Control-Allow-Origin: *` alongside `Cross-Origin-Resource-Policy: same-origin`, and the script correctly reported FAIL |
 
 ## No runtime surface: waive, don't fake a probe
 
@@ -48,3 +49,4 @@ work.
 |---|---|
 | bt-5fb7 | LIVE — deployed sw.js CACHE (`tuner-v10`) matches HEAD's source; negative control against `e53825c` correctly fails |
 | bt-3143 | LIVE — deployed sw.js byte-matches HEAD's source and contains the resolved-non-ok cache fallback; negative control against `bc15aa0` correctly fails |
+| bt-bfee | pending deploy — negative control against the still-unpatched live site correctly reports FAIL (`Access-Control-Allow-Origin: *` vs `Cross-Origin-Resource-Policy: same-origin`); re-run after the fix lands on main to confirm PASS |

@@ -6,6 +6,17 @@
 // green. This mirrors check-sw-cache-bump.js's approach: read the real
 // vercel.json rather than hardcoding a parallel copy of it, so the test and
 // the config cannot drift apart.
+//
+// bt-bfee: a config-reading test like this one CANNOT catch a header the
+// platform injects on top of vercel.json (Vercel's static-file handler sent
+// `Access-Control-Allow-Origin: *`, contradicting the Cross-Origin-Resource-
+// Policy this file verifies, and nothing here saw it because the `*` was
+// never in vercel.json at all). That class of bug needs a LIVE response,
+// which conflicts with this suite's hermeticity (every test/*.test.js file
+// here is stubbed — no real network, see docs/TESTING.md) — so the live
+// check lives at scripts/check-cors-corp-consistency.sh instead, with its
+// own hermetic CURL_CMD-stubbed companion test picked up by `npm test`'s
+// scripts/*.test.sh loop, same split as check-permissions-policy.sh.
 // Run with:  npm test   (== node --test test/)
 
 const { test } = require("node:test");
