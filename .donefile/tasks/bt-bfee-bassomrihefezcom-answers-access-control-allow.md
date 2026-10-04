@@ -3,7 +3,7 @@ id: bt-bfee
 title: "bass.omrihefez.com answers Access-Control-Allow-Origin: * , defeating the
   Cross-Origin-Resource-Policy vercel.json sets - and the header test only asserts headers it
   expects"
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -12,6 +12,9 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-5e7b4f
   at: 2026-10-04T22:35:30Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-04T23:31:49Z
 ---
 
 Measured live 2026-10-05 01:26 IDT, `curl -sI https://bass.omrihefez.com/`:
@@ -62,3 +65,6 @@ DONE WHEN:
     here, because the current state already passes every existing test.
   - Do NOT close this with a grep of `vercel.json`. The `*` is not in `vercel.json`;
     that is the whole point. Evidence must read the served response.
+
+## Log
+- 2026-10-05 claimed by capacity-engine
