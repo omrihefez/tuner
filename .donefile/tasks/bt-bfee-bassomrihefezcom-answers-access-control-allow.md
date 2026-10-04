@@ -3,7 +3,7 @@ id: bt-bfee
 title: "bass.omrihefez.com answers Access-Control-Allow-Origin: * , defeating the
   Cross-Origin-Resource-Policy vercel.json sets - and the header test only asserts headers it
   expects"
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -12,9 +12,38 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-5e7b4f
   at: 2026-10-04T22:35:30Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-04T23:31:49Z
+done:
+  at: 2026-10-04T23:56:23Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 925d494
+    verified: 2026-10-04T23:56:23Z
+  - type: test
+    cmd: bash scripts/check-cors-corp-consistency.test.sh
+    exit: 0
+    at: 2026-10-04T23:56:22Z
+    log: evidence/bt-bfee-2026-10-04T23-56-22Z-test.txt
+    sha256: 0d1f77e8c7010fdb710b385d53f890e23dc2859f83921c77324646f0b44408e4
+    bytes: 908
+  - type: live
+    cmd: bash deploy/activation-probes/probe-bt-bfee.sh
+    exit: 0
+    at: 2026-10-04T23:56:22Z
+    expect: PASS
+    log: evidence/bt-bfee-2026-10-04T23-56-22Z-live.txt
+    sha256: 88e7a5d1c57766fae75525982c418d188f4e20562285658f7bced1d3afea7e03
+    bytes: 284
+  - type: note
+    value: "Branch spans a86d8b2..925d494 (two commits: the fix itself, then a doc-only README update
+      recording the live probe's post-deploy PASS). ACAO:* was a Vercel platform default never
+      present in vercel.json, not catchable by the old config-reading test. Fix: explicit
+      ACAO=https://bass.omrihefez.com in vercel.json (confirmed via live preview deploy that an
+      empty-string value does NOT override the platform default, only a concrete value does); kept
+      CORP/COOP same-origin per bt-d517's deliberate posture. New
+      scripts/check-cors-corp-consistency.sh (+hermetic test) and
+      deploy/activation-probes/probe-bt-bfee.sh read the live response; probe confirmed FAIL against
+      the still-unpatched site pre-deploy and PASS against production post-deploy."
 ---
 
 Measured live 2026-10-05 01:26 IDT, `curl -sI https://bass.omrihefez.com/`:
@@ -68,3 +97,4 @@ DONE WHEN:
 
 ## Log
 - 2026-10-05 claimed by capacity-engine
+- 2026-10-05 done by capacity-engine/worker — commit 925d494, test `bash scripts/check-cors-corp-consistency.test.sh` exit 0 (log: evidence/bt-bfee-2026-10-04T23-56-22Z-test.txt), live `bash deploy/activation-probes/probe-bt-bfee.sh` exit 0 (--live-expect "PASS") (log: evidence/bt-bfee-2026-10-04T23-56-22Z-live.txt)

@@ -1,0 +1,4 @@
+$ bash deploy/activation-probes/probe-bt-bfee.sh
+
+OK     bass.omrihefez.com -> Cross-Origin-Resource-Policy: same-origin, Access-Control-Allow-Origin: https://bass.omrihefez.com
+probe-bt-bfee: PASS - live Access-Control-Allow-Origin no longer contradicts Cross-Origin-Resource-Policy

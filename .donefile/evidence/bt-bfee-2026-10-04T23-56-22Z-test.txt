@@ -1,0 +1,14 @@
+$ bash scripts/check-cors-corp-consistency.test.sh
+
+1. BEFORE: ACAO:* alongside CORP:same-origin (the live pre-fix bt-bfee shape) fails loudly
+  ok — the check fails on the exact pre-fix shape (ACAO:* + CORP:same-origin)
+2. AFTER: ACAO scoped to the site's own origin passes — same check, proves this is a real fail/pass probe
+  ok — the check flips to OK once ACAO is scoped to the site's own origin
+3. ACAO missing entirely is DRIFT, not a silent pass
+  ok — a missing Access-Control-Allow-Origin header is caught, not silently accepted
+4. CORP missing entirely is DRIFT — this check also guards the posture it depends on
+  ok — a missing Cross-Origin-Resource-Policy header is caught too
+5. a different wrong ACAO value (e.g. a different origin, not *) is still DRIFT, not a near-miss pass
+  ok — a wrong non-wildcard origin is caught, not accepted just for not being *
+
+PASS (5 assertions)
