@@ -2,7 +2,7 @@
 id: bt-57fc
 title: check-model-ids-resolve.sh's EXTRA_ROOTS misses /home/omri/compose and ~/study/sn2526a, both
   of which have their own board - the hand-maintained-root drift bt-8ce4 fixed once
-status: open
+status: claimed
 priority: p3
 tags:
   - tooling
@@ -12,6 +12,9 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-5e7b4f
   at: 2026-10-04T22:36:20Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-04T22:59:27Z
 ---
 
 `scripts/check-model-ids-resolve.sh` builds its scan roots as one glob plus a
@@ -83,3 +86,6 @@ derivation in both.
 
 
 cross-board: names a file under 'meni' at /home/omri/meni — ~/meni is undispatched — route it via ~/inbox/meni-board-queue/ instead (see dn-334c).
+
+## Log
+- 2026-10-05 claimed by capacity-engine
