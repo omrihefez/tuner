@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Web-based bass/guitar tuner (static PWA). Node is used only for tests.",
   "private": true,
+  "dependencies": {
+    "@vercel/functions": "^3.9.11"
+  },
   "scripts": {
     "//build": "bt-f541: there is nothing to compile here (static PWA), but the donefile pre-push hook's default gate is `npm run build && npm test`, and a missing script makes npm exit 1 — so the gate refused EVERY non-bookkeeping push, which is precisely the pressure that gets the next person to reach for --no-verify. `build` therefore runs the offline half of .github/workflows/ci.yml's static-checks job, so the local gate mirrors CI instead of dying on it. html-validate is left to CI alone: it shells out to `npx --yes html-validate@8.29.0`, which needs the network and has no business in a pre-push hook.",
     "build": "npm run check:syntax && npm run check:links && npm run check:cache-bump",
