@@ -1,0 +1,2 @@
+$ crontab -l | grep -q '18 6 \* \* \* .*cors-corp-consistency .*check-cors-corp-consistency.sh'
+

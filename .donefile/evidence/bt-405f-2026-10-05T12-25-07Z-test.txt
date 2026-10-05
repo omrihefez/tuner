@@ -1,0 +1,1065 @@
+$ cd /home/omri/projects/bass-tuner && ./scripts/install-monitoring-crons.sh --dry-run
+
+lint-crontab-logdirs: OK — all 1 redirect target(s) in - have their parent directory created by the same line.
+[install-monitoring-crons] dry-run: crontab would become:
+    0 4 * * * /home/omri/meni/scripts/auto-reflect.sh
+    # Morning brief — Omri 2026-07-13 timed-send split: generate on a 1h lead (dryrun=cache, no send), deliver at target time.
+    7 8 * * 0-4 MORNING_DRYRUN=1 /home/omri/meni/bin/morning-brief-v2.sh   # weekday generate 08:07
+    7 9 * * 0-4 /home/omri/meni/bin/brief-send-timed.sh                     # weekday send 09:07
+    3 10 * * 5,6 MORNING_DRYRUN=1 /home/omri/meni/bin/morning-brief-v2.sh  # weekend generate 10:03
+    3 11 * * 5,6 /home/omri/meni/bin/brief-send-timed.sh                    # weekend send 11:03
+    
+    # meni prevention — watchdog (every 2min) + weekly Sun-4am restart
+    47 8 * * 0 mkdir -p /home/omri/.cache && /home/omri/bin/claude-usage-weekly.sh >> /home/omri/.cache/claude-usage-weekly.log 2>&1
+    30 11 * * 1 /home/omri/bin/options-menu.sh
+    # SUNSET 2026-07-21 (games over, app 404) — disabled by worker; Main to remove health-registry entry + script
+    
+    # FIFA autofill / zn-tournaments RETIRED 2026-09-22 by Main (df-9278). The app was
+    # sunset 2026-07-21 (DOMAIN.md: CNAME deleted, 404) but these two lines kept firing
+    # twice a day into a dead Vercel deployment for two months, logging DEPLOYMENT_NOT_FOUND
+    # into ~/.meni/znt-*.log (23KB of it). The zn-tournaments healthcheck line above them
+    # had already been commented out and left in place. Scripts kept in bin/, unwired.
+    
+    # SN exam driver (exam Mon Jul 27) — 3 run slots (weekday = evening ONLY), all outside 09-18 Sun-Thu; script re-gates internally
+    # RETIRED 2026-09-13 by Main (ce-e05e). Course sn2526a's last sitting was
+    # מועד ג on 2026-07-27; the driver has logged phase=post / sent=False on every
+    # run for the 47 days since, i.e. it wakes three times a day to decide it has
+    # nothing to do. Restore by uncommenting. Rationale + the repo's board
+    # disposition: capacity-engine docs/config-notes/_excluded_boards_note.md.
+    # 10 19 * * 0-4 mkdir -p /home/omri/.cache && /usr/bin/python3 /home/omri/study/sn2526a/lessons/scripts/exam_driver.py >> /home/omri/.cache/sn-exam-driver.log 2>&1
+    # 30 10 * * 5,6 mkdir -p /home/omri/.cache && /usr/bin/python3 /home/omri/study/sn2526a/lessons/scripts/exam_driver.py >> /home/omri/.cache/sn-exam-driver.log 2>&1
+    # 5 16 * * 5,6 mkdir -p /home/omri/.cache && /usr/bin/python3 /home/omri/study/sn2526a/lessons/scripts/exam_driver.py >> /home/omri/.cache/sn-exam-driver.log 2>&1
+    # iac Terraform drift detection (iac-4872) — README claims Mon 08:30
+    15 4 * * 1 mkdir -p /home/omri/.meni && docker system prune -af --filter "until=168h" >> /home/omri/.meni/docker-prune.cron.log 2>&1   # tkn-3957 weekly docker image/container/build-cache prune (bounds accumulation from ad-hoc Dockerfile verification; volumes deliberately excluded, pruned manually if ever needed)
+    # BEGIN punchlist-link-check (apartment/bin/install-punchlist-link-cron.sh)
+    # Nightly dead-buy-link check for ~/apartment/punchlist.md (2026-08-01).
+    # Every OPTION/PICK link in that file was click-verified exactly once, on the
+    # day it was researched; nothing re-checked them after. On 2026-08-01 Omri
+    # clicked the oven-cabinet PICK and got ACE's 404 — the only detector was him
+    # clicking. Reports 4xx/5xx AND 200-but-out-of-stock; bot-walled hosts (IKEA,
+    # AliExpress, ksp) are listed as unverifiable, not screamed about. Alerts via
+    # meni-notify, deduped on the exact finding set, re-arming on change/recovery.
+    # Verify the checker itself with: /home/omri/apartment/bin/check-punchlist-links.py --self-test
+    40 4 * * * mkdir -p /home/omri/.local/share/meni-hub/punchlist-links && /home/omri/apartment/bin/check-punchlist-links.py >> /home/omri/.local/share/meni-hub/punchlist-links/cron.log 2>&1
+    # END punchlist-link-check (apartment/bin/install-punchlist-link-cron.sh)
+    
+    17 3 * * * mkdir -p /home/omri/.meni && /usr/bin/python3 /home/omri/meni/bin/intake snapshot >> /home/omri/.meni/intake-snapshot.cron.log 2>&1  # intake daily metric (Omri 2026-08-07: track the number, aim for zero)
+    
+    # ── th-419e (2026-08-18, Main): jobs moved off GitHub Actions ──────────────
+    # GitHub bills Actions in WHOLE MINUTES, ROUNDED UP, PER JOB, and these repos
+    # are private. An 11-second scheduled job therefore costs a full minute every
+    # time it fires, which is how the scheduled workflows alone reached ~1,250
+    # min/mo against a 2,000 min/mo free allowance and took CI down account-wide
+    # from 2026-08-13. Omri's instruction (2026-08-07 voice note) is to stay inside
+    # the free tier rather than raise the spend limit, so the work moves here,
+    # where a minute costs nothing. Each job below carries its own liveness signal
+    # because a cron that stops firing is otherwise indistinguishable from a cron
+    # with nothing to report.
+    #
+    # CRON_TZ WARNING: CRON_TZ applies to every line BELOW it until the next one.
+    # The tik-api trigger must stay on UTC because its window tracks market hours,
+    # which do not shift with Israeli DST; everything after it is reset to
+    # Asia/Jerusalem so later additions inherit the system default, not UTC.
+    
+    CRON_TZ=UTC
+    # tik-api price alerts (th-419e): replaces .github/workflows/check_alerts.yml,
+    # whose schedule is now removed entirely. That workflow was never an off-box
+    # observer — it only ever POSTed to an API that is self-hosted on this same
+    # box, so GitHub's runner bought no independence. Calls 127.0.0.1:8000 direct.
+    15 7-21 * * 1-5 mkdir -p /home/omri/.local/share/meni-hub/tik-api-check-alerts && /home/omri/projects/tik-api/scripts/check-price-alerts-cron.sh >> /home/omri/.local/share/meni-hub/tik-api-check-alerts/cron.log 2>&1
+    
+    CRON_TZ=Asia/Jerusalem
+    # Liveness for the line above (th-419e): asserts last-run/last-success are
+    # fresh, gated to the same market-hours window so it cannot false-alarm at
+    # night or at weekends.
+    */30 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-check-alerts && /home/omri/projects/tik-api/scripts/check-price-alerts-staleness.sh >> /home/omri/.local/share/meni-hub/tik-api-check-alerts/staleness-cron.log 2>&1
+    
+    # trips-hub bookkeeping secret scan (th-419e): now the PRIMARY scan. The
+    # Actions workflow drops 6h -> daily and stays only as insurance against this
+    # very line dying silently. It is the only thing that scans bookkeeping-only
+    # commits, which ci.yml excludes by path, and real PNRs and hotel PINs have
+    # leaked into that repo before (th-eedb, th-4684, th-86ea, th-2d15).
+    0 */6 * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-secret-scan && /home/omri/projects/trips-hub/scripts/vps-bookkeeping-secret-scan.sh >> /home/omri/.local/share/meni-hub/trips-hub-secret-scan/cron.log 2>&1
+    # ── end th-419e ───────────────────────────────────────────────────────────
+    20 4 * * * /home/omri/meni/bin/omri-request-sweep-cron.sh   # df-bfe7 — re-sweep from-omri tasks for captured-but-dead items, notify Main only on change
+    50 4 * * * /home/omri/meni/bin/secret-sweep-cron.sh   # secret-sweep — private-key material outside the vault paths; notify Main on change
+    # RETIRED 2026-09-14 by Main (df-8909). Two fixed-date reminder ramps removed here,
+    # scripts deleted with their cron lines rather than left inert:
+    #   phangan-decide-reminder.sh  - th-c16f DROPPED; its Sep 7 money deadline is past.
+    #   samui-stop-reminder.sh      - th-1c49 CLOSED; already deleted 2026-09-11.
+    #   scooter-carrier-chase-reminder.sh - th-b93f DONE; the 9 Sep flight has gone.
+    # All three carried yearless dates (`* 9 *`), so each would have re-fired in 2027
+    # with text that is already wrong. The surviving ramp, plant-watering-reminder.sh,
+    # now sources bin/lib/ramp-guard.sh: past its last rung with the condition unmet it
+    # SHOUTS and exits 3 instead of going quiet the way success goes quiet.
+    
+    # dn-05e3: ff-sync for donefile's own main checkout — nothing else pulled it
+    # after a worktree push (worktree_guard means code never lands via a local
+    # commit here), so post-merge/rebuild_on_merge never fired and dist/cli.js
+    # (what the whole fleet executes) stayed stale until a Claude SessionStart
+    
+    # BEGIN plant-watering-reminder (meni/bin/plant-watering-reminder.sh)
+    12 8 16,19,21 9 * mkdir -p /home/omri/.meni && /home/omri/meni/bin/plant-watering-reminder.sh >> /home/omri/.meni/plant-watering-reminder.log 2>&1   # hc-0c04 — silent once the row is ticked
+    # END plant-watering-reminder (meni/bin/plant-watering-reminder.sh)
+    # BEGIN bangkokair-wheelchair-chase (meni/bin/bangkokair-wheelchair-chase.sh)
+    # DISABLED 2026-09-11 by Main: this chase reads Omri's Gmail to decide whether Bangkok Airways
+    # replied. The Google grant was revoked this morning (sb-a841 revoked a YouTube scope and Google's
+    # revoke endpoint kills the whole grant for the shared OAuth client), so the check now returns
+    # UNKNOWN and would alarm him mid-trip about assistance that IS confirmed: Bangkok Airways said
+    # yes on 2026-09-10 for PG242 and PG136, Liva confirmed the ferry on 2026-08-25. Re-enable only
+    # after the Google re-consent lands (ny-google-reconsent-after-revoke) AND a live run is seen
+    # reading real mail — not before, or it false-alarms him again.
+    #0 6 11,13,14 9 * /home/omri/meni/bin/bangkokair-wheelchair-chase.sh >> /home/omri/.meni/bangkokair-chase.log 2>&1   # th-b93f — PG242 needs >24h notice; silent once they confirm
+    # END bangkokair-wheelchair-chase (meni/bin/bangkokair-wheelchair-chase.sh)
+    # BEGIN tik-api-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-tik-api-main-checkout && /home/omri/projects/tik-api/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-tik-api-main-checkout/cron.log 2>&1
+    44 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-ff-sync-crontab-drift && BLOCK_LABEL=tik-api-ff-sync BEGIN_MARK="# BEGIN tik-api-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END tik-api-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-api/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-ff-sync-crontab-drift/cron.log 2>&1
+    # END tik-api-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN tik-api-fleet-ci-health (scripts/install-fleet-ci-health-cron.sh)
+    */30 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-fleet-ci-health && /home/omri/projects/tik-api/scripts/check-fleet-ci-runner-health.sh >> /home/omri/.local/share/meni-hub/tik-api-fleet-ci-health/cron.log 2>&1
+    17 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-fleet-ci-health-crontab-drift && BLOCK_LABEL=tik-api-fleet-ci-health BEGIN_MARK="# BEGIN tik-api-fleet-ci-health (scripts/install-fleet-ci-health-cron.sh)" END_MARK="# END tik-api-fleet-ci-health (scripts/install-fleet-ci-health-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-api/scripts/install-fleet-ci-health-cron.sh --print-line" INSTALLER_HINT="scripts/install-fleet-ci-health-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-fleet-ci-health-crontab-drift/cron.log 2>&1
+    # END tik-api-fleet-ci-health (scripts/install-fleet-ci-health-cron.sh)
+    # BEGIN trips-hub-promote (scripts/install-promote-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.meni && /home/omri/.local/share/meni-hub/trips-hub-promote/bin/trips-hub-promote.sh >> /home/omri/.meni/trips-hub-promote.cron.log 2>&1   # trips-hub-promote
+    9 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-promote-crontab-drift && BLOCK_LABEL=trips-hub-promote BEGIN_MARK="# BEGIN trips-hub-promote (scripts/install-promote-cron.sh)" END_MARK="# END trips-hub-promote (scripts/install-promote-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-promote-cron.sh --print-line" INSTALLER_HINT="scripts/install-promote-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-promote-crontab-drift/cron.log 2>&1
+    # END trips-hub-promote (scripts/install-promote-cron.sh)
+    
+    # BEGIN meni-bin (scripts/install-meni-bin-crons.sh)
+    */15 * * * * mkdir -p /home/omri/.meni && /usr/bin/python3 /home/omri/meni/bin/billing_killswitch.py >> /home/omri/.meni/killswitch.cron.log 2>&1
+    */5 * * * * mkdir -p /home/omri/.meni && /home/omri/meni/bin/tik-healthcheck.sh >> /home/omri/.meni/tik-health.log 2>&1   # tik-healthcheck
+    30 4 * * * mkdir -p /home/omri/.meni && /home/omri/meni/bin/disk-janitor.sh >> /home/omri/.meni/janitor.log 2>&1
+    49 * * * * mkdir -p /home/omri/.local/share/meni-hub/meni-bin-crontab-drift && BLOCK_LABEL=meni-bin BEGIN_MARK="# BEGIN meni-bin (scripts/install-meni-bin-crons.sh)" END_MARK="# END meni-bin (scripts/install-meni-bin-crons.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-meni-bin-crons.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-meni-bin-crons.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/meni-bin-crontab-drift/cron.log 2>&1
+    # END meni-bin (scripts/install-meni-bin-crons.sh)
+    # BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
+    17 6 * * 1 /home/omri/projects/bass-tuner/scripts/run-monitor.sh cert-renewal /home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh
+    47 * * * * mkdir -p /home/omri/.local/share/meni-hub/bass-tuner-crontab-drift && BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK="# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)" END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/bass-tuner/scripts/install-cert-renewal-cron.sh --print-line" INSTALLER_HINT="scripts/install-cert-renewal-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/bass-tuner-crontab-drift/cron.log 2>&1
+    # END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
+    # BEGIN prune-fleet-worktrees (scripts/install-prune-cron.sh)
+    0 4 * * * mkdir -p /home/omri/.meni && /home/omri/projects/second-brain/scripts/prune-fleet-worktrees.sh >> /home/omri/.meni/prune-fleet-worktrees.cron.log 2>&1
+    48 * * * * mkdir -p /home/omri/.local/share/meni-hub/prune-fleet-worktrees-crontab-drift && BLOCK_LABEL=prune-fleet-worktrees BEGIN_MARK="# BEGIN prune-fleet-worktrees (scripts/install-prune-cron.sh)" END_MARK="# END prune-fleet-worktrees (scripts/install-prune-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/second-brain/scripts/install-prune-cron.sh --print-line" INSTALLER_HINT="scripts/install-prune-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/prune-fleet-worktrees-crontab-drift/cron.log 2>&1
+    # END prune-fleet-worktrees (scripts/install-prune-cron.sh)
+    # BEGIN iac-drift-check (scripts/install-cron.sh)
+    30 8 * * 1 mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/drift-check.sh >> /home/omri/.cache/iac-drift-check.log 2>&1   # iac drift-check (weekly Mon 08:30)
+    35 9 * * * mkdir -p /home/omri/.local/share/meni-hub/iac-drift-check && /home/omri/projects/iac/scripts/check-drift-check-alive.sh >> /home/omri/.local/share/meni-hub/iac-drift-check/liveness.log 2>&1   # iac drift-check liveness (daily 09:35)
+    48 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-drift-check-crontab-drift && BLOCK_LABEL=iac-drift-check BEGIN_MARK="# BEGIN iac-drift-check (scripts/install-cron.sh)" END_MARK="# END iac-drift-check (scripts/install-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-cron.sh --print-line" INSTALLER_HINT="scripts/install-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-drift-check-crontab-drift/cron.log 2>&1
+    # END iac-drift-check (scripts/install-cron.sh)
+    # BEGIN tik-api-backup (scripts/install-backup-cron.sh)
+    0 3 * * * mkdir -p /home/omri/tik-api && /home/omri/tik-api/scripts/deploy-checkout-sync.sh >> /home/omri/tik-api/backup-cron.log 2>&1   # tik-api-backup
+    23 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-backup-crontab-drift && BLOCK_LABEL=tik-api-backup BEGIN_MARK="# BEGIN tik-api-backup (scripts/install-backup-cron.sh)" END_MARK="# END tik-api-backup (scripts/install-backup-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/tik-api/scripts/install-backup-cron.sh --print-line-backup" INSTALLER_HINT="scripts/install-backup-cron.sh --backup-only" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-backup-crontab-drift/cron.log 2>&1
+    # END tik-api-backup (scripts/install-backup-cron.sh)
+    # BEGIN tik-api-backup-freshness (scripts/install-backup-cron.sh)
+    17 */4 * * * mkdir -p /home/omri/.meni && /home/omri/projects/tik-api/scripts/check-backup-freshness.sh >> /home/omri/.meni/tik-backup-freshness.log 2>&1   # tik-api-backup-freshness
+    33 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-backup-freshness-crontab-drift && BLOCK_LABEL=tik-api-backup-freshness BEGIN_MARK="# BEGIN tik-api-backup-freshness (scripts/install-backup-cron.sh)" END_MARK="# END tik-api-backup-freshness (scripts/install-backup-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-api/scripts/install-backup-cron.sh --print-line-monitor" INSTALLER_HINT="scripts/install-backup-cron.sh --monitor-only" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-backup-freshness-crontab-drift/cron.log 2>&1
+    # END tik-api-backup-freshness (scripts/install-backup-cron.sh)
+    # BEGIN tik-api-daily-summary (scripts/install-daily-summary-cron.sh)
+    30 7 * * * mkdir -p /home/omri/.meni && /home/omri/projects/tik-api/scripts/send-daily-summary-cron.sh >> /home/omri/.meni/tik-daily-summary.log 2>&1   # tik-api-daily-summary
+    43 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-daily-summary-crontab-drift && BLOCK_LABEL=tik-api-daily-summary BEGIN_MARK="# BEGIN tik-api-daily-summary (scripts/install-daily-summary-cron.sh)" END_MARK="# END tik-api-daily-summary (scripts/install-daily-summary-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-api/scripts/install-daily-summary-cron.sh --print-line" INSTALLER_HINT="scripts/install-daily-summary-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-daily-summary-crontab-drift/cron.log 2>&1
+    # END tik-api-daily-summary (scripts/install-daily-summary-cron.sh)
+    # BEGIN tik-api-deploy-rebuild (scripts/install-deploy-rebuild-cron.sh)
+    */10 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-deploy-rebuild && /home/omri/tik-api/scripts/deploy-rebuild.sh >> /home/omri/.local/share/meni-hub/tik-api-deploy-rebuild/cron.log 2>&1   # tik-api-deploy-rebuild
+    53 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-deploy-rebuild-crontab-drift && BLOCK_LABEL=tik-api-deploy-rebuild BEGIN_MARK="# BEGIN tik-api-deploy-rebuild (scripts/install-deploy-rebuild-cron.sh)" END_MARK="# END tik-api-deploy-rebuild (scripts/install-deploy-rebuild-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/tik-api/scripts/install-deploy-rebuild-cron.sh --print-line" INSTALLER_HINT="scripts/install-deploy-rebuild-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-deploy-rebuild-crontab-drift/cron.log 2>&1
+    # END tik-api-deploy-rebuild (scripts/install-deploy-rebuild-cron.sh)
+    # BEGIN tik-api-fetch-report (scripts/install-fetch-report-cron.sh)
+    40 13 * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-fetch-report && /home/omri/projects/tik-api/scripts/fetch-report-cron.sh >> /home/omri/.local/share/meni-hub/tik-api-fetch-report/cron.log 2>&1   # tik-api-fetch-report
+    37 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-fetch-report-crontab-drift && BLOCK_LABEL=tik-api-fetch-report BEGIN_MARK="# BEGIN tik-api-fetch-report (scripts/install-fetch-report-cron.sh)" END_MARK="# END tik-api-fetch-report (scripts/install-fetch-report-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-api/scripts/install-fetch-report-cron.sh --print-line" INSTALLER_HINT="scripts/install-fetch-report-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-fetch-report-crontab-drift/cron.log 2>&1
+    # END tik-api-fetch-report (scripts/install-fetch-report-cron.sh)
+    # BEGIN tik-api-send-digest (scripts/install-send-digest-cron.sh)
+    0 10 * * 0 mkdir -p /home/omri/.local/share/meni-hub/tik-api-send-digest && /home/omri/projects/tik-api/scripts/send-digest-cron.sh >> /home/omri/.local/share/meni-hub/tik-api-send-digest/cron.log 2>&1   # tik-api-send-digest
+    41 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-api-send-digest-crontab-drift && BLOCK_LABEL=tik-api-send-digest BEGIN_MARK="# BEGIN tik-api-send-digest (scripts/install-send-digest-cron.sh)" END_MARK="# END tik-api-send-digest (scripts/install-send-digest-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-api/scripts/install-send-digest-cron.sh --print-line" INSTALLER_HINT="scripts/install-send-digest-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-api-send-digest-crontab-drift/cron.log 2>&1
+    # END tik-api-send-digest (scripts/install-send-digest-cron.sh)
+    # BEGIN trips-hub-backflow (scripts/install-backflow-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.meni && /home/omri/.local/share/meni-hub/trips-hub-backflow/bin/trips-hub-backflow.sh >> /home/omri/.meni/trips-hub-backflow.cron.log 2>&1   # trips-hub-backflow
+    7 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-backflow-crontab-drift && BLOCK_LABEL=trips-hub-backflow BEGIN_MARK="# BEGIN trips-hub-backflow (scripts/install-backflow-cron.sh)" END_MARK="# END trips-hub-backflow (scripts/install-backflow-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-backflow-cron.sh --print-line" INSTALLER_HINT="scripts/install-backflow-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-backflow-crontab-drift/cron.log 2>&1
+    # END trips-hub-backflow (scripts/install-backflow-cron.sh)
+    # BEGIN trips-hub-dev-alias-heal (scripts/install-dev-alias-heal-cron.sh)
+    */10 * * * * mkdir -p /home/omri/.meni && /home/omri/.local/share/meni-hub/trips-hub-dev-alias/bin/trips-hub-dev-alias-heal.sh >> /home/omri/.meni/trips-hub-dev-alias-heal.cron.log 2>&1   # trips-hub-dev-alias-heal
+    27 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-dev-alias-heal-crontab-drift && BLOCK_LABEL=trips-hub-dev-alias-heal BEGIN_MARK="# BEGIN trips-hub-dev-alias-heal (scripts/install-dev-alias-heal-cron.sh)" END_MARK="# END trips-hub-dev-alias-heal (scripts/install-dev-alias-heal-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-dev-alias-heal-cron.sh --print-line" INSTALLER_HINT="scripts/install-dev-alias-heal-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-dev-alias-heal-crontab-drift/cron.log 2>&1
+    # END trips-hub-dev-alias-heal (scripts/install-dev-alias-heal-cron.sh)
+    # BEGIN tik-next-deploy-stall (scripts/install-deploy-stall-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-next-deploy-stall && /home/omri/projects/tik-next/scripts/check-deploy-stall.sh >> /home/omri/.local/share/meni-hub/tik-next-deploy-stall/cron.log 2>&1   # tik-next-deploy-stall
+    12 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-next-deploy-stall-crontab-drift && BLOCK_LABEL=tik-next-deploy-stall BEGIN_MARK="# BEGIN tik-next-deploy-stall (scripts/install-deploy-stall-cron.sh)" END_MARK="# END tik-next-deploy-stall (scripts/install-deploy-stall-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-next/scripts/install-deploy-stall-cron.sh --print-line" INSTALLER_HINT="scripts/install-deploy-stall-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-next-deploy-stall-crontab-drift/cron.log 2>&1
+    # END tik-next-deploy-stall (scripts/install-deploy-stall-cron.sh)
+    # BEGIN compose-deploy-stall (scripts/install-compose-deploy-stall-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.local/share/meni-hub/compose-deploy-stall && DEPLOY_VERIFY_BASE_URL=https://compose.omrihefez.com DEPLOY_STALL_REPO_URL=https://github.com/omrihefez/compose.git DEPLOY_STALL_STATE_DIR=/home/omri/.local/share/meni-hub/compose-deploy-stall DEPLOY_STALL_APP_NAME=compose DEPLOY_STALL_TICKET_REF=tkn-535d /home/omri/projects/tik-next/scripts/check-deploy-stall.sh >> /home/omri/.local/share/meni-hub/compose-deploy-stall/cron.log 2>&1   # compose-deploy-stall
+    19 * * * * mkdir -p /home/omri/.local/share/meni-hub/compose-deploy-stall-crontab-drift && BLOCK_LABEL=compose-deploy-stall BEGIN_MARK="# BEGIN compose-deploy-stall (scripts/install-compose-deploy-stall-cron.sh)" END_MARK="# END compose-deploy-stall (scripts/install-compose-deploy-stall-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-next/scripts/install-compose-deploy-stall-cron.sh --print-line" INSTALLER_HINT="scripts/install-compose-deploy-stall-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/compose-deploy-stall-crontab-drift/cron.log 2>&1
+    # END compose-deploy-stall (scripts/install-compose-deploy-stall-cron.sh)
+    # BEGIN kidai-deploy-stall (scripts/install-kidai-deploy-stall-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.local/share/meni-hub/kidai-deploy-stall && DEPLOY_VERIFY_BASE_URL=https://kidai.omrihefez.com DEPLOY_STALL_REPO_URL=https://github.com/omrihefez/kidai.git DEPLOY_STALL_STATE_DIR=/home/omri/.local/share/meni-hub/kidai-deploy-stall DEPLOY_STALL_APP_NAME=kidai DEPLOY_STALL_TICKET_REF=tkn-c3a4 /home/omri/projects/tik-next/scripts/check-deploy-stall.sh >> /home/omri/.local/share/meni-hub/kidai-deploy-stall/cron.log 2>&1   # kidai-deploy-stall
+    31 * * * * mkdir -p /home/omri/.local/share/meni-hub/kidai-deploy-stall-crontab-drift && BLOCK_LABEL=kidai-deploy-stall BEGIN_MARK="# BEGIN kidai-deploy-stall (scripts/install-kidai-deploy-stall-cron.sh)" END_MARK="# END kidai-deploy-stall (scripts/install-kidai-deploy-stall-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-next/scripts/install-kidai-deploy-stall-cron.sh --print-line" INSTALLER_HINT="scripts/install-kidai-deploy-stall-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/kidai-deploy-stall-crontab-drift/cron.log 2>&1
+    # END kidai-deploy-stall (scripts/install-kidai-deploy-stall-cron.sh)
+    # BEGIN planner-deploy-stall (scripts/install-planner-deploy-stall-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.local/share/meni-hub/planner-deploy-stall && DEPLOY_VERIFY_BASE_URL=https://planner.omrihefez.com DEPLOY_STALL_REPO_URL=https://github.com/omrihefez/apartment-planner.git DEPLOY_STALL_STATE_DIR=/home/omri/.local/share/meni-hub/planner-deploy-stall DEPLOY_STALL_APP_NAME=planner DEPLOY_STALL_TICKET_REF=tkn-e345 DEPLOY_STALL_VERCEL_DOMAIN=planner.omrihefez.com /home/omri/projects/tik-next/scripts/check-deploy-stall.sh >> /home/omri/.local/share/meni-hub/planner-deploy-stall/cron.log 2>&1   # planner-deploy-stall
+    40 * * * * mkdir -p /home/omri/.local/share/meni-hub/planner-deploy-stall-crontab-drift && BLOCK_LABEL=planner-deploy-stall BEGIN_MARK="# BEGIN planner-deploy-stall (scripts/install-planner-deploy-stall-cron.sh)" END_MARK="# END planner-deploy-stall (scripts/install-planner-deploy-stall-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-next/scripts/install-planner-deploy-stall-cron.sh --print-line" INSTALLER_HINT="scripts/install-planner-deploy-stall-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/planner-deploy-stall-crontab-drift/cron.log 2>&1
+    # END planner-deploy-stall (scripts/install-planner-deploy-stall-cron.sh)
+    # BEGIN tik-next-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-tik-next-main-checkout && /home/omri/projects/tik-next/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-tik-next-main-checkout/cron.log 2>&1
+    47 * * * * mkdir -p /home/omri/.local/share/meni-hub/tik-next-ff-sync-crontab-drift && BLOCK_LABEL=tik-next-ff-sync BEGIN_MARK="# BEGIN tik-next-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END tik-next-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/tik-next/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/tik-next-ff-sync-crontab-drift/cron.log 2>&1
+    # END tik-next-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN iac-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-iac-main-checkout && /home/omri/projects/iac/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-iac-main-checkout/cron.log 2>&1
+    39 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-ff-sync-crontab-drift && BLOCK_LABEL=iac-ff-sync BEGIN_MARK="# BEGIN iac-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END iac-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-ff-sync-crontab-drift/cron.log 2>&1
+    # END iac-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN meni-arch-promotion-drift (scripts/install-promotion-drift-cron.sh)
+    */15 * * * * mkdir -p /home/omri/.local/share/meni-hub/meni-arch-promotion-drift && /home/omri/projects/meni-arch/scripts/check-promotion-drift.sh >> /home/omri/.local/share/meni-hub/meni-arch-promotion-drift/cron.log 2>&1   # meni-arch-promotion-drift
+    29 * * * * mkdir -p /home/omri/.local/share/meni-hub/meni-arch-promotion-drift-crontab-drift && BLOCK_LABEL=meni-arch-promotion-drift BEGIN_MARK="# BEGIN meni-arch-promotion-drift (scripts/install-promotion-drift-cron.sh)" END_MARK="# END meni-arch-promotion-drift (scripts/install-promotion-drift-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meni-arch/scripts/install-promotion-drift-cron.sh --print-line" INSTALLER_HINT="scripts/install-promotion-drift-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/meni-arch-promotion-drift-crontab-drift/cron.log 2>&1
+    # END meni-arch-promotion-drift (scripts/install-promotion-drift-cron.sh)
+    # BEGIN bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-bass-tuner-main-checkout && /home/omri/projects/bass-tuner/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-bass-tuner-main-checkout/cron.log 2>&1
+    52 * * * * mkdir -p /home/omri/.local/share/meni-hub/bass-tuner-ff-sync-crontab-drift && BLOCK_LABEL=bass-tuner-ff-sync BEGIN_MARK="# BEGIN bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/bass-tuner/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/bass-tuner-ff-sync-crontab-drift/cron.log 2>&1
+    # END bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN house-control-ff-sync (house-control/deploy/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-house-control-main-checkout && /home/omri/projects/house-control/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-house-control-main-checkout/cron.log 2>&1
+    26 * * * * mkdir -p /home/omri/.local/share/meni-hub/house-control-ff-sync-crontab-drift && BLOCK_LABEL=house-control-ff-sync BEGIN_MARK="# BEGIN house-control-ff-sync (house-control/deploy/install-ff-sync-cron.sh)" END_MARK="# END house-control-ff-sync (house-control/deploy/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/house-control/deploy/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="deploy/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/house-control-ff-sync-crontab-drift/cron.log 2>&1
+    # END house-control-ff-sync (house-control/deploy/install-ff-sync-cron.sh)
+    # BEGIN donefile-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-donefile-main-checkout && /home/omri/projects/donefile/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-donefile-main-checkout/cron.log 2>&1
+    14 * * * * mkdir -p /home/omri/.local/share/meni-hub/donefile-ff-sync-crontab-drift && BLOCK_LABEL=donefile-ff-sync BEGIN_MARK="# BEGIN donefile-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END donefile-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/donefile/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/donefile-ff-sync-crontab-drift/cron.log 2>&1
+    # END donefile-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN donefile-rebuild-dist-from-origin (scripts/install-rebuild-dist-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/donefile-rebuild-from-origin && /home/omri/projects/donefile/scripts/rebuild-dist-from-origin.sh >> /home/omri/.local/share/meni-hub/donefile-rebuild-from-origin/cron.log 2>&1
+    22 * * * * mkdir -p /home/omri/.local/share/meni-hub/donefile-rebuild-dist-from-origin-crontab-drift && BLOCK_LABEL=donefile-rebuild-dist-from-origin BEGIN_MARK="# BEGIN donefile-rebuild-dist-from-origin (scripts/install-rebuild-dist-cron.sh)" END_MARK="# END donefile-rebuild-dist-from-origin (scripts/install-rebuild-dist-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/donefile/scripts/install-rebuild-dist-cron.sh --print-line" INSTALLER_HINT="scripts/install-rebuild-dist-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/donefile-rebuild-dist-from-origin-crontab-drift/cron.log 2>&1
+    # END donefile-rebuild-dist-from-origin (scripts/install-rebuild-dist-cron.sh)
+    # BEGIN gce-render-probe (scripts/install-gce-render-probe-cron.sh)
+    23 5 * * * mkdir -p /home/omri/.meni && /home/omri/meni/bin/gce-render-probe --auth >> /home/omri/.meni/gce-render-probe.cron.log 2>&1
+    41 5 * * 0 mkdir -p /home/omri/.meni && /home/omri/meni/bin/gce-render-probe --full >> /home/omri/.meni/gce-render-probe.cron.log 2>&1
+    26 * * * * mkdir -p /home/omri/.local/share/meni-hub/gce-render-probe-crontab-drift && BLOCK_LABEL=gce-render-probe BEGIN_MARK="# BEGIN gce-render-probe (scripts/install-gce-render-probe-cron.sh)" END_MARK="# END gce-render-probe (scripts/install-gce-render-probe-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-gce-render-probe-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-gce-render-probe-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/gce-render-probe-crontab-drift/cron.log 2>&1
+    # END gce-render-probe (scripts/install-gce-render-probe-cron.sh)
+    # BEGIN orphaned-wip-scan (scripts/install-orphaned-wip-scan-cron.sh)
+    40 5 * * * mkdir -p /home/omri/.meni && /home/omri/meni/bin/orphaned-wip-scan.sh --quiet >> /home/omri/.meni/orphaned-wip-scan.log 2>&1
+    34 * * * * mkdir -p /home/omri/.local/share/meni-hub/orphaned-wip-scan-crontab-drift && BLOCK_LABEL=orphaned-wip-scan BEGIN_MARK="# BEGIN orphaned-wip-scan (scripts/install-orphaned-wip-scan-cron.sh)" END_MARK="# END orphaned-wip-scan (scripts/install-orphaned-wip-scan-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-orphaned-wip-scan-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-orphaned-wip-scan-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/orphaned-wip-scan-crontab-drift/cron.log 2>&1
+    # END orphaned-wip-scan (scripts/install-orphaned-wip-scan-cron.sh)
+    # BEGIN second-brain-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-second-brain-main-checkout && /home/omri/projects/second-brain/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-second-brain-main-checkout/cron.log 2>&1
+    46 * * * * mkdir -p /home/omri/.local/share/meni-hub/second-brain-ff-sync-crontab-drift && BLOCK_LABEL=second-brain-ff-sync BEGIN_MARK="# BEGIN second-brain-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END second-brain-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/second-brain/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/second-brain-ff-sync-crontab-drift/cron.log 2>&1
+    # END second-brain-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN trips-hub-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-trips-hub-dev-checkout && /home/omri/projects/trips-hub/scripts/ff-sync-dev-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-trips-hub-dev-checkout/cron.log 2>&1
+    33 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-ff-sync-crontab-drift && BLOCK_LABEL=trips-hub-ff-sync BEGIN_MARK="# BEGIN trips-hub-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END trips-hub-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-ff-sync-crontab-drift/cron.log 2>&1
+    # END trips-hub-ff-sync (scripts/install-ff-sync-cron.sh)
+    # BEGIN promote-guard-contract-drift (scripts/install-promote-guard-contract-drift-cron.sh)
+    20 5,17 * * * mkdir -p /home/omri/.local/share/meni-hub/promote-guard-contract-drift && /home/omri/projects/meniapp/scripts/check-promote-guard-contract-drift.sh >> /home/omri/.local/share/meni-hub/promote-guard-contract-drift/cron.log 2>&1
+    37 * * * * mkdir -p /home/omri/.local/share/meni-hub/promote-guard-contract-drift-crontab-drift && BLOCK_LABEL=promote-guard-contract-drift BEGIN_MARK="# BEGIN promote-guard-contract-drift (scripts/install-promote-guard-contract-drift-cron.sh)" END_MARK="# END promote-guard-contract-drift (scripts/install-promote-guard-contract-drift-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-promote-guard-contract-drift-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-promote-guard-contract-drift-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/promote-guard-contract-drift-crontab-drift/cron.log 2>&1
+    # END promote-guard-contract-drift (scripts/install-promote-guard-contract-drift-cron.sh)
+    # BEGIN reap-abandoned-scratchpads (scripts/install-reap-abandoned-scratchpads-cron.sh)
+    20 4 * * * mkdir -p /home/omri/.meni && /home/omri/projects/meniapp/scripts/reap-abandoned-scratchpads.sh --apply --quiet >> /home/omri/.meni/reap-abandoned-scratchpads.log 2>&1
+    26 * * * * mkdir -p /home/omri/.local/share/meni-hub/reap-abandoned-scratchpads-crontab-drift && BLOCK_LABEL=reap-abandoned-scratchpads BEGIN_MARK="# BEGIN reap-abandoned-scratchpads (scripts/install-reap-abandoned-scratchpads-cron.sh)" END_MARK="# END reap-abandoned-scratchpads (scripts/install-reap-abandoned-scratchpads-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-reap-abandoned-scratchpads-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-reap-abandoned-scratchpads-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/reap-abandoned-scratchpads-crontab-drift/cron.log 2>&1
+    # END reap-abandoned-scratchpads (scripts/install-reap-abandoned-scratchpads-cron.sh)
+    # BEGIN house-control-pip-outdated-check (house-control/deploy/install-pip-outdated-check-cron.sh)
+    15 6 * * 0 mkdir -p /home/omri/.meni && /home/omri/projects/house-control/deploy/pip-outdated-check.sh >> /home/omri/.meni/house-control-pip-outdated-check.log 2>&1   # hc-598a
+    42 * * * * mkdir -p /home/omri/.local/share/meni-hub/house-control-pip-outdated-check-crontab-drift && BLOCK_LABEL=house-control-pip-outdated-check BEGIN_MARK="# BEGIN house-control-pip-outdated-check (house-control/deploy/install-pip-outdated-check-cron.sh)" END_MARK="# END house-control-pip-outdated-check (house-control/deploy/install-pip-outdated-check-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/house-control/deploy/install-pip-outdated-check-cron.sh --print-line" INSTALLER_HINT="deploy/install-pip-outdated-check-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/house-control-pip-outdated-check-crontab-drift/cron.log 2>&1
+    # END house-control-pip-outdated-check (house-control/deploy/install-pip-outdated-check-cron.sh)
+    # BEGIN iac-cf-token-sync (scripts/install-cf-token-sync-cron.sh)
+    10 5 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/sync-cloudflare-api-token-gh-secret.sh >> /home/omri/.cache/iac-cf-token-sync.log 2>&1   # iac CLOUDFLARE_API_TOKEN gh-secret resync (daily 05:10)
+    41 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-cf-token-sync-crontab-drift && BLOCK_LABEL=iac-cf-token-sync BEGIN_MARK="# BEGIN iac-cf-token-sync (scripts/install-cf-token-sync-cron.sh)" END_MARK="# END iac-cf-token-sync (scripts/install-cf-token-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-cf-token-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-cf-token-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-cf-token-sync-crontab-drift/cron.log 2>&1
+    # END iac-cf-token-sync (scripts/install-cf-token-sync-cron.sh)
+    # BEGIN iac-hcloud-token-sync (scripts/install-hcloud-token-sync-cron.sh)
+    20 5 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/sync-hcloud-token-gh-secret.sh >> /home/omri/.cache/iac-hcloud-token-sync.log 2>&1   # iac HCLOUD_TOKEN gh-secret resync (daily 05:20)
+    43 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-hcloud-token-sync-crontab-drift && BLOCK_LABEL=iac-hcloud-token-sync BEGIN_MARK="# BEGIN iac-hcloud-token-sync (scripts/install-hcloud-token-sync-cron.sh)" END_MARK="# END iac-hcloud-token-sync (scripts/install-hcloud-token-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-hcloud-token-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-hcloud-token-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-hcloud-token-sync-crontab-drift/cron.log 2>&1
+    # END iac-hcloud-token-sync (scripts/install-hcloud-token-sync-cron.sh)
+    # BEGIN trips-hub-weather (scripts/install-weather-cron.sh)
+    10 4,16 * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-weather && /home/omri/.local/share/meni-hub/trips-hub-weather/bin/trips-hub-weather-refresh.sh >> /home/omri/.local/share/meni-hub/trips-hub-weather/cron.log 2>&1   # trips-hub-weather
+    51 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-weather-crontab-drift && BLOCK_LABEL=trips-hub-weather BEGIN_MARK="# BEGIN trips-hub-weather (scripts/install-weather-cron.sh)" END_MARK="# END trips-hub-weather (scripts/install-weather-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-weather-cron.sh --print-line" INSTALLER_HINT="scripts/install-weather-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-weather-crontab-drift/cron.log 2>&1
+    # END trips-hub-weather (scripts/install-weather-cron.sh)
+    
+    # BEGIN meni-arch-ff-sync (scripts/install-ff-sync-cron.sh)
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-meni-arch-main-checkout && /home/omri/projects/meni-arch/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-meni-arch-main-checkout/cron.log 2>&1   # meni-arch-ff-sync
+    55 * * * * mkdir -p /home/omri/.local/share/meni-hub/meni-arch-ff-sync-crontab-drift && BLOCK_LABEL=meni-arch-ff-sync BEGIN_MARK="# BEGIN meni-arch-ff-sync (scripts/install-ff-sync-cron.sh)" END_MARK="# END meni-arch-ff-sync (scripts/install-ff-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meni-arch/scripts/install-ff-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-ff-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/meni-arch-ff-sync-crontab-drift/cron.log 2>&1
+    # END meni-arch-ff-sync (scripts/install-ff-sync-cron.sh)
+    
+    # BEGIN meni-music (jobs/install-crons.sh)
+    # One app owns music. Every line reports did-work / nothing-to-do / COULD-NOT-RUN
+    # through state/runs/<job>.jsonl; only the third is loud, and only to Main.
+    # See docs/DESIGN.md section 4.4.
+    */30 * * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music poll     >> /home/omri/.meni/meni-music.log 2>&1
+    17 */6 * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music snapshot >> /home/omri/.meni/meni-music.log 2>&1
+    23 */2 * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music build    >> /home/omri/.meni/meni-music.log 2>&1
+    47 5   * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music intake   >> /home/omri/.meni/meni-music.log 2>&1
+    10 16  * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music shishi --commit >> /home/omri/.meni/meni-music.log 2>&1
+    # hc-596d: keeps skip_signal.json fresh for judge.py's eventual consumption.
+    # Local-only (no Spotify/Gemini call), so 2h keeps it well ahead of build's
+    # own 2h cadence without adding vault load.
+    41 */2 * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music skip_signal >> /home/omri/.meni/meni-music.log 2>&1
+    # The watchdog is the only line that can report a line above having been
+    # deleted, so it must not be one of them. Hourly: the tightest cadence it
+    # polices is 30 minutes, and GRACE=2.5 means a dead poller surfaces in ~75 min.
+    5 * * * * mkdir -p /home/omri/.meni && /home/omri/projects/meni-music/bin/meni-music watchdog >> /home/omri/.meni/meni-music.log 2>&1
+    # mm-6612: keeps this checkout level with origin/master so the six lines
+    # above (and shishi --commit's writes) never run stale code -- see
+    # scripts/ff-sync-main-checkout.sh for the full why/how.
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-meni-music-main-checkout && /home/omri/projects/meni-music/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-meni-music-main-checkout/cron.log 2>&1
+    # mm-1167: polices THIS block (including the watchdog and ff-sync lines
+    # above) against the rendered content below -- see the comment on
+    # DRIFT_LINE above for what it does and does not catch.
+    37 * * * * mkdir -p /home/omri/.local/share/meni-hub/meni-music-crontab-drift && BLOCK_LABEL=meni-music BEGIN_MARK="# BEGIN meni-music (jobs/install-crons.sh)" END_MARK="# END meni-music (jobs/install-crons.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meni-music/jobs/install-crons.sh --print-line" INSTALLER_HINT="jobs/install-crons.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/meni-music-crontab-drift/cron.log 2>&1
+    # END meni-music (jobs/install-crons.sh)
+    # BEGIN guest-grant-expiry-notify (house-control/deploy/install-guest-grant-expiry-notify-cron.sh)
+    14 8 * * * mkdir -p /home/omri/.meni && /home/omri/projects/house-control/deploy/guest-grant-expiry-notify.sh >> /home/omri/.meni/guest-grant-expiry-notify.log 2>&1   # hc-327b
+    38 * * * * mkdir -p /home/omri/.local/share/meni-hub/guest-grant-expiry-notify-crontab-drift && BLOCK_LABEL=guest-grant-expiry-notify BEGIN_MARK="# BEGIN guest-grant-expiry-notify (house-control/deploy/install-guest-grant-expiry-notify-cron.sh)" END_MARK="# END guest-grant-expiry-notify (house-control/deploy/install-guest-grant-expiry-notify-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/house-control/deploy/install-guest-grant-expiry-notify-cron.sh --print-line" INSTALLER_HINT="deploy/install-guest-grant-expiry-notify-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/guest-grant-expiry-notify-crontab-drift/cron.log 2>&1
+    # END guest-grant-expiry-notify (house-control/deploy/install-guest-grant-expiry-notify-cron.sh)
+    # BEGIN house-control-reap-sessions (house-control/deploy/install-reap-sessions-cron.sh)
+    35 4 * * * mkdir -p /home/omri/.meni && cd /home/omri/projects/house-control && ./housectl reap-sessions >> /home/omri/.meni/house-reap-sessions.log 2>&1   # hc-6058 — revoke non-browser sessions minted by verification runs; they actuate the flat for 90 days
+    44 * * * * mkdir -p /home/omri/.local/share/meni-hub/house-control-reap-sessions-crontab-drift && BLOCK_LABEL=house-control-reap-sessions BEGIN_MARK="# BEGIN house-control-reap-sessions (house-control/deploy/install-reap-sessions-cron.sh)" END_MARK="# END house-control-reap-sessions (house-control/deploy/install-reap-sessions-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/house-control/deploy/install-reap-sessions-cron.sh --print-line" INSTALLER_HINT="deploy/install-reap-sessions-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/house-control-reap-sessions-crontab-drift/cron.log 2>&1
+    # END house-control-reap-sessions (house-control/deploy/install-reap-sessions-cron.sh)
+    # BEGIN iac-codex-auth-check (scripts/install-codex-auth-check-cron.sh)
+    15 7 1 * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/check-codex-auth-alive-cron.sh >> /home/omri/.cache/iac-codex-auth-check.log 2>&1   # iac codex auth-alive check (monthly, 1st 07:15)
+    8 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-codex-auth-check-crontab-drift && BLOCK_LABEL=iac-codex-auth-check BEGIN_MARK="# BEGIN iac-codex-auth-check (scripts/install-codex-auth-check-cron.sh)" END_MARK="# END iac-codex-auth-check (scripts/install-codex-auth-check-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-codex-auth-check-cron.sh --print-line" INSTALLER_HINT="scripts/install-codex-auth-check-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-codex-auth-check-crontab-drift/cron.log 2>&1
+    # END iac-codex-auth-check (scripts/install-codex-auth-check-cron.sh)
+    # BEGIN iac-mail-digest-brief (scripts/install-mail-digest-cron.sh)
+    # Weekly mail digest -> morning brief queue (ma-741f). Queues via
+    # ~/meni/bin/brief-add (2-day TTL), never touches the ~/meni repo directly.
+    0 6 * * 0 mkdir -p /home/omri/.cache && /usr/bin/python3 /home/omri/projects/iac/mail/feed_brief.py >> /home/omri/.cache/iac-mail-digest-feed.log 2>&1
+    28 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-mail-digest-brief-crontab-drift && BLOCK_LABEL=iac-mail-digest-brief BEGIN_MARK="# BEGIN iac-mail-digest-brief (scripts/install-mail-digest-cron.sh)" END_MARK="# END iac-mail-digest-brief (scripts/install-mail-digest-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-mail-digest-cron.sh --print-line" INSTALLER_HINT="scripts/install-mail-digest-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-mail-digest-brief-crontab-drift/cron.log 2>&1
+    # END iac-mail-digest-brief (scripts/install-mail-digest-cron.sh)
+    # BEGIN iac-tool-results-perms (scripts/install-tool-results-perms-cron.sh)
+    */10 * * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/fix-tool-results-perms-cron.sh >> /home/omri/.cache/iac-tool-results-perms.log 2>&1   # iac tool-results perms sweep (every 10min)
+    18 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-tool-results-perms-crontab-drift && BLOCK_LABEL=iac-tool-results-perms BEGIN_MARK="# BEGIN iac-tool-results-perms (scripts/install-tool-results-perms-cron.sh)" END_MARK="# END iac-tool-results-perms (scripts/install-tool-results-perms-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-tool-results-perms-cron.sh --print-line" INSTALLER_HINT="scripts/install-tool-results-perms-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-tool-results-perms-crontab-drift/cron.log 2>&1
+    # END iac-tool-results-perms (scripts/install-tool-results-perms-cron.sh)
+    # BEGIN house-control-dependency-audit-check (house-control/deploy/install-dependency-audit-check-cron.sh)
+    20 6 * * 0 mkdir -p /home/omri/.meni && /home/omri/projects/house-control/deploy/dependency-audit-check.sh >> /home/omri/.meni/house-control-dependency-audit-check.log 2>&1   # hc-2048
+    43 * * * * mkdir -p /home/omri/.local/share/meni-hub/house-control-dependency-audit-check-crontab-drift && BLOCK_LABEL=house-control-dependency-audit-check BEGIN_MARK="# BEGIN house-control-dependency-audit-check (house-control/deploy/install-dependency-audit-check-cron.sh)" END_MARK="# END house-control-dependency-audit-check (house-control/deploy/install-dependency-audit-check-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/house-control/deploy/install-dependency-audit-check-cron.sh --print-line" INSTALLER_HINT="deploy/install-dependency-audit-check-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/house-control-dependency-audit-check-crontab-drift/cron.log 2>&1
+    # END house-control-dependency-audit-check (house-control/deploy/install-dependency-audit-check-cron.sh)
+    # BEGIN inbox-archive (meni/bin/inbox-archive.sh)
+    41 4 * * * mkdir -p /home/omri/.meni && /home/omri/meni/bin/inbox-archive.sh >> /home/omri/.meni/inbox-archive.log 2>&1   # ce-dd60 — move aged monitor-alert families into inbox/archive/YYYY-MM/
+    # END inbox-archive (meni/bin/inbox-archive.sh)
+    # trips-hub dev-role-isolation VPS twin (th-e82e): GitHub's dev-role-isolation.yml
+    # (th-120d) is repeatedly disabled by meniapp's Actions budget governor with no
+    # other watch on the Neon preview/prod role split (th-41dc). Same shape as the
+    # bookkeeping-secret-scan.sh twin above (th-419e) — VPS cron the governor cannot reach.
+    20 */6 * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-dev-role-isolation && /home/omri/projects/trips-hub/scripts/vps-verify-dev-role-isolation.sh >> /home/omri/.local/share/meni-hub/trips-hub-dev-role-isolation/cron.log 2>&1
+    # BEGIN trips-hub-unshipped-scan (scripts/install-unshipped-scan-cron.sh)
+    12 3 * * 0 mkdir -p /home/omri/.local/share/meni-hub/trips-hub-unshipped-scan && /home/omri/projects/trips-hub/scripts/unshipped-scan-notify.sh >> /home/omri/.local/share/meni-hub/trips-hub-unshipped-scan/cron.log 2>&1
+    44 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-unshipped-scan-crontab-drift && BLOCK_LABEL=trips-hub-unshipped-scan BEGIN_MARK="# BEGIN trips-hub-unshipped-scan (scripts/install-unshipped-scan-cron.sh)" END_MARK="# END trips-hub-unshipped-scan (scripts/install-unshipped-scan-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-unshipped-scan-cron.sh --print-line" INSTALLER_HINT="scripts/install-unshipped-scan-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-unshipped-scan-crontab-drift/cron.log 2>&1
+    # END trips-hub-unshipped-scan (scripts/install-unshipped-scan-cron.sh)
+    # BEGIN meniapp (scripts/setup-deploy-infra.sh)
+    # meniapp crontab lines — installed into the interactive user's crontab by
+    # scripts/setup-deploy-infra.sh. This file is the source of truth; the live
+    # crontab (`crontab -l`) also carries unrelated entries for other projects
+    # that this file does not touch.
+    #
+    # ⚠️ EVERY LINE MUST START WITH `mkdir -p <log dir> &&` (ma-5896).
+    # This is load-bearing, not defensive tidiness. cron sets up the `>>`
+    # redirection BEFORE exec'ing the command, so if the log directory does not
+    # exist /bin/sh aborts with "Directory nonexistent" and the command NEVER runs
+    # — including any `mkdir -p` the script itself does to fix exactly this. The
+    # line looks installed and correct in `crontab -l` and has never produced a
+    # single byte. That is how three monitors (check-guard-liveness,
+    # check-cgroup-swap-livelock, check-cgroup-throttle-band) sat here having never
+    # executed once, and how the ma-635d delivery probe sat silent for two hours
+    # the same day. A separate `mkdir -p` command joined with `&&` fixes it,
+    # because its redirect is only set up after the directory is there.
+    #   proof:    scripts/repro-cron-logdir-abort.sh   (old form exits 2, new exits 0)
+    #   enforced: scripts/lint-crontab-logdirs.sh      (pre-push + setup-deploy-infra.sh)
+    #   at run time: scripts/check-cron-log-staleness.sh — a line that stops
+    #             producing output at all, for any reason, is otherwise invisible.
+    #
+    # meniapp deploy — batch-deploy app/ to Vercel prod every 20min (git auto-deploy disabled to stay under Hobby 100/day cap, see meniapp/docs/INFRA.md)
+    */20 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-deploy && /home/omri/projects/meniapp/scripts/deploy-app-if-changed.sh >> /home/omri/.local/share/meni-hub/meniapp-deploy/cron.log 2>&1
+    # weekly brain deep-dive (ma-f1e7) — Friday 13:00 local; script gates delivery to allowed hours internally
+    0 13 * * 5 mkdir -p /home/omri/.cache && /home/omri/projects/meniapp/scripts/weekly-brain-deep-dive.sh >> /home/omri/.cache/weekly-deep-dive.log 2>&1
+    # prune completed worker dirs on the children volume every 6h (ma-ce44) — guarded:
+    # skips active meni-child@ units + dirs touched within 2 days, archives each
+    # transcript before removing. Stops the volume refilling to 100% (2026-07-22 outage).
+    # Folded into meni-fleet as a native subcommand (ma-4170) — single source of
+    # truth with `gc`, no more separate script shelling back into meni-fleet remove.
+    0 */6 * * * mkdir -p /home/omri/.meni && /home/omri/meni/bin/meni-fleet prune >> /home/omri/.meni/prune-children.cron.log 2>&1
+    # crontab drift check (ma-2a47) — hourly: warns via meni-notify if the live
+    # meniapp crontab block (this file's own installed copy) has drifted from
+    # this file, so a live edit or a repo edit that never got re-synced onto a
+    # box doesn't sit silent. Dedups so it alerts once per distinct drift, not
+    # every tick; re-run scripts/setup-deploy-infra.sh to reconcile.
+    # cron-staleness: verdict clean:|DRIFT detected|UNDETERMINED
+    47 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-crontab-drift && /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/meniapp-crontab-drift/cron.log 2>&1
+    # vendored-guard fork check (ma-c616) — hourly: check-crontab-drift.sh used to
+    # exist as six hand-copied variants across the fleet, no two the same length,
+    # so a fix to one never reached the others. Consolidated to this repo's one
+    # implementation, called by absolute path from every other repo's installer —
+    # this guard fails (and alerts) if any of those repos ever grows its own
+    # private copy back, so the next fork is caught by a cron tick instead of a
+    # manual sweep months later.
+    # cron-staleness: verdict clean:|FORK detected
+    51 * * * * mkdir -p /home/omri/.local/share/meni-hub/vendored-guard-drift && /home/omri/projects/meniapp/scripts/check-vendored-guard-drift.sh >> /home/omri/.local/share/meni-hub/vendored-guard-drift/cron.log 2>&1
+    # vendored PIN drift check (ma-2aba) — hourly, same slot as the fork check
+    # above: that one asserts a consolidated-out repo does NOT carry a private
+    # copy; this one asserts every *.vendored.sh pin that IS supposed to exist
+    # still matches the canonical its own header names. Nothing checked this
+    # before — meniapp's ff-sync-checkout-lib.vendored.sh had already drifted
+    # (missing ff_sync_clear_skip and more) with nothing noticing.
+    # cron-staleness: verdict clean:|STALE PIN
+    51 * * * * mkdir -p /home/omri/.local/share/meni-hub/vendored-pin-drift && /home/omri/projects/meniapp/scripts/check-vendored-pin-drift.sh >> /home/omri/.local/share/meni-hub/vendored-pin-drift/cron.log 2>&1
+    # crontab-drift GUARD INVENTORY reconciliation (ma-2602) — hourly. Every
+    # check-crontab-drift.sh guard line lives inside the block it watches, which
+    # makes each guard blind to its own deletion: drop the line and you drop the
+    # only thing that could report the line missing. With one guard per block and
+    # no statement of how many there should be, the count could only ratchet down
+    # in silence — and it did. On 2026-09-14 twelve of eighteen declared guards
+    # were gone, the oldest since 2026-08-05, including the one watching the
+    # ~/meni/bin block; every watched block was still installed. This reconciles
+    # deploy/guard-inventory.tsv against the live crontab, against the fleet's
+    # installers and against the state dirs, so the next one is loud within the
+    # hour instead of found by a sweep 40 days later.
+    # cron-staleness: verdict clean:|FINDINGS:|UNDETERMINED:
+    21 * * * * mkdir -p /home/omri/.local/share/meni-hub/guard-inventory && /home/omri/projects/meniapp/scripts/check-guard-inventory.sh >> /home/omri/.local/share/meni-hub/guard-inventory/cron.log 2>&1
+    # weekly meni/meni-hub audit (Omri msg 8948, 2026-07-25) — Saturday 19:10 local:
+    # spawns a fleet audit worker with docs/routines/weekly-hub-audit-brief.md; it
+    # files findings on the donefile boards and sends Main an executive summary.
+    10 19 * * 6 mkdir -p /home/omri/.local/share/meni-hub/weekly-audit && /home/omri/projects/meniapp/scripts/weekly-hub-audit.sh >> /home/omri/.local/share/meni-hub/weekly-audit/cron.log 2>&1
+    # vercel git-link disconnect check (ma-8882) — twice daily: re-verifies the
+    # meniapp Vercel project's git link is still disconnected. ma-84d6 found
+    # gitProviderOptions.createDeployments="disabled" is a broken Vercel API
+    # contract (reports disabled, doesn't enforce it); the real fix was
+    # disconnecting the git link entirely, and nothing stops a future
+    # `vercel git connect` from silently re-exposing the same bug. Warns via
+    # meni-notify (deduped) if the link ever comes back non-null.
+    # cron-staleness: verdict clean:|RECONNECTED:|UNDETERMINED
+    13 */12 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-git-link-check && /home/omri/projects/meniapp/scripts/check-vercel-git-disconnected.sh >> /home/omri/.local/share/meni-hub/meniapp-git-link-check/cron.log 2>&1
+    # merge-queue backup (ma-eb12) — every 6h, phased so one run lands at 03:23,
+    # just ahead of the 04:00 worktree prune / disk janitor: fleet workers commit to a local branch
+    # and nothing ever pushes it, so finished work sits on one 87%-full root disk
+    # with no copy off the box (the 2026-07-26 audit found 8 such branches, oldest
+    # 3 weeks). --push backs every unmerged branch up to origin; it never force-
+    # pushes and never publishes to master (diverged tips and master itself go to
+    # rescue/<branch>-<sha>). Alerts via meni-notify, deduped, only if a push fails.
+    23 3,9,15,21 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-merge-queue && /home/omri/projects/meniapp/scripts/check-merge-queue.sh --push >> /home/omri/.local/share/meni-hub/meniapp-merge-queue/cron.log 2>&1
+    # merge-queue backup, extended to the rest of the fleet's repos (ma-9d87): the
+    # guard above only ever watched meniapp, so a fleet worker committing in a
+    # donefile/capacity-engine/meni worktree had the identical "finished branch on
+    # one disk, no remote copy" exposure with nothing watching it. Same script,
+    # not a fork — it already takes MERGE_QUEUE_REPO/MERGE_QUEUE_STATE_DIR
+    # (check-merge-queue.test.sh has always run it hermetically against another
+    # repo). Staggered onto different hours than the meniapp run and each other so
+    # four repos' checks don't land on the same tick.
+    #
+    # donefile and capacity-engine push, same guarantees as meniapp's line above:
+    # never force, never publishes to the default branch, a diverged tip goes to
+    # rescue/<branch>-<sha>.
+    23 4,10,16,22 * * * mkdir -p /home/omri/.local/share/meni-hub/donefile-merge-queue && MERGE_QUEUE_REPO=/home/omri/projects/donefile MERGE_QUEUE_STATE_DIR=/home/omri/.local/share/meni-hub/donefile-merge-queue /home/omri/projects/meniapp/scripts/check-merge-queue.sh --push >> /home/omri/.local/share/meni-hub/donefile-merge-queue/cron.log 2>&1
+    23 5,11,17,23 * * * mkdir -p /home/omri/.local/share/meni-hub/capacity-engine-merge-queue && MERGE_QUEUE_REPO=/home/omri/projects/capacity-engine MERGE_QUEUE_STATE_DIR=/home/omri/.local/share/meni-hub/capacity-engine-merge-queue /home/omri/projects/meniapp/scripts/check-merge-queue.sh --push >> /home/omri/.local/share/meni-hub/capacity-engine-merge-queue/cron.log 2>&1
+    # meni pushes too (ma-d656, authorised by Main 2026-08-18): this cron runs as
+    # Omri/the identity holder, not as a fleet worker, so "a fleet worker is not
+    # an identity holder for omrihefez/meni" doesn't apply to it — it backs up
+    # commits that already exist locally, publishes nothing new and authors
+    # nothing. Same guarantees as every other line above: --no-verify, explicit
+    # refspec, no force path exists in the script at all; a clean fast-forward of
+    # a non-default branch lands under its own name, anything diverged or the
+    # default branch itself goes to rescue/<branch>-<sha> instead. It never
+    # touches the working tree (push/fetch only), so it does not race Main
+    # editing this checkout.
+    23 0,6,12,18 * * * mkdir -p /home/omri/.local/share/meni-hub/meni-merge-queue && MERGE_QUEUE_REPO=/home/omri/meni MERGE_QUEUE_STATE_DIR=/home/omri/.local/share/meni-hub/meni-merge-queue /home/omri/projects/meniapp/scripts/check-merge-queue.sh --push >> /home/omri/.local/share/meni-hub/meni-merge-queue/cron.log 2>&1
+    # cgroup OOM-livelock check (ma-37f5) — daily 06:41: fails if any active user
+    # unit has a finite MemoryHigh with MemorySwapMax=infinity. That pair cannot
+    # ever OOM-kill (swap funds every overshoot, so RSS never reaches MemoryMax) —
+    # the unit throttles forever instead of dying, which is what silently froze
+    # Main for ~40 minutes. Four units were found in this shape on 2026-07-29;
+    # nothing stops a new unit from being added with the same default. Daily, not
+    # hourly: unit memory config only changes on a deliberate edit.
+    41 6 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-swap-livelock && /home/omri/projects/meniapp/scripts/check-cgroup-swap-livelock.sh >> /home/omri/.local/share/meni-hub/meniapp-swap-livelock/cron.log 2>&1
+    # cgroup throttle-BAND check (ma-0bf1) — daily 06:43, the sibling of the line
+    # above. ma-37f5's swap cap was not sufficient: even with swap capped, a finite
+    # MemoryHigh BELOW MemoryMax leaves a band that an unreclaimable footprint can
+    # come to rest inside — reclaim keeps succeeding so MemoryMax is never reached,
+    # and the process is throttled forever and killed never. Measured at the real
+    # worker caps: 34/80 frames in 180s with the band, 80/80 in 29s without it.
+    # Fails if any unexpected unit still has a band, so the apply-0bf1 drop-in can't
+    # silently vanish and a meni/scripts/install.sh re-run can't quietly restore it.
+    43 6 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-throttle-band && /home/omri/projects/meniapp/scripts/check-cgroup-throttle-band.sh >> /home/omri/.local/share/meni-hub/meniapp-throttle-band/cron.log 2>&1
+    # cgroup throttle-livelock watchdog (ma-0bf1) — every 2min: for the units that
+    # still HAVE a band (meni.service pending Omri's freeze-vs-kill call, plus
+    # brain-web/meni-hub), detect a sustained throttle storm (memory.events high
+    # >=50/s AND >25% of wall clock in full memory stall, for 2 consecutive
+    # intervals) and SIGKILL the offending descendant — never MainPID, never
+    # claude/screen/bun — then say so in-app. Also reports any OOM kill in a watched
+    # cgroup, which with the band gone is now the expected failure for an oversized
+    # render and must not be silent. Needs two samples, so it is a no-op right after
+    # a reboot. Cheap: a few cgroup file reads per unit.
+    # The only job here that is SILENT on a normal run — it writes to cron.log only
+    # when something happens (a baseline, a throttle storm, an OOM kill), roughly
+    # once an hour on a */2 schedule, so its log's mtime is not evidence it ran.
+    # It does rewrite its per-unit sample files every single tick, so point the
+    # staleness check at those instead of skipping the job — skipping the
+    # tightest-interval monitor on the box would restore exactly the invisibility
+    # ma-5896 is about.
+    # cron-staleness: witness /home/omri/.local/share/meni-hub/cgroup-throttle-watchdog/state
+    */2 * * * * mkdir -p /home/omri/.local/share/meni-hub/cgroup-throttle-watchdog && /home/omri/projects/meniapp/scripts/cgroup-throttle-watchdog.sh >> /home/omri/.local/share/meni-hub/cgroup-throttle-watchdog/cron.log 2>&1
+    # merged-pending-activation sweep (ma-207b) — hourly: lists every donefile
+    # board's PENDING_ACTIVATION findings (a merged, activation-gated task that's
+    # sat past the 4h nag threshold with no --live probe run) so deployment never
+    # again depends on a human noticing the audit line (ma-3b71 sat merged 39h).
+    # Deliberately reminder-only, not --run: the recorded --activation commands
+    # are free-form deploy/restart strings spanning every registered board, and
+    # donefile itself never executes them either. Alerts via meni-notify, deduped
+    # to once per distinct unresolved set.
+    17 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-pending-activation && /home/omri/projects/meniapp/scripts/check-pending-activation.sh >> /home/omri/.local/share/meni-hub/meniapp-pending-activation/cron.log 2>&1
+    # nested-subagent-guard liveness heartbeat (ma-563b) — every 15min: feeds
+    # plugin/hooks/nested-subagent-guard.sh a synthetic main-loop-shaped payload
+    # (must stay ALLOWED) and a synthetic sub-agent-shaped payload (must stay
+    # DENIED). The guard's allow branch depends on Claude Code's PreToolUse
+    # payload continuing to omit `agent_id` for main-loop calls — a third-party
+    # shape on an upgrade treadmill that, if it ever changes, denies every
+    # meni-app tool for every session (Main included) with no gated way to say
+    # so. 15min, tighter than this file's other hourly checks, because that
+    # failure mode is a full deaf channel, not a slow drift. Alerts via
+    # meni-notify (itself a plain shell script, not a meni-app MCP tool, so this
+    # guard can never gate its own liveness alert), deduped by failure kind.
+    */15 * * * * mkdir -p /home/omri/.local/share/meni-hub/nested-subagent-guard-liveness && /home/omri/projects/meniapp/scripts/check-guard-liveness.sh >> /home/omri/.local/share/meni-hub/nested-subagent-guard-liveness/cron.log 2>&1
+    # public-hostname DELIVERY probe (ma-635d) — every 10min: fetches a 2MiB body
+    # over DNS/TLS/Cloudflare/the tunnel and asserts a throughput floor, not a
+    # status code. Every other check on this box reads /health, which answers in
+    # ~3ms no matter what is happening — on 2026-07-29 the app was unusable for an
+    # hour and all of them stayed green. This one goes red in that exact outage.
+    # It still runs ON the VPS, so it cannot report the box being dead; that half
+    # is .github/workflows/external-probe.yml, which is committed and correct but
+    # not executing until ma-416f (Actions billing) clears. Alerts via meni-notify,
+    # once per episode.
+    # This was the first line here to carry the `mkdir -p` guard (dfaa294): it sat
+    # installed and silent from 2026-07-31 18:02 until 20:10 for exactly the reason
+    # in this file's header, and ma-5896 then found three more in the same state and
+    # made the guard the rule for every line.
+    */10 * * * * mkdir -p /home/omri/.local/share/meni-hub/external-probe && /home/omri/projects/meniapp/deploy/external-probe/run-and-alert.sh >> /home/omri/.local/share/meni-hub/external-probe/cron.log 2>&1
+    # cron-log staleness check (ma-5896) — hourly at :31: the runtime half of the
+    # header's rule. For every job in THIS file it derives the job's own interval
+    # from its schedule and asserts the log has been written within it — so a
+    # monitor that is installed but producing nothing (missing log dir, script
+    # deleted, permissions, cron itself stopped) is reported instead of being
+    # invisible. Three monitors were found in that state on 2026-07-31 and the only
+    # reason anyone noticed was a worker happening to trip over the same bug in its
+    # own fix. Hourly is enough to catch the tightest job here (*/2, a 24min
+    # threshold) within one interval. Alerts via meni-notify, deduped on the exact
+    # failure set. Complements check-crontab-drift.sh, which compares this file to
+    # the LIVE crontab but cannot tell whether an installed line actually runs.
+    31 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-cron-staleness && /home/omri/projects/meniapp/scripts/check-cron-log-staleness.sh >> /home/omri/.local/share/meni-hub/meniapp-cron-staleness/cron.log 2>&1
+    # fleet-wide crontab log-dir lint (ma-822f) — hourly at :33: the sibling of
+    # the two lines above, but static instead of runtime. check-cron-log-staleness.sh
+    # above now defaults to the live crontab too, so between the two, the fleet
+    # gets both halves of the ma-5896 rule — a line that will never run, and a
+    # line that stopped running — instead of only meniapp's own 37 lines getting
+    # either. Lints `crontab -l` itself via scripts/lint-crontab-logdirs.sh -,
+    # so a guardless line from ANY repo's installer is caught within the hour
+    # instead of by a manual grep months later (the way the 9 that prompted this
+    # task were found). Alerts via meni-notify, deduped on the exact finding set.
+    33 * * * * mkdir -p /home/omri/.local/share/meni-hub/fleet-crontab-logdirs && /home/omri/projects/meniapp/scripts/check-fleet-crontab-logdirs.sh >> /home/omri/.local/share/meni-hub/fleet-crontab-logdirs/cron.log 2>&1
+    # pre-push guard-table reconciliation (ma-937b) — hourly at :45:
+    # check-pre-push-guard-table.sh (ma-ec21) behaviorally probes every declared
+    # repo's REAL pre-push hook and compares it to
+    # scripts/pre-push-guard-table.tsv, instead of trusting the table. It existed
+    # only as its own hermetic test until now — nothing ran it against the real
+    # fleet, so the table could drift with nothing noticing, and it already had:
+    # meniapp was mis-declared unguarded in the one repo where the guard is
+    # load-bearing, and four repos (zn-tournaments, pete, tik-board,
+    # weekly-deepdive) were missing from the table entirely.
+    # Raw crontab line, not a check-crontab-drift.sh block, same shape as the
+    # three guard checks above — this reconciles real hook behaviour across
+    # repos, not one rendered crontab block's own content, so there is nothing
+    # for check-crontab-drift.sh to watch. Alerts via meni-notify, deduped on the
+    # exact finding-set fingerprint (same alert-latch.sh convention as the guards
+    # above).
+    45 * * * * mkdir -p /home/omri/.local/share/meni-hub/pre-push-guard-table && /home/omri/projects/meniapp/scripts/check-pre-push-guard-table.sh >> /home/omri/.local/share/meni-hub/pre-push-guard-table/cron.log 2>&1
+    # guard crash-loop check (ma-405f) — hourly at :41: the staleness check above
+    # reasons about SILENCE, and a crashing job is not silent. Five scheduled
+    # guards emitted nothing but `Segmentation fault (core dumped)` every 15
+    # minutes from 2026-09-08 20:00 to 2026-09-14 — 524 runs each, mtimes
+    # perfectly fresh the whole time, one of them mid-way through tracking a real
+    # production stall. This reads the last lines of every cron.log under
+    # ~/.local/share/meni-hub/ and alerts when a recently-written one contains no
+    # successful run at all. It walks the state root rather than this file
+    # deliberately: none of those five lines are in this file, which is why no
+    # control here had ever heard of them.
+    # cron-staleness: verdict clean:|CRASH LOOP detected|UNDETERMINED
+    41 * * * * mkdir -p /home/omri/.local/share/meni-hub/guard-crash-loop && /home/omri/projects/meniapp/scripts/check-guard-crash-loop.sh >> /home/omri/.local/share/meni-hub/guard-crash-loop/cron.log 2>&1
+    # guard no-verdict-loop check (ma-85ed) — hourly at :43: the sibling gap next
+    # to crash-loop above. check-hub-exec-pinned.sh ran hourly from 2026-08-12 to
+    # 2026-09-19 and logged "skip: ... MainPID=0 (not running) - nothing to
+    # check" on all 906 consecutive ticks (ma-73db) while the hub it was
+    # supposed to be watching ran the whole time — cron gave it no session bus,
+    # so it read an unreachable systemd as "not running" and skipped forever.
+    # Every tick still appended a line, so the log's mtime stayed fresh and
+    # check-cron-log-staleness.sh saw a healthy job; a "skip:" line is not a
+    # crash signature, so check-guard-crash-loop.sh above never saw it either.
+    # This reads the same state-root cron.log tails as crash-loop but asks the
+    # opposite question: not "did it crash" but "has it produced one real
+    # verdict recently, or only ever decided there was nothing to check". One
+    # non-skip line anywhere in the tail clears a job; that instance's own root
+    # cause is fixed, but the class — any job whose skip grammar goes stuck for
+    # a reason nobody wrote a `verdict` directive for — is not job-specific.
+    # cron-staleness: verdict clean:|NO-VERDICT LOOP detected|UNDETERMINED
+    43 * * * * mkdir -p /home/omri/.local/share/meni-hub/guard-no-verdict-loop && /home/omri/projects/meniapp/scripts/check-guard-no-verdict-loop.sh >> /home/omri/.local/share/meni-hub/guard-no-verdict-loop/cron.log 2>&1
+    # meni-hub pinned-exec check (ma-1436) — hourly at :37: asserts the RUNNING
+    # hub process is executing a `git archive` export of a pinned commit, not the
+    # live shared checkout. Until 2026-08-09 the unit was
+    # ExecStart=…/projects/meniapp/hub/node_modules/.bin/tsx src/index.ts, so any
+    # Restart=always cycle — crash, OOM kill, reboot, a hand-run restart — booted
+    # whatever uncommitted code happened to be sitting in hub/ at that instant
+    # (hub/ was dirty when this was found). Same hole ce-0bda closed for the
+    # capacity-engine tick, on the always-on process every worker's tool calls and
+    # Omri's app go through.
+    # A unit file and a shell script are exactly the kind of fix that quietly comes
+    # undone (systemctl edit, a restored old unit, setup-deploy-infra.sh re-run from
+    # an older checkout) and the regression is invisible from outside — /health
+    # answers identically either way. So this reads the live world: the running
+    # pid's cwd, its .hub-head-sha marker, the git_sha file every activation probe
+    # trusts, and the live unit vs its tracked source. Alerts via meni-notify,
+    # deduped, re-arming on recovery. Silent no-op when the hub is down — that is
+    # a different alarm, owned by the hub's own liveness monitors.
+    # It tells never-activated from reverted apart by the unit backup apply-1436.sh
+    # writes, which exists if and only if activation has run — so a pending
+    # activation stays quiet rather than crying hourly about a known state. ma-1436
+    # was activated 2026-08-10, so that skip no longer applies here.
+    # ma-73db: this line ran 906 consecutive hourly no-ops (2026-08-12 -> 2026-09-19)
+    # and never once performed its check. cron supplies no XDG_RUNTIME_DIR and no
+    # DBUS_SESSION_BUS_ADDRESS, `systemctl --user` could not reach the user service
+    # manager, and the script read the empty MainPID as "hub not running" and logged
+    # a benign skip. The script now exports the bus itself and treats CANNOT-QUERY
+    # as an alerting failure, never as a skip. If you ever see a bare "not running"
+    # skip in that log again, check MainPID=0 is really what systemctl said.
+    37 * * * * mkdir -p /home/omri/.local/share/meni-hub/hub-exec-pinned && /home/omri/projects/meniapp/scripts/check-hub-exec-pinned.sh >> /home/omri/.local/share/meni-hub/hub-exec-pinned/cron.log 2>&1
+    # vol-bind / root-disk check (ma-inf2) — hourly at :53. scripts/vol-bind.sh
+    # moved every recurring growth path (repo node_modules, ~/.venvs, worker
+    # worktree roots, ~/.local/lib/python3.12, meni-hub-uploads, the Claude CLI
+    # versions dir) off the 38G root onto the 100G volume and bind-mounted them
+    # back. Both failure modes are silent: an unmounted bind leaves an EMPTY
+    # directory at a path that still exists (a repo looks like its node_modules
+    # vanished; the uploads dir looks like Omri's voice notes are gone), and root
+    # refilling from some not-yet-redirected path is invisible until the capacity
+    # engine parks the whole fleet at its 3000MB floor. Warns at 6000MB — above
+    # that floor, so there is still room to act. Alerts via meni-notify, deduped
+    # on the exact failure set, re-arming after a recovery.
+    53 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-vol-binds && /home/omri/projects/meniapp/scripts/check-vol-binds.sh >> /home/omri/.local/share/meni-hub/meniapp-vol-binds/cron.log 2>&1
+    # weekly hub rollback-real CI lane (ma-e01f) — Sunday 05:20 local:
+    # hub/scripts/test-hub-auto-restart-rollback-real.sh exercises
+    # hub-auto-restart.sh's rollback path against a REAL systemd --user unit and
+    # a REAL curl/HTTP server (genuine systemctl restart/is-failed, not stubbed)
+    # but takes up to ~100s and was wired into no gate at all — a regression in
+    # the real systemctl/curl integration or in how the script interacts with
+    # systemd's own state machine could ship silently. It can't sit in ci.yml:
+    # that needs a live systemd --user session tied to meni-hub.service, which
+    # only exists on this box, and GitHub Actions on this repo is fully dark
+    # regardless (ma-416f, open, billing — every job fails in seconds with no
+    # runner assigned), so a workflow-based schedule would be a decorative gate.
+    # This box's cron already runs scheduled checks independent of Actions
+    # billing, so that's the lane: same real, systemd-touching test the fast
+    # pre-merge gate can't run, on a cadence loose enough (weekly) to absorb its
+    # cost. Alerts via meni-notify, deduped by failure content, re-arming on
+    # recovery — see scripts/check-hub-rollback-real.sh.
+    20 5 * * 0 mkdir -p /home/omri/.local/share/meni-hub/hub-rollback-real-weekly && /home/omri/projects/meniapp/scripts/check-hub-rollback-real.sh >> /home/omri/.local/share/meni-hub/hub-rollback-real-weekly/cron.log 2>&1
+    # inbound-message-replay check (ma-38f1, follow-up from ma-1889) — hourly at
+    # :46: hub/scripts/check-no-inbound-replay.sh reads the hub's own delivery
+    # history and exits 1 the moment a message has gone out on the wire more than
+    # once — the exact symptom that survived three prior closures (ma-ebce,
+    # ma-dc5b, ma-5c0b) because nothing ran it continuously. hourly matches its
+    # default 24h lookback window closely enough to catch a fresh episode well
+    # within a session, same cadence as the staleness/crash-loop checks below.
+    # check-no-inbound-replay-alert.sh wraps it unmodified (never wires its own
+    # .test.sh — that tests the probe, not the check) and adds ONLY the alert:
+    # meni-notify via scripts/lib/alert-latch.sh, deduped by finding, re-arming
+    # once a run comes back clean.
+    46 * * * * mkdir -p /home/omri/.local/share/meni-hub/no-inbound-replay && /home/omri/projects/meniapp/hub/scripts/check-no-inbound-replay-alert.sh >> /home/omri/.local/share/meni-hub/no-inbound-replay/cron.log 2>&1
+    # reaction-capture liveness check (ma-948b, follow-up from ma-bac7) — hourly
+    # at :06: hub/scripts/check-reaction-capture-alert.sh landed proven red/green
+    # (hub/test/reaction-health.test.ts) but had no caller at all — the exact
+    # shape this estate keeps getting bitten by (meni-music's reaction_health was
+    # correct and unread; ma-9aa7/ma-cf50's transcript-secret fix sat staged in a
+    # checkout cron never ran from). Same split as the inbound-message-replay
+    # line above: the probe (hub/scripts/reaction-health.ts) owns the condition,
+    # this wrapper adds ONLY the alert-latch reporting. Hourly comfortably covers
+    # the probe's own 15m capture-lag grace window (GRACE_MS) within one tick,
+    # same cadence as its sibling.
+    6 * * * * mkdir -p /home/omri/.local/share/meni-hub/reaction-capture-alert && HUB_DB=/home/omri/.local/share/meni-hub/hub.db /home/omri/projects/meniapp/hub/scripts/check-reaction-capture-alert.sh >> /home/omri/.local/share/meni-hub/reaction-capture-alert/cron.log 2>&1
+    # TLS cert-expiry check (ma-05ac) — daily 06:07: the `*.omrihefez.com`
+    # wildcard fallback cert expired 2026-06-17 and sat expired for over a month
+    # with nothing noticing — the only thing carrying that risk was a one-shot
+    # calendar reminder for the next renewal date, which cannot see an early
+    # replacement, a revocation, or a renewal that silently fails. Live TLS
+    # handshakes (not local cert files — this box does no TLS termination) against
+    # the wildcard witness, this repo's own meniapp/meniapp-api hostnames, and
+    # every other 🟢 live / 🔵 alias hostname in ~/meni/DOMAIN.md §1, alerting via
+    # meni-notify (deduped) once any of them drops under a 14-day remaining
+    # threshold. Daily is enough: certs move in weeks, not minutes, and the
+    # wildcard's own renewal automation (bass-tuner/scripts/renew-wildcard-cert.sh)
+    # only acts weekly to begin with. See scripts/check-cert-expiry.sh.
+    7 6 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-cert-expiry && /home/omri/projects/meniapp/scripts/check-cert-expiry.sh >> /home/omri/.local/share/meni-hub/meniapp-cert-expiry/cron.log 2>&1
+    # production alias drift watch (ma-5487) — every 5 minutes: compares the
+    # deployment meniapp.omrihefez.com ACTUALLY serves (the <html data-dpl-id> in
+    # the served page) against the deployment a promote-hold pinned it to, alerts
+    # on drift, and moves the alias back onto the pin.
+    #
+    # On 2026-08-07 a hold set at 00:57 IDT to keep the lockout regression off
+    # production was bypassed at 01:20 and prod served the suspect build for about
+    # an hour, found only by accident during an unrelated end-of-session check.
+    # Nothing looked wrong: `vercel-promote-guard.sh status` reported "HELD since
+    # 00:57" the entire time, truthfully, because the flag really was set — it just
+    # had nothing to do with what users were being served. The hold was verified
+    # twice that night by reading that status and once by reading the served page,
+    # and only the third method could have caught it.
+    #
+    # So this never reads the flag to decide whether things are fine; it reads the
+    # bytes the domain serves. That makes it independent of whatever moved the
+    # alias — the deploy cron, a hand-run `vercel --prod`, a Vercel-side change —
+    # which is why it is worth more than hardening any single deploy path. Five
+    # minutes because the cost is one HTTP GET and the thing being bounded is how
+    # long Omri can be served a build that locks him out.
+    */5 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-alias-drift && /home/omri/projects/meniapp/scripts/check-prod-alias-drift.sh >> /home/omri/.local/share/meni-hub/meniapp-alias-drift/cron.log 2>&1
+    
+    # trips-hub alias drift (ma-73c1 follow-up) — the SAME script, a second row.
+    #
+    # WHY IT IS HERE AND NOT IN trips-hub. ma-73c1 made the promote-hold cover
+    # trips-hub by generalising the shim into a per-project registry rather than
+    # copying 337 lines of security-relevant logic into a second repo. This is the
+    # other half of that decision. The shim is deliberately FAIL-OPEN: if it cannot
+    # tell what project an invocation targets it ALLOWS, and that is only tolerable
+    # because something watches the served bytes independently of whether the shim
+    # ran at all. meniapp had that watcher; trips-hub had none, so its new hold was
+    # a refusal with no second line behind it. This is that second line. The script
+    # is already fully env-parameterised, so a second project is a row, not a fork —
+    # no copy that can drift from the original.
+    #
+    # NOTE both rows police the one shared CLI shim (SHIM_INSTALLER defaults to
+    # meniapp's). That double-alerts if the shim ever drifts. Deliberate: a
+    # duplicate alert on a real problem is cheaper than a single policing row that
+    # can silently stop, which is the failure family this whole epic is about.
+    #
+    # th-455e: PROMOTE_GUARD is REQUIRED on this row, not optional tidiness.
+    # check-prod-alias-drift.sh always executes out of THIS (meniapp) checkout —
+    # see its EXECUTE-FROM-CHECKOUT note — and without an override its GUARD
+    # variable defaults to "$REPO_ROOT/scripts/vercel-promote-guard.sh", i.e.
+    # meniapp's own guard script, even on this trips-hub row. Any gate added to
+    # trips-hub's copy of vercel-promote-guard.sh (th-aeb7's signed-in content
+    # probe included) is invisible to this repair path unless PROMOTE_GUARD names
+    # it explicitly. Points at the trips-hub deploy watchdog's own synced runner
+    # clone (scripts/install-deploy-watchdog-cron.sh's RUNNER_DIR), not the shared
+    # /home/omri/projects/trips-hub checkout, for the same reason that watchdog
+    # doesn't run from there either: that checkout is whatever branch a concurrent
+    # worker last left it on, and the runner clone is always what's actually live
+    # on trips-hub's main.
+    */5 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-alias-drift && DEPLOY_VERIFY_BASE_URL=https://trips.omrihefez.com VERCEL_PROMOTE_STATE_DIR=/home/omri/.local/share/meni-hub/trips-hub-deploy DRIFT_STATE_DIR=/home/omri/.local/share/meni-hub/trips-hub-alias-drift PROMOTE_GUARD=/home/omri/.local/share/meni-hub/trips-hub-deploy/runner/scripts/vercel-promote-guard.sh /home/omri/projects/meniapp/scripts/check-prod-alias-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-alias-drift/cron.log 2>&1
+    
+    # hub deploy trigger keyed off the REMOTE ref, not a local commit event
+    # (ma-6ce6) — every 3 minutes: fast-forwards this shared main checkout onto
+    # origin/master with a real `git merge --ff-only`. The existing hub deploy
+    # trigger (ma-43ee) is .git/hooks/post-commit and .git/hooks/post-merge in
+    # THIS checkout, so it only fires on a `git commit`/`git merge` run HERE — the
+    # repo's own AGENTS.md mandates the opposite workflow (isolated worktree,
+    # `git push origin <branch>:master` straight to the remote), which never
+    # touches this checkout at all and so never fires either hook. Observed twice
+    # independently within the same hour on 2026-08-10 (ma-d28d, ma-e237): a
+    # hub-touching commit reached origin/master, the board read "done", and
+    # meni-hub kept running old code with nothing catching it. A fast-forward
+    # merge is exactly the git operation post-merge already exists to catch
+    # (ma-b7cb/ma-42a8's ORIG_HEAD handling was built for precisely this shape),
+    # so this reuses hub-auto-restart.sh's debounce/build-gate/rollback pipeline
+    # completely unchanged — it just gives that hook a reason to run when nothing
+    # else in this checkout would. Never forces: refuses and alerts (after 3
+    # consecutive ticks, to ride out a momentary lock collision with an unrelated
+    # concurrent commit) if the checkout has diverged from origin/master.
+    */3 * * * * mkdir -p /home/omri/.local/share/meni-hub/ff-sync-main-checkout && /home/omri/projects/meniapp/scripts/ff-sync-main-checkout.sh >> /home/omri/.local/share/meni-hub/ff-sync-main-checkout/cron.log 2>&1
+    
+    # hub liveness-check backstop (ma-02bc) — every 10 minutes: compares the
+    # RUNNING hub's reported sha (same git_sha status file do_restart_cycle
+    # itself trusts, via resolve_prev_good_sha) against this checkout's HEAD, and
+    # arms the ordinary debounce/build-gate/restart pipeline if hub/plugin
+    # genuinely differs between them.
+    #
+    # ff-sync-main-checkout.sh right above already re-arms post-merge for the
+    # ordinary case — a worktree pushing straight to origin/master, landed via
+    # rebase (scripts/git-push-verified.sh's sanctioned workflow) or otherwise —
+    # by turning "origin/master moved" into a real `git merge --ff-only` here.
+    # This is the backstop for every path that ISN'T that: a manual git
+    # reset/checkout in this shared checkout, a hub-auto-restart.sh rollback left
+    # mid-recovery, or any future path nobody has wired a hook into yet. An
+    # event-based trigger structurally cannot fire on an event it never saw;
+    # comparing state doesn't have that blind spot. This is exactly what happened
+    # 2026-08-13: this checkout diverged from origin/master, got fixed by hand,
+    # and the hub/ commit that fix swept in (ma-4bbe's 26690549) never fired
+    # post-commit or post-merge — it only went live later, by luck, when an
+    # unrelated later hub/ commit's restart happened to cover it too. See
+    # hub/scripts/hub-auto-restart.sh's liveness_check() for the full rationale.
+    # Loose cadence (vs ff-sync's 3min): this is a backstop for a rare failure
+    # mode, not the primary trigger.
+    #
+    # ma-f7e0 — why this job needs a verdict and most don't: liveness_check() prints
+    # an unconditional heartbeat before any work (ma-da52), which is what stopped
+    # hours of correct, silent no-ops reading as a dead cron job. But a heartbeat
+    # proves an attempt STARTED, never that one finished — so a run OOM-killed
+    # straight after it leaves the same single line and the same fresh mtime as a
+    # healthy no-op, and freshness alone would grade the kill as healthy. The
+    # completion line is the other half of that pair; requiring it here is what
+    # turns "heartbeat, then nothing" back into a reported failure (no_verdict)
+    # instead of a fresh-looking success. Do not drop one half without the other.
+    # cron-staleness: verdict liveness-check: complete rc=
+    */10 * * * * mkdir -p /home/omri/.local/share/meni-hub/auto-restart && /home/omri/projects/meniapp/hub/scripts/hub-auto-restart.sh liveness-check >> /home/omri/.local/share/meni-hub/auto-restart/liveness-check.cron.log 2>&1
+    
+    # shared GitHub PAT validity / pre-expiry monitor (ma-d653) — hourly at :59.
+    # On 2026-08-07 the fleet's shared GitHub PAT died mid-task (a deliberate
+    # security rotation after a transcript leak); the first symptom was a silent
+    # push/read failure inside a worker session, indistinguishable from a random
+    # outage. Every worker holds the SAME credential, so one death breaks the
+    # whole fleet at once and nothing was watching for it before this line.
+    #
+    # Checks the two independent local copies of the PAT (~/.git-credentials —
+    # what git push/pull actually authenticate with — and ~/.meni/auth.env's
+    # GITHUB_PAT= — what gets exported into every worker session) against each
+    # other, against a live GitHub API call, and against Infisical prod
+    # GITHUB_PAT (sha256-compared, values never touch a log). Also warns
+    # GITHUB_PAT_EXPIRY_WARN_DAYS (default 21) before the fine-grained PAT's own
+    # expiry, read from GitHub's `github-authentication-token-expiration`
+    # response header rather than a hardcoded date, so a rotation that changes
+    # the expiry doesn't silently stop being watched.
+    #
+    # WHILE BUILDING THIS, auth.env's cached GITHUB_PAT was found to already be
+    # dead (git-credentials had rotated correctly; auth.env's copy had not) —
+    # a live, real instance of exactly the failure class this line exists to
+    # catch, fixed the same day it was found. See scripts/check-github-pat-validity.sh's
+    # header for the full story and why it does NOT use `gh api /user` (the `gh`
+    # CLI keeps its own, different, personal credential — verified on this box).
+    # Hourly, matching the other credential/cert-adjacent monitors here (cert
+    # expiry moves in weeks not minutes; a PAT death needs to be caught before a
+    # worker hits it, which on this box means within the hour, not the day).
+    # Alerts via meni-notify, deduped per distinct failure set, re-arming on
+    # recovery.
+    59 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-github-pat-validity && /home/omri/projects/meniapp/scripts/check-github-pat-validity.sh >> /home/omri/.local/share/meni-hub/meniapp-github-pat-validity/cron.log 2>&1
+    
+    # gh CLI's own personal OAuth token validity/pre-expiry monitor (ma-e985).
+    # The fleet's shared GITHUB_PAT already has the monitor above (ma-d653), whose
+    # own header records that the `gh` CLI keeps a SEPARATE stored credential
+    # (~/.config/gh/hosts.yml, via `gh auth login`) — confirmed a different token
+    # entirely from the fleet's shared GITHUB_PAT — and deliberately does not
+    # probe it. Nothing was watching this token until now. See
+    # scripts/check-gh-cli-token-validity.sh for what it checks (token missing /
+    # auth failed / pre-expiry, read from GitHub's own expiration header). No
+    # Infisical comparison: this is Omri's own personal gh login, never stored in
+    # the vault. Hourly, same cadence as the PAT monitor above. Alerts via
+    # meni-notify, deduped per distinct failure set, re-arming on recovery.
+    9 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-gh-cli-token-validity && /home/omri/projects/meniapp/scripts/check-gh-cli-token-validity.sh >> /home/omri/.local/share/meni-hub/meniapp-gh-cli-token-validity/cron.log 2>&1
+    
+    # exit-trap-only cleanup lint (ma-9507) — daily: static scan of every
+    # non-test script across the registered repos plus ~/meni/bin and
+    # ~/meni/scripts for one root cause seen three times (iac-4c2d, ma-1267,
+    # df-f417): a script that materializes a credential or allocates a billed
+    # resource and trusts a trap alone (EXIT or wider) as its only cleanup, with
+    # no compensating sweep of prior-run state and no server-side TTL/expiry — a
+    # SIGKILL or a hard reboot runs no trap at all, so trap-only cleanup can be
+    # silently defeated. Static analysis over source, not a live probe, so daily
+    # is fine — a new offender doesn't rot the way a stopped monitor does.
+    17 5 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-exit-trap-only-cleanup && /home/omri/projects/meniapp/scripts/check-exit-trap-only-cleanup.sh >> /home/omri/.local/share/meni-hub/meniapp-exit-trap-only-cleanup/cron.log 2>&1
+    
+    # argv secret exposure lint (ma-9631) — daily: static scan of every
+    # non-test script across the registered repos plus ~/meni/bin,
+    # ~/meni/scripts and ~/meni/probes for a live credential passed as a
+    # process command-line ARGUMENT — /proc/<pid>/cmdline is world-readable for
+    # the life of the process, unlike /proc/<pid>/environ. Matches on argument
+    # SHAPE (any credential-shaped flag/header followed by a live variable
+    # interpolation), not a name allowlist, and is gated against
+    # deploy/argv-secret-exposure-baseline.tsv so only a NEW offender fails it —
+    # see that file's own header for the ratchet. Static analysis over source,
+    # so daily is fine, same reasoning as the exit-trap-only lint above.
+    23 5 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-argv-secret-exposure && /home/omri/projects/meniapp/scripts/check-argv-secret-exposure.sh >> /home/omri/.local/share/meni-hub/meniapp-argv-secret-exposure/cron.log 2>&1
+    
+    # transcript credential scan (ma-f949) — every 4h at :27. On 2026-08-15 a worker
+    # ran `cat ~/.config/meni-hub/env` to read ONE non-secret variable and put nine
+    # live credentials into its transcript. It self-disclosed; two EARLIER full dumps
+    # (2026-08-13, 2026-08-14) had never been reported by anyone, so the observed
+    # rate was 1 in 3 and every figure for "how often does this happen" came from
+    # workers volunteering it. env-dump-guard.py blocks that command now — but a
+    # guard only covers the shapes someone thought of, and a secret can still reach
+    # a transcript via a tool result, a file the model read or a subagent's report.
+    # This is the detection half, on a clock instead of on a worker's conscience.
+    # Value-based, not pattern-based: it takes the real values out of the real
+    # secret files and asks whether those exact bytes are on disk. Its output is
+    # names, paths and counts — never a value, or the cron log would itself become
+    # a second plaintext copy every four hours.
+    27 */4 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-transcript-secrets && /home/omri/projects/meniapp/scripts/check-transcript-secrets.sh >> /home/omri/.local/share/meni-hub/meniapp-transcript-secrets/cron.log 2>&1
+    
+    # ma-988f — the meni-app plugin exists on disk in more than one place a Claude
+    # Code session can resolve ${CLAUDE_PLUGIN_ROOT} to: this checkout (the
+    # marketplace source, `known_marketplaces.json`'s `meni` entry is a directory
+    # source pointing at it) and the version-pinned install under
+    # ~/.claude/plugins/cache/meni/meni-app/<version>. Nothing kept them in sync:
+    # plugin.json's `version` stayed 0.1.4 across 60 commits that touched plugin/,
+    # and `claude plugin update` compares that field and nothing else, so the
+    # installed copy silently stayed on the 2026-07-26 hook set for 23 days —
+    # WITHOUT hooks/nested-subagent-guard.sh, the ma-d760 guard that denies the
+    # channel tools to a Task-spawned sub-agent, and without the PreToolUse
+    # matcher that routes to it. It did not fire in production only because
+    # measured on Claude Code 2.1.234 a session's hooks run from the marketplace
+    # source, not from installPath — an undocumented detail that can change under
+    # any upgrade, and when it does the failure is silent: a hook that isn't there
+    # does not error, it just never denies anything. So: compare every registered
+    # root against plugin/ hourly, and alert naming what is missing.
+    49 * * * * mkdir -p /home/omri/.local/share/meni-hub/plugin-install-drift && /home/omri/projects/meniapp/scripts/check-plugin-install-drift.sh >> /home/omri/.local/share/meni-hub/plugin-install-drift/cron.log 2>&1
+    
+    # refresh per-child meni-app plugin caches (ma-bfda) — meni-fleet's
+    # cmd_provision_app runs `claude plugin install` exactly ONCE per child
+    # (bin/meni-fleet cmd_start/cmd_run_once: `if [ ! -d ".../.claude" ]`) and
+    # nothing ever re-runs `claude plugin update` against an already-provisioned
+    # child, so every one of the 80+ ~/.meni-children/*/.claude dirs sits frozen at
+    # whatever plugin/ commit was current when it was first spawned. Measured
+    # 2026-08-18: 84 of 89 children were still on meni-app 0.1.4 while plugin/ was
+    # already at 0.2.1 — the check-plugin-install-drift.sh alert above only covers
+    # the ONE durable $HOME/.claude install (ma-988f), deliberately, by that
+    # script's own header; nothing played this role for the ephemeral per-child
+    # ones. Skips any child whose systemd unit is currently active (same liveness
+    # signal meni-fleet's own cmd_prune uses) so it never mutates a live worker's
+    # plugin cache out from under it — that child picks up the update next time it
+    # is (re)started via cmd_provision_app's own once-only install. Every 6h,
+    # offset from the prune sweep above.
+    17 */6 * * * mkdir -p /home/omri/.local/share/meni-hub/refresh-child-plugin-caches && /home/omri/projects/meniapp/scripts/refresh-child-plugin-caches.sh >> /home/omri/.local/share/meni-hub/refresh-child-plugin-caches/cron.log 2>&1
+    
+    # GitHub Actions daily minute ceiling (ma-97f9, 2026-08-29) — Omri's explicit
+    # ask after the account exhausted its 2000 min/month free allowance by
+    # 2026-08-08 and every repo went without CI for three weeks: "we need to set
+    # ourselves a daily limit". Sums today's actually-billed Actions minutes
+    # across every private repo (via the read-only runs+timing API, proven not to
+    # need billing scope) and alerts via meni-notify the SAME DAY it crosses
+    # DAILY_CAP_MINUTES (default 60/day, ~1800/month) — this account cannot be
+    # ⚠️ THE NEXT SENTENCE USED TO SAY THIS BOX HAS NO actions:write. That was
+    # false and it is corrected below, not deleted, because it is the premise that
+    # stopped a kill switch being built for a month: this entry measures and
+    # alerts, and the enforce-actions-budget.sh entry that follows is what actually
+    # stops the burn (ma-1470). What IS true: the two billing endpoints are refused
+    # (403), so spend is computed from run/job timestamps rather than read from
+    # GitHub. So this entry's own contribution remains "someone finds out today,
+    # not next month" — it is a tripwire, not the kill switch. See scripts/check-actions-daily-minutes.sh's header
+    # for the full reasoning and scripts/check-actions-daily-minutes.test.sh for
+    # the hermetic proof it can actually fail. Every 2h.
+    0 */2 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-actions-daily-minutes && /home/omri/projects/meniapp/scripts/check-actions-daily-minutes.sh >> /home/omri/.local/share/meni-hub/meniapp-actions-daily-minutes/cron.log 2>&1
+    
+    # GitHub Actions budget ENFORCEMENT (ma-1470, 2026-09-01) — the thing that
+    # stops the burn, as distinct from the check-actions-daily-minutes.sh entry
+    # above, which measures it and alerts. Keep both: they answer different
+    # questions and the alert is still the fastest way a human hears about a spike.
+    #
+    # WHY THIS EXISTS. The comment above says this account "cannot be throttled
+    # from this box (no actions:write/billing scope on this PAT)". That was WRONG
+    # and it is why no kill switch was ever built. Probed live on 2026-09-01
+    # against this box's own token, reading GitHub's own accepted-permission
+    # header: PUT .../actions/workflows/{id}/disable -> 204 (actions=write) and
+    # PUT .../actions/permissions -> 204 (administration=write). Only the two
+    # BILLING endpoints are genuinely refused (403), which is why spend is computed
+    # from run/job timestamps rather than read from GitHub. Both write levers were
+    # then proven to actually BLOCK on omrihefez/meni-arch: with the workflow
+    # disabled, and again with Actions off repo-wide, POST .../dispatches returned
+    # 422 and the repo's run count was 61 before and 61 after.
+    #
+    # WHAT IT DOES. Measures month-to-date billed minutes across every private repo
+    # and disables workflows in stages as the monthly budget (1800 of the 2000 free
+    # minutes) is consumed: 50% scheduled-only workflows, 75% named non-gate
+    # workflows, 92% repo-wide Actions off. Stage 3 is the only one that costs a CI
+    # gate. It is ARMED here — HARD_STOP_ENABLED=1 below. Everything it
+    # disables is ledgered with its prior state and released automatically once
+    # spend falls back, which a new calendar month does on its own.
+    #
+    # It fails SAFE: a measurement failure disables nothing and exits 2.
+    #
+    # ⚠️ ARMED STATE IS OMRI'S CALL, NOT AN AGENT'S — it is the only setting that
+    # can leave a repo without CI. He made that call on 2026-09-01 22:34 IDT:
+    # "I told you to stay strictly under and make sure to enforce and don't wish
+    # for the best." Main armed it 2026-09-02 (ma-b6f1) in the LIVE crontab only
+    # and left THIS file at 0, so the next setup-deploy-infra.sh reinstall silently
+    # disarmed it; September then ran to 3394/2000 minutes with stage 3 withheld
+    # every time (ma-6df5). It is set to 1 HERE now so a reinstall cannot revert it
+    # again. To disarm, change it here AND in the live crontab — changing only one
+    # is the bug above. Without it stages 1+2 are a throttle and an early warning,
+    # NOT a guarantee — see the script header for the measured reason why.
+    #
+    # Every 3h, offset from the measure-and-alert entry above so the two never
+    # contend for the API rate limit. See scripts/enforce-actions-budget.test.sh
+    # (run it for the current hermetic check count — a fixed number here drifts
+    # every time the suite grows) for the proof it can fail.
+    40 */3 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-actions-budget && HARD_STOP_ENABLED=1 /home/omri/projects/meniapp/scripts/enforce-actions-budget.sh >> /home/omri/.local/share/meni-hub/meniapp-actions-budget/cron.log 2>&1
+    
+    # stage-3 hard-stop ARMED check (ma-6df5) — every 2h: asserts the entry above
+    # really carries HARD_STOP_ENABLED=1, in BOTH the live crontab and this file.
+    # The drift check at the top of this file grades AGREEMENT, not VALUE, so it
+    # read the armed state as drift while the 1 lived only in the live crontab,
+    # and would read a reinstall that set BOTH to 0 as perfectly clean. Only a
+    # check on the value itself can see that. ma-b6f1 armed the live crontab
+    # alone on 2026-09-02; a reinstall reverted it and September ran to 3394/2000
+    # minutes with stage 3 withheld every single tick before anyone noticed.
+    # To disarm on Omri's word, change it here, in the live crontab, AND in that
+    # script's EXPECT_ARMED — three edits, on purpose, so the reversal is recorded.
+    # cron-staleness: verdict clean:|HARD STOP DISARMED|UNDETERMINED
+    17 */2 * * * mkdir -p /home/omri/.local/share/meni-hub/actions-hard-stop-armed && /home/omri/projects/meniapp/scripts/check-actions-hard-stop-armed.sh >> /home/omri/.local/share/meni-hub/actions-hard-stop-armed/cron.log 2>&1
+    
+    # brief-send-timed.sh fail-loud proof, as a standing guard (ma-212d) — until
+    # now scripts/check-brief-send-fail-loud.sh only ran when a human happened to
+    # invoke it by hand, so a regression in ~/meni/bin/brief-send-timed.sh's
+    # briefs-table read-back (the ma-b628 bug: `brief-deliver exit=0` logged with
+    # no trace of whether anything was actually delivered) would go unnoticed
+    # again exactly the way the original bug did for four days.
+    # Fully self-contained and safe to run unattended: BASH_ENV pre-seeds readonly
+    # LOG/MARKER/NOTIFY paths and a `bash` function that intercepts the one
+    # brief-deliver.sh call, HUB_DB points at a throwaway sqlite file, and the
+    # notify stub only records calls to a temp file — nothing here reaches the
+    # real log, the real hub DB, or Omri. It does not send or generate anything
+    # real (MORNING_DRYRUN=1 is belt-and-braces).
+    # This guard has no clean/finding/undetermined grammar of its own, so instead
+    # of hooking a bespoke alert path onto it, it opts into
+    # check-cron-log-staleness.sh's `verdict` directive below: a run that reaches
+    # its final "PASS (3/3)" line is healthy; anything else appended this
+    # interval — a `FAIL —` line from any of its three cases, or a crash before
+    # it gets that far — does not match and is reported as a no_verdict failure,
+    # alerted via meni-notify the same as every other guard in this file.
+    # Once daily, shortly after the weekday 08:07 generate populates
+    # /home/omri/.cache/morning-brief-text.txt (the script refuses to run rather
+    # than risk a real generate when that cache is empty) and well before the
+    # weekday 09:07 / weekend 11:03 sends, so a regression is caught before that
+    # day's real brief goes out. The cache persists across days, so this also
+    # covers Fri/Sat mornings ahead of the weekend's later 10:03 generate.
+    # cron-staleness: verdict check-brief-send-fail-loud: PASS \(3/3\)
+    20 8 * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-brief-send-fail-loud && /home/omri/projects/meniapp/scripts/check-brief-send-fail-loud.sh >> /home/omri/.local/share/meni-hub/meniapp-brief-send-fail-loud/cron.log 2>&1
+    # END meniapp (scripts/setup-deploy-infra.sh)
+    # BEGIN meniapp-unshipped-scan (scripts/install-unshipped-scan-cron.sh)
+    18 3 * * 0 mkdir -p /home/omri/.local/share/meni-hub/meniapp-unshipped-scan && /home/omri/projects/meniapp/scripts/unshipped-scan-notify.sh >> /home/omri/.local/share/meni-hub/meniapp-unshipped-scan/cron.log 2>&1
+    36 * * * * mkdir -p /home/omri/.local/share/meni-hub/meniapp-unshipped-scan-crontab-drift && BLOCK_LABEL=meniapp-unshipped-scan BEGIN_MARK="# BEGIN meniapp-unshipped-scan (scripts/install-unshipped-scan-cron.sh)" END_MARK="# END meniapp-unshipped-scan (scripts/install-unshipped-scan-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-unshipped-scan-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-unshipped-scan-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/meniapp-unshipped-scan-crontab-drift/cron.log 2>&1
+    # END meniapp-unshipped-scan (scripts/install-unshipped-scan-cron.sh)
+    # BEGIN trips-hub-csp-report-prune (scripts/install-csp-report-prune-cron.sh)
+    17 3 * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-csp-report-prune && /home/omri/.local/share/meni-hub/trips-hub-csp-report-prune/bin/trips-hub-csp-report-prune.sh >> /home/omri/.local/share/meni-hub/trips-hub-csp-report-prune/cron.log 2>&1   # trips-hub-csp-report-prune
+    53 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-csp-report-prune-crontab-drift && BLOCK_LABEL=trips-hub-csp-report-prune BEGIN_MARK="# BEGIN trips-hub-csp-report-prune (scripts/install-csp-report-prune-cron.sh)" END_MARK="# END trips-hub-csp-report-prune (scripts/install-csp-report-prune-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-csp-report-prune-cron.sh --print-line" INSTALLER_HINT="scripts/install-csp-report-prune-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-csp-report-prune-crontab-drift/cron.log 2>&1
+    # END trips-hub-csp-report-prune (scripts/install-csp-report-prune-cron.sh)
+    # BEGIN trips-hub-deploy-watchdog (scripts/install-deploy-watchdog-cron.sh)
+    */10 * * * * mkdir -p /home/omri/.meni && /home/omri/.local/share/meni-hub/trips-hub-deploy/bin/trips-hub-deploy-watchdog.sh >> /home/omri/.meni/trips-hub-deploy-watchdog.cron.log 2>&1   # trips-hub-deploy-watchdog
+    17 * * * * mkdir -p /home/omri/.local/share/meni-hub/trips-hub-deploy-watchdog-crontab-drift && BLOCK_LABEL=trips-hub-deploy-watchdog BEGIN_MARK="# BEGIN trips-hub-deploy-watchdog (scripts/install-deploy-watchdog-cron.sh)" END_MARK="# END trips-hub-deploy-watchdog (scripts/install-deploy-watchdog-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/trips-hub/scripts/install-deploy-watchdog-cron.sh --print-line" INSTALLER_HINT="scripts/install-deploy-watchdog-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/trips-hub-deploy-watchdog-crontab-drift/cron.log 2>&1
+    # END trips-hub-deploy-watchdog (scripts/install-deploy-watchdog-cron.sh)
+    # BEGIN iac-gcloud-log-hygiene (scripts/install-gcloud-log-hygiene-cron.sh)
+    40 5 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/check-gcloud-log-hygiene-cron.sh >> /home/omri/.cache/iac-gcloud-log-hygiene.log 2>&1   # iac gcloud log hygiene (daily 05:40)
+    24 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-gcloud-log-hygiene-crontab-drift && BLOCK_LABEL=iac-gcloud-log-hygiene BEGIN_MARK="# BEGIN iac-gcloud-log-hygiene (scripts/install-gcloud-log-hygiene-cron.sh)" END_MARK="# END iac-gcloud-log-hygiene (scripts/install-gcloud-log-hygiene-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-gcloud-log-hygiene-cron.sh --print-line" INSTALLER_HINT="scripts/install-gcloud-log-hygiene-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-gcloud-log-hygiene-crontab-drift/cron.log 2>&1
+    # END iac-gcloud-log-hygiene (scripts/install-gcloud-log-hygiene-cron.sh)
+    # BEGIN iac-paid-gemini-key-not-on-disk (scripts/install-paid-gemini-key-not-on-disk-cron.sh)
+    12 6 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/check-paid-gemini-key-not-on-disk-cron.sh >> /home/omri/.cache/iac-paid-gemini-key-not-on-disk.log 2>&1   # iac paid gemini key disk sweep (daily 06:12)
+    29 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-paid-gemini-key-not-on-disk-crontab-drift && BLOCK_LABEL=iac-paid-gemini-key-not-on-disk BEGIN_MARK="# BEGIN iac-paid-gemini-key-not-on-disk (scripts/install-paid-gemini-key-not-on-disk-cron.sh)" END_MARK="# END iac-paid-gemini-key-not-on-disk (scripts/install-paid-gemini-key-not-on-disk-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-paid-gemini-key-not-on-disk-cron.sh --print-line" INSTALLER_HINT="scripts/install-paid-gemini-key-not-on-disk-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-paid-gemini-key-not-on-disk-crontab-drift/cron.log 2>&1
+    # END iac-paid-gemini-key-not-on-disk (scripts/install-paid-gemini-key-not-on-disk-cron.sh)
+    # BEGIN iac-cli-cred-log-hygiene (scripts/install-cli-cred-log-hygiene-cron.sh)
+    45 5 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/check-cli-cred-log-hygiene-cron.sh >> /home/omri/.cache/iac-cli-cred-log-hygiene.log 2>&1   # iac CLI cred/log hygiene (daily 05:45)
+    26 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-cli-cred-log-hygiene-crontab-drift && BLOCK_LABEL=iac-cli-cred-log-hygiene BEGIN_MARK="# BEGIN iac-cli-cred-log-hygiene (scripts/install-cli-cred-log-hygiene-cron.sh)" END_MARK="# END iac-cli-cred-log-hygiene (scripts/install-cli-cred-log-hygiene-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-cli-cred-log-hygiene-cron.sh --print-line" INSTALLER_HINT="scripts/install-cli-cred-log-hygiene-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-cli-cred-log-hygiene-crontab-drift/cron.log 2>&1
+    # END iac-cli-cred-log-hygiene (scripts/install-cli-cred-log-hygiene-cron.sh)
+    # BEGIN iac-stale-secret-in-env (scripts/install-stale-secret-in-env-cron.sh)
+    22 6 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/check-stale-secret-in-env-cron.sh >> /home/omri/.cache/iac-stale-secret-in-env.log 2>&1   # iac stale secret in env sweep (daily 06:22)
+    34 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-stale-secret-in-env-crontab-drift && BLOCK_LABEL=iac-stale-secret-in-env BEGIN_MARK="# BEGIN iac-stale-secret-in-env (scripts/install-stale-secret-in-env-cron.sh)" END_MARK="# END iac-stale-secret-in-env (scripts/install-stale-secret-in-env-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-stale-secret-in-env-cron.sh --print-line" INSTALLER_HINT="scripts/install-stale-secret-in-env-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-stale-secret-in-env-crontab-drift/cron.log 2>&1
+    # END iac-stale-secret-in-env (scripts/install-stale-secret-in-env-cron.sh)
+    # BEGIN reap-orphaned-vite-ssr-caches (scripts/install-reap-orphaned-vite-ssr-caches-cron.sh)
+    5 * * * * mkdir -p /home/omri/.meni && /home/omri/projects/meniapp/scripts/reap-orphaned-vite-ssr-caches.sh --apply --quiet >> /home/omri/.meni/reap-orphaned-vite-ssr-caches.log 2>&1
+    35 * * * * mkdir -p /home/omri/.local/share/meni-hub/reap-orphaned-vite-ssr-caches-crontab-drift && BLOCK_LABEL=reap-orphaned-vite-ssr-caches BEGIN_MARK="# BEGIN reap-orphaned-vite-ssr-caches (scripts/install-reap-orphaned-vite-ssr-caches-cron.sh)" END_MARK="# END reap-orphaned-vite-ssr-caches (scripts/install-reap-orphaned-vite-ssr-caches-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-reap-orphaned-vite-ssr-caches-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-reap-orphaned-vite-ssr-caches-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/reap-orphaned-vite-ssr-caches-crontab-drift/cron.log 2>&1
+    # END reap-orphaned-vite-ssr-caches (scripts/install-reap-orphaned-vite-ssr-caches-cron.sh)
+    # BEGIN iac-cf-worker-probe-secrets-sync (scripts/install-cloudflare-worker-probe-secrets-sync-cron.sh)
+    30 5 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/sync-cloudflare-worker-probe-secrets-gh-secret.sh >> /home/omri/.cache/iac-cf-worker-probe-secrets-sync.log 2>&1   # iac cloudflare worker-probe secrets gh-secret resync (daily 05:30)
+    44 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-cf-worker-probe-secrets-sync-crontab-drift && BLOCK_LABEL=iac-cf-worker-probe-secrets-sync BEGIN_MARK="# BEGIN iac-cf-worker-probe-secrets-sync (scripts/install-cloudflare-worker-probe-secrets-sync-cron.sh)" END_MARK="# END iac-cf-worker-probe-secrets-sync (scripts/install-cloudflare-worker-probe-secrets-sync-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-cloudflare-worker-probe-secrets-sync-cron.sh --print-line" INSTALLER_HINT="scripts/install-cloudflare-worker-probe-secrets-sync-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-cf-worker-probe-secrets-sync-crontab-drift/cron.log 2>&1
+    # END iac-cf-worker-probe-secrets-sync (scripts/install-cloudflare-worker-probe-secrets-sync-cron.sh)
+    # BEGIN iac-crontab-backup (scripts/install-crontab-backup-cron.sh)
+    17 2 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/backup-crontab.sh >> /home/omri/.cache/iac-crontab-backup.log 2>&1   # iac crontab snapshot (daily 02:17)
+    40 */6 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/check-crontab-backup-freshness-cron.sh >> /home/omri/.cache/iac-crontab-backup-freshness.log 2>&1   # iac crontab backup freshness (every 6h)
+    27 2 * * * mkdir -p /home/omri/.cache && /home/omri/projects/iac/scripts/backup-crontab-offsite.sh --auto-weekly >> /home/omri/.cache/iac-crontab-backup-offsite.log 2>&1   # iac crontab offsite mirror (daily 02:27)
+    12 * * * * mkdir -p /home/omri/.local/share/meni-hub/iac-crontab-backup-crontab-drift && BLOCK_LABEL=iac-crontab-backup BEGIN_MARK="# BEGIN iac-crontab-backup (scripts/install-crontab-backup-cron.sh)" END_MARK="# END iac-crontab-backup (scripts/install-crontab-backup-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/iac/scripts/install-crontab-backup-cron.sh --print-line" INSTALLER_HINT="scripts/install-crontab-backup-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/iac-crontab-backup-crontab-drift/cron.log 2>&1
+    # END iac-crontab-backup (scripts/install-crontab-backup-cron.sh)
+    # BEGIN needs-you-null-fields (scripts/install-needs-you-null-fields-cron.sh)
+    11 * * * * mkdir -p /home/omri/.local/share/meni-hub/needs-you-null-fields && HUB_DB=/home/omri/.local/share/meni-hub/hub.db /home/omri/projects/meniapp/hub/scripts/check-needs-you-null-fields-alert.sh >> /home/omri/.local/share/meni-hub/needs-you-null-fields/cron.log 2>&1
+    50 * * * * mkdir -p /home/omri/.local/share/meni-hub/needs-you-null-fields-crontab-drift && BLOCK_LABEL=needs-you-null-fields BEGIN_MARK="# BEGIN needs-you-null-fields (scripts/install-needs-you-null-fields-cron.sh)" END_MARK="# END needs-you-null-fields (scripts/install-needs-you-null-fields-cron.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/meniapp/scripts/install-needs-you-null-fields-cron.sh --print-line" INSTALLER_HINT="/home/omri/projects/meniapp/scripts/install-needs-you-null-fields-cron.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/needs-you-null-fields-crontab-drift/cron.log 2>&1
+    # END needs-you-null-fields (scripts/install-needs-you-null-fields-cron.sh)
+    # BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)
+    5 6 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh fallback-cert /home/omri/projects/bass-tuner/scripts/check-fallback-cert.sh
+    10 6 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh domain-audit /home/omri/projects/bass-tuner/scripts/audit-domains.sh
+    12 6 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh tunnel-liveness /home/omri/projects/bass-tuner/scripts/check-tunnel-liveness.sh
+    14 6 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh model-ids /home/omri/projects/bass-tuner/scripts/check-model-ids-resolve.sh
+    16 6 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh permissions-policy /home/omri/projects/bass-tuner/scripts/check-permissions-policy.sh
+    18 6 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh cors-corp-consistency /home/omri/projects/bass-tuner/scripts/check-cors-corp-consistency.sh
+    0 7 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh heartbeat /home/omri/projects/bass-tuner/scripts/check-monitor-heartbeats.sh
+    22 */2 * * * /home/omri/projects/bass-tuner/scripts/run-monitor.sh stale-deploy /home/omri/projects/bass-tuner/deploy/activation-probes/probe-bt-5fb7.sh
+    58 * * * * mkdir -p /home/omri/.local/share/meni-hub/bass-tuner-monitoring-crontab-drift && BLOCK_LABEL=bass-tuner-monitoring BEGIN_MARK="# BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)" END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)" EXPECTED_CONTENT_CMD="/home/omri/projects/bass-tuner/scripts/install-monitoring-crons.sh --print-line" INSTALLER_HINT="scripts/install-monitoring-crons.sh" /home/omri/projects/meniapp/scripts/check-crontab-drift.sh >> /home/omri/.local/share/meni-hub/bass-tuner-monitoring-crontab-drift/cron.log 2>&1
+    # END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)
