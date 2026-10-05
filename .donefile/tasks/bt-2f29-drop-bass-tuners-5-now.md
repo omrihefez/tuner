@@ -1,7 +1,7 @@
 ---
 id: bt-2f29
 title: Drop bass-tuner's 5 now-fixed rows from meniapp's argv-secret-exposure-baseline.tsv
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-05T05:44:28Z
 reported: 2026-10-05
+claim:
+  owner: capacity-engine
+  at: 2026-10-05T05:58:04Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): filed as ma-d8d3, meniapp owns that file; rows 91-95 are now stale
@@ -33,3 +36,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed DONE (commit 14bf41bb907fb9cf5d739a4420aa811b3c2f12cb).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-05 claimed by capacity-engine
