@@ -1,0 +1,2 @@
+$ cd /home/omri/projects/meniapp && N=$(git show origin/master:deploy/argv-secret-exposure-baseline.tsv | grep -c '^projects/bass-tuner/' || true); [ "$N" = "0" ]
+

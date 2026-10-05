@@ -1,7 +1,7 @@
 ---
 id: bt-2f29
 title: Drop bass-tuner's 5 now-fixed rows from meniapp's argv-secret-exposure-baseline.tsv
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -11,9 +11,31 @@ filed:
   owner: capacity-engine
   at: 2026-10-05T05:44:28Z
 reported: 2026-10-05
-claim:
-  owner: capacity-engine
-  at: 2026-10-05T05:58:04Z
+done:
+  at: 2026-10-05T07:15:31Z
+  by: capacity-engine/worker
+  waived: "no runtime surface: fix is in meniapp's security baseline file
+    (deploy/argv-secret-exposure-baseline.tsv), not bass-tuner's deployed PWA surface"
+evidence:
+  - type: commit
+    value: c84edf99faf9abb1830979d65a92dabfd29d0f0c
+    repo: meniapp
+    verified: 2026-10-05T07:15:31Z
+  - type: test
+    cmd: cd /home/omri/projects/meniapp && N=$(git show
+      origin/master:deploy/argv-secret-exposure-baseline.tsv | grep -c '^projects/bass-tuner/' ||
+      true); [ "$N" = "0" ]
+    exit: 0
+    at: 2026-10-05T07:15:31Z
+    log: evidence/bt-2f29-2026-10-05T07-15-31Z-test.txt
+    sha256: 9866f89ae61840b2546f6f347abbc3978c15f562ff1a146e83eb6c742cd83d6c
+    bytes: 164
+  - type: note
+    value: "Premise was live: the 5 bass-tuner rows (91-95) were still in meniapp's baseline. Fix landed
+      in meniapp (which owns the file), not bass-tuner: bt-0ead already fixed the call sites (commit
+      14bf41bb, verified 0 offenders via scan-argv-secret-exposure.py), this commit drops the
+      now-stale rows. Cross-board dup ma-d8d3 (meniapp board) closed alongside this with the same
+      evidence."
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): filed as ma-d8d3, meniapp owns that file; rows 91-95 are now stale
@@ -39,3 +61,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-05 claimed by capacity-engine
+- 2026-10-05 done by capacity-engine/worker — commit c84edf99faf9 (meniapp), test `cd /home/omri/projects/meniapp && N=$(git show origin/master:deploy/argv-secret-exposure-baseline.tsv | grep -c '^projects/bass-tuner/' || true); [ "$N" = "0" ]` exit 0 (log: evidence/bt-2f29-2026-10-05T07-15-31Z-test.txt) (evidence waived: no runtime surface: fix is in meniapp's security baseline file (deploy/argv-secret-exposure-baseline.tsv), not bass-tuner's deployed PWA surface)
