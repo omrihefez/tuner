@@ -2,7 +2,7 @@
 id: bt-2604
 title: check-monitor-heartbeats.sh watches 6 of the 7 installed monitors — permissions-policy has no
   heartbeat entry
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-fc64ea
   at: 2026-10-05T10:47:12Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-05T11:03:55Z
 ---
 
 `scripts/check-monitor-heartbeats.sh` is the watcher-of-watchers: its `MAX_AGE_HOURS`
@@ -69,3 +72,6 @@ commit, watch it fail, and say so in the note. Do not close on a grep for the st
 `permissions-policy` in `check-monitor-heartbeats.sh`: that passes the moment the line
 is typed and would pass equally if the max-age were nonsense or the derivation were
 still hand-maintained.
+
+## Log
+- 2026-10-05 claimed by capacity-engine
