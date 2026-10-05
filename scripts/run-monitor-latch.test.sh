@@ -18,13 +18,39 @@ ok() { echo "  ok — $*"; pass=$((pass + 1)); }
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
+# bt-0803: run-monitor.sh appends to $HOME/.cache/bass-tuner-<name>.log
+# forever by design for a REAL monitor with a stable name, but this test
+# mints a fresh name every run ($$), so that log is a throwaway fixture, not
+# a real monitor's history -- it must not accumulate. Sweep dead runs' leftover
+# fixtures from $HOME/.cache first: a SIGKILL or a bare `exec` runs no EXIT
+# trap, so cleanup-on-exit can never be complete on its own, and these are the
+# strays that already built up. Keyed on PID so a concurrent run's still-live
+# fixture is never swept out from under it.
+sweep_stale_latch_fixtures() {
+  local f pid
+  for f in "$HOME"/.cache/bass-tuner-latch-test-bt7964-*.log \
+           "$HOME"/.cache/bass-tuner-latch-test-bt7964-*.alert-latch \
+           "$HOME"/.cache/bass-tuner-latch-test-bt7964-*.alert-latch.undelivered; do
+    [ -e "$f" ] || continue
+    pid="$(basename "$f")"
+    pid="${pid#bass-tuner-latch-test-bt7964-}"
+    pid="${pid%%.*}"
+    [[ "$pid" =~ ^[0-9]+$ ]] || continue
+    [[ "$pid" == "$$" ]] && continue
+    kill -0 "$pid" 2>/dev/null && continue
+    rm -f "$f"
+  done
+}
+sweep_stale_latch_fixtures
+
 NAME="latch-test-bt7964-$$"
 FLAKY="$TMP/flaky.sh"
 OUTPUT_FILE="$TMP/output.txt"
+LOG="$HOME/.cache/bass-tuner-${NAME}.log"
 LATCH="$HOME/.cache/bass-tuner-${NAME}.alert-latch"
 inbox() { echo "$HOME/inbox/bass-tuner-${NAME}-$(date -I).md"; }
-rm -f "$(inbox)" "$LATCH" "${LATCH}.undelivered"
-cleanup() { rm -f "$(inbox)" "$LATCH" "${LATCH}.undelivered"; }
+rm -f "$(inbox)" "$LATCH" "${LATCH}.undelivered" "$LOG"
+cleanup() { rm -f "$(inbox)" "$LATCH" "${LATCH}.undelivered" "$LOG"; }
 trap 'cleanup; rm -rf "$TMP"' EXIT
 
 fails() {
