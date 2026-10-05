@@ -2,7 +2,7 @@
 id: bt-0803
 title: run-monitor-latch.test.sh leaks one ~/.cache log per run — 90+ strays since 2026-08-29,
   outnumbering the real monitor logs 10:1
-status: open
+status: claimed
 priority: p3
 tags:
   - hygiene
@@ -11,6 +11,9 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-fc64ea
   at: 2026-10-05T10:47:37Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-05T11:31:27Z
 ---
 
 `scripts/run-monitor-latch.test.sh:21` names its fixture monitor after its own PID:
@@ -59,3 +62,6 @@ Assertion LAST — a trailing `echo` would force exit 0 regardless. Do not use
 `ls -d ... | wc -l`: `ls -d` on an absent path exits 2 and under `pipefail` the
 pipeline fails while printing `0`, which reads as a failure on exactly the clean
 result you want.
+
+## Log
+- 2026-10-05 claimed by capacity-engine
