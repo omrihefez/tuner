@@ -1,0 +1,2 @@
+$ N=$(find -L "$HOME/.cache" -maxdepth 1 -name 'bass-tuner-latch-test-bt7964-*' -printf x | wc -c); [ "$N" = "0" ]
+

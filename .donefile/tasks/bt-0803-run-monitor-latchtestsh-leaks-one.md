@@ -2,7 +2,7 @@
 id: bt-0803
 title: run-monitor-latch.test.sh leaks one ~/.cache log per run — 90+ strays since 2026-08-29,
   outnumbering the real monitor logs 10:1
-status: claimed
+status: done
 priority: p3
 tags:
   - hygiene
@@ -11,9 +11,21 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-fc64ea
   at: 2026-10-05T10:47:37Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-05T11:31:27Z
+done:
+  at: 2026-10-05T11:48:40Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 69aac1d832e67a47ad8f10307863620bcd76a0fc
+    verified: 2026-10-05T11:48:40Z
+  - type: test
+    cmd: N=$(find -L "$HOME/.cache" -maxdepth 1 -name 'bass-tuner-latch-test-bt7964-*' -printf x | wc
+      -c); [ "$N" = "0" ]
+    exit: 0
+    at: 2026-10-05T11:48:39Z
+    log: evidence/bt-0803-2026-10-05T11-48-39Z-test.txt
+    sha256: f5061ba5cec166986b550fc422a5e6b6dfd3ffee5f4375488021c559f458a495
+    bytes: 116
 ---
 
 `scripts/run-monitor-latch.test.sh:21` names its fixture monitor after its own PID:
@@ -65,3 +77,4 @@ result you want.
 
 ## Log
 - 2026-10-05 claimed by capacity-engine
+- 2026-10-05 done by capacity-engine/worker — commit 69aac1d832e6, test `N=$(find -L "$HOME/.cache" -maxdepth 1 -name 'bass-tuner-latch-test-bt7964-*' -printf x | wc -c); [ "$N" = "0" ]` exit 0 (log: evidence/bt-0803-2026-10-05T11-48-39Z-test.txt)
