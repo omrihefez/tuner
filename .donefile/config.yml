@@ -41,6 +41,13 @@ repos:
   # landed in second-brain and this alias is what lets bt-6b06 cite it — same
   # cross-repo-evidence need as the aliases above.
   second-brain: /home/omri/projects/second-brain
+  # bt-2f29 (2026-10-05): this board's argv-secret-exposure-baseline.tsv
+  # rows-91-95 finding is fixed in meniapp (deploy/argv-secret-exposure-
+  # baseline.tsv is meniapp's file; bass-tuner's own call sites were already
+  # fixed in bt-0ead) — this alias is what lets bt-2f29 cite the meniapp
+  # commit that dropped the stale rows. Same cross-repo-evidence need as the
+  # aliases above.
+  meniapp: /home/omri/projects/meniapp
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
