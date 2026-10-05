@@ -1,0 +1,2 @@
+$ git -C /home/omri/projects/bass-tuner fetch -q origin main && git -C /home/omri/projects/bass-tuner merge-base --is-ancestor 14bf41bb907fb9cf5d739a4420aa811b3c2f12cb origin/main && git -C /home/omri/projects/bass-tuner show origin/main:scripts/renew-wildcard-cert.sh | grep -F 'printf '\''header = "Authorization: Bearer %s"' >/dev/null
+
