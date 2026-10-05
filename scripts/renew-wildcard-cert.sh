@@ -123,8 +123,8 @@ fi
 
 export CLOUDFLARE_API_TOKEN
 CLOUDFLARE_API_TOKEN=$(curl -sf -m 30 \
+  --config <(printf 'header = "Authorization: Bearer %s"\n' "$_infisical_token") \
   "https://app.infisical.com/api/v3/secrets/raw/CLOUDFLARE_API_TOKEN?workspaceId=$INFISICAL_PROJECT_ID&environment=prod&secretPath=/" \
-  -H "Authorization: Bearer $_infisical_token" \
   | python3 -c "import json,sys; print(json.load(sys.stdin)['secret']['secretValue'])") || true
 unset _infisical_token
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
@@ -137,11 +137,12 @@ cf() {
   local method="$1" path="$2" body="${3:-}"
   if [[ -n "$body" ]]; then
     curl -sS -X "$method" "https://api.cloudflare.com/client/v4$path" \
-      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+      --config <(printf 'header = "Authorization: Bearer %s"\n' "$CLOUDFLARE_API_TOKEN") \
+      -H "Content-Type: application/json" \
       --data "$body"
   else
     curl -sS -X "$method" "https://api.cloudflare.com/client/v4$path" \
-      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+      --config <(printf 'header = "Authorization: Bearer %s"\n' "$CLOUDFLARE_API_TOKEN")
   fi
 }
 

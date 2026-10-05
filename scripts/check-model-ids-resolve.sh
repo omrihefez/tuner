@@ -273,8 +273,8 @@ if [[ -z "$API_KEY" ]]; then
     exit 2
   fi
   API_KEY=$(curl -sf -m 30 \
+    --config <(printf 'header = "Authorization: Bearer %s"\n' "$_infisical_token") \
     "https://app.infisical.com/api/v3/secrets/raw/MENI_TOOLS_GEMINI_API_KEY?workspaceId=$INFISICAL_PROJECT_ID&environment=prod&secretPath=/" \
-    -H "Authorization: Bearer $_infisical_token" \
     | python3 -c "import json,sys; print(json.load(sys.stdin)['secret']['secretValue'])" 2>/dev/null) || true
   unset _infisical_token
   if [[ -z "$API_KEY" ]]; then
@@ -287,7 +287,7 @@ OK=() DRIFT=() CANNOT=()
 while IFS= read -r model; do
   [[ -z "$model" ]] && continue
   code="$("${CURL_CMD:-curl}" -s -o /dev/null -w '%{http_code}' --max-time 15 \
-    -H "x-goog-api-key: $API_KEY" \
+    --config <(printf 'header = "x-goog-api-key: %s"\n' "$API_KEY") \
     "https://generativelanguage.googleapis.com/v1beta/models/${model}")"
   case "$code" in
     200) OK+=("$model") ;;
