@@ -1,7 +1,7 @@
 ---
 id: bt-0ead
 title: Migrate bass-tuner's 5 argv-secret offenders to env-var/stdin-fed form (ma-529d)
-status: claimed
+status: open
 priority: p3
 tags:
   - security
@@ -10,9 +10,6 @@ created: 2026-10-05
 filed:
   owner: meni-worker/migrate-the-177-baseline-c8a687
   at: 2026-10-05T01:35:45Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-05T05:00:41Z
 ---
 
 Named in the finding: env-var/stdin-fed (ma-529d, meniapp).
@@ -48,3 +45,4 @@ have write access there — path-scoped, do not touch other repos' rows).
 
 ## Log
 - 2026-10-05 claimed by capacity-engine
+- 2026-10-05 released by capacity-engine
