@@ -60,6 +60,7 @@ declare -A MAX_AGE_HOURS=(
   [stale-deploy]=6         # every 2h at :22 (bt-4e2a) -- 3x cadence for slack
   [model-ids]=30           # daily 06:14 (bt-5abe)
   [permissions-policy]=30  # daily 06:16 (bt-40c5/bt-b97b, bt-2604)
+  [cors-corp-consistency]=30  # daily 06:18 (bt-bfee/bt-405f)
   # NOTE: does NOT include "heartbeat" itself (this script's own run) --
   # that was tried and rejected in bt-6492: a self-referential entry only
   # reports once the watcher has already run, so it can never catch "the
