@@ -2,7 +2,7 @@
 id: bt-2604
 title: check-monitor-heartbeats.sh watches 6 of the 7 installed monitors — permissions-policy has no
   heartbeat entry
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,34 @@ created: 2026-10-05
 filed:
   owner: meni-worker/board-refill-work-discov-fc64ea
   at: 2026-10-05T10:47:12Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-05T11:03:55Z
+done:
+  at: 2026-10-05T11:14:38Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: c0087325e04bd4c127624ee3f8fd3c8679bdad5a
+    verified: 2026-10-05T11:14:38Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-monitor-heartbeats-default-set.test.sh
+    exit: 0
+    at: 2026-10-05T11:14:37Z
+    log: evidence/bt-2604-2026-10-05T11-14-37Z-test.txt
+    sha256: 60a24224209adf6c558564d1c5633d542cf6e99b88732230873fc5fefa7791b0
+    bytes: 319
+  - type: note
+    value: "Implemented DONE WHEN (a): check-monitor-heartbeats.sh's default (no-args) monitor set is
+      now derived from install-monitoring-crons.sh --print-line + install-cert-renewal-cron.sh
+      --print-line (cert-renewal's own separate weekly installer), with 'heartbeat' excluded per
+      bt-6492, instead of restating MAX_AGE_HOURS's own keys. A monitor present in an installer but
+      missing a MAX_AGE_HOURS entry now shows UNKNOWN and fails loudly. permissions-policy also got
+      its explicit MAX_AGE_HOURS=30 entry. New hermetic test
+      check-monitor-heartbeats-default-set.test.sh fails on the parent commit (checked 6 monitor(s),
+      installers schedule 7) and passes after this fix; also added a matching section to
+      test-monitoring.sh against the real live installers. Unrelated pre-existing failures observed
+      in test-monitoring.sh's full run (install-monitoring-crons.sh --dry-run tripping on an
+      unregistered check-cors-corp-consistency.sh monitor, and the documented bt-d30a crontab-read
+      race) reproduce identically on unmodified origin/main and are NOT caused by this change --
+      filed as a separate follow-up."
 ---
 
 `scripts/check-monitor-heartbeats.sh` is the watcher-of-watchers: its `MAX_AGE_HOURS`
@@ -75,3 +100,4 @@ still hand-maintained.
 
 ## Log
 - 2026-10-05 claimed by capacity-engine
+- 2026-10-05 done by capacity-engine/worker — commit c0087325e04b, test `cd /home/omri/projects/bass-tuner && bash scripts/check-monitor-heartbeats-default-set.test.sh` exit 0 (log: evidence/bt-2604-2026-10-05T11-14-37Z-test.txt)

@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-monitor-heartbeats-default-set.test.sh
+
+OK     check-monitor-heartbeats.sh (no args): default monitor set matches all 7 of the installers' --print-line monitors (cert-renewal domain-audit fallback-cert model-ids permissions-policy stale-deploy tunnel-liveness)
