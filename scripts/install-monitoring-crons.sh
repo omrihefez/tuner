@@ -56,6 +56,7 @@ STALE_DEPLOY="$REPO/deploy/activation-probes/probe-bt-5fb7.sh"
 TUNNEL_LIVENESS="$REPO/scripts/check-tunnel-liveness.sh"
 MODEL_IDS="$REPO/scripts/check-model-ids-resolve.sh"
 PERMISSIONS_POLICY="$REPO/scripts/check-permissions-policy.sh"
+CORS_CORP="$REPO/scripts/check-cors-corp-consistency.sh"
 
 # Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
 # copy); runs on the same box as meniapp, so the absolute path always
@@ -93,11 +94,18 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 # microphone=(self)) would have silently broken getUserMedia with nothing to
 # notice. Once daily is enough -- this only drifts if a deploy changes
 # vercel.json's header block, not on its own.
+# cors-corp-consistency (bt-bfee, registered by bt-405f) -- :18, right after
+# permissions-policy and the 06:17 cert-renewal run. Same class of check as
+# permissions-policy (asserts live response headers, only drifts when a
+# deploy changes the header block) but it shipped with its own .test.sh and
+# was simply never added here -- the exact bt-b97b-class gap the UNREGISTERED
+# guard below exists to catch. Once daily is enough for the same reason.
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
 12 6 * * * $RUNNER tunnel-liveness $TUNNEL_LIVENESS
 14 6 * * * $RUNNER model-ids $MODEL_IDS
 16 6 * * * $RUNNER permissions-policy $PERMISSIONS_POLICY
+18 6 * * * $RUNNER cors-corp-consistency $CORS_CORP
 0 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
@@ -248,5 +256,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 06:16 permissions-policy, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 06:16 permissions-policy, 06:18 cors-corp-consistency, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
 fi
