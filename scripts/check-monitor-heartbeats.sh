@@ -32,10 +32,12 @@
 # monitor reports OK again, so a later recurrence still alerts.
 #
 # Usage: check-monitor-heartbeats.sh [monitor-name ...]
-#   No args: checks every monitor in MAX_AGE_HOURS below.
-#   One or more names: checks only those. An unknown name is reported as
-#   UNKNOWN (not silently skipped) so pointing this at a typo'd or removed
-#   monitor name is itself visible, the same way a stale log is.
+#   No args: checks every monitor install-monitoring-crons.sh --print-line
+#   says is scheduled (minus "heartbeat" itself -- see MAX_AGE_HOURS below).
+#   One or more names: checks only those. A name with no MAX_AGE_HOURS entry
+#   -- whether it's a typo, a removed monitor, or a real one the installer
+#   schedules but this map was never updated for -- is reported as UNKNOWN
+#   (not silently skipped), the same way a stale log is.
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -51,12 +53,13 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # to catch a real gap within about a day, loose enough not to flap on
 # ordinary cron jitter.
 declare -A MAX_AGE_HOURS=(
-  [fallback-cert]=30    # daily 06:05
-  [domain-audit]=30     # daily 06:10
-  [tunnel-liveness]=30  # daily 06:12 (bt-8818)
-  [cert-renewal]=192    # weekly Mon 06:17 (7d + 1d slack)
-  [stale-deploy]=6      # every 2h at :22 (bt-4e2a) -- 3x cadence for slack
-  [model-ids]=30        # daily 06:14 (bt-5abe)
+  [fallback-cert]=30       # daily 06:05
+  [domain-audit]=30        # daily 06:10
+  [tunnel-liveness]=30     # daily 06:12 (bt-8818)
+  [cert-renewal]=192       # weekly Mon 06:17 (7d + 1d slack)
+  [stale-deploy]=6         # every 2h at :22 (bt-4e2a) -- 3x cadence for slack
+  [model-ids]=30           # daily 06:14 (bt-5abe)
+  [permissions-policy]=30  # daily 06:16 (bt-40c5/bt-b97b, bt-2604)
   # NOTE: does NOT include "heartbeat" itself (this script's own run) --
   # that was tried and rejected in bt-6492: a self-referential entry only
   # reports once the watcher has already run, so it can never catch "the
@@ -68,10 +71,38 @@ declare -A MAX_AGE_HOURS=(
 MENI_NOTIFY="$HOME/meni/bin/meni-notify"
 ALERT_DIR="$HOME/.cache/bass-tuner-monitor-heartbeats-alerts"
 
+# bt-2604: the DEFAULT monitor set (no CLI args) is derived from the
+# installers' own --print-line output -- the same source check-crontab-drift.sh
+# already reconciles against -- instead of restating it as a second,
+# hand-maintained list. MAX_AGE_HOURS keys drifted from the installers' real
+# monitor set already (tunnel-liveness/bt-0603, permissions-policy/bt-2604):
+# each was added to an installer and started running on schedule while
+# staying invisible to this watcher, because the watcher only ever checked
+# its OWN list. TWO installers schedule monitors this script watches --
+# install-monitoring-crons.sh for everything except cert-renewal, which
+# install-cert-renewal-cron.sh schedules on its own separate weekly cadence --
+# so both are queried and unioned. Parses the same way each installer's own
+# monitor_names() parses the live crontab: the first argument after any
+# run-monitor.sh invocation is the monitor name. "heartbeat" is excluded
+# explicitly -- see the MAX_AGE_HOURS comment above, same reason.
+INSTALLERS=("$HERE/install-monitoring-crons.sh" "$HERE/install-cert-renewal-cron.sh")
+installed_monitor_names() {
+  for installer in "${INSTALLERS[@]}"; do
+    "$installer" --print-line 2>/dev/null
+  done | awk '!/^[[:space:]]*#/ {
+    for (i = 1; i < NF; i++)
+      if ($i ~ /run-monitor\.sh$/) { print $(i + 1); break }
+  }' | sed '/^$/d' | sort -u
+}
+
 if [[ $# -gt 0 ]]; then
   TARGETS=("$@")
 else
-  TARGETS=("${!MAX_AGE_HOURS[@]}")
+  mapfile -t TARGETS < <(installed_monitor_names | grep -vFx "heartbeat" || true)
+  if [[ ${#TARGETS[@]} -eq 0 ]]; then
+    echo "FATAL: '${INSTALLERS[*]} --print-line' produced no monitor names -- refusing to run with an empty target set" >&2
+    exit 2
+  fi
 fi
 
 FAIL=0

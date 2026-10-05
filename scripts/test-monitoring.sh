@@ -203,6 +203,65 @@ else
   echo "OK     check-monitor-heartbeats.sh via run-monitor.sh: exit $rm_code -> $hb_inbox"
 fi
 
+# --- 4b. bt-2604: check-monitor-heartbeats.sh's DEFAULT (no-args) monitor
+#         set must cover every monitor install-monitoring-crons.sh --print-line
+#         actually schedules (minus "heartbeat" itself, deliberately excluded
+#         per bt-6492) -- not a hand-restated subset of it. This is the same
+#         drift class bt-0603 already hit once for tunnel-liveness: a monitor
+#         can be added to the installer, start running on a real cron
+#         schedule, and stay permanently invisible to this watcher because
+#         MAX_AGE_HOURS was a second, hand-maintained list that nobody
+#         remembered to update.
+#
+#         Fakes a fresh run marker for every monitor name the REAL installers'
+#         --print-line report -- both install-monitoring-crons.sh AND
+#         install-cert-renewal-cron.sh (cert-renewal's own separate weekly
+#         installer); both hardcode their own REPO path, so this isn't
+#         sandboxable by HOME -- same as section 6 below -- then runs
+#         check-monitor-heartbeats.sh with NO ARGS against a sandboxed HOME
+#         and asserts: exit 0, no UNKNOWN/no-max-age monitor, and exactly one
+#         OK line per derived name. A script that silently never checks an
+#         installer-scheduled monitor would exit 0 and print no UNKNOWN too
+#         -- it just prints fewer OK lines than there are real monitors -- so
+#         the count comparison is load-bearing, not the exit code or the
+#         absence of UNKNOWN alone.
+mapfile -t REAL_MONITOR_NAMES < <(
+  { "$REPO/scripts/install-monitoring-crons.sh" --print-line
+    "$REPO/scripts/install-cert-renewal-cron.sh" --print-line; } | awk '!/^[[:space:]]*#/ {
+    for (i = 1; i < NF; i++)
+      if ($i ~ /run-monitor\.sh$/) { print $(i + 1); break }
+  }' | sed '/^$/d' | grep -vFx "heartbeat" | sort -u)
+
+mkdir -p "$TMP/hbhome-4b/.cache"
+for mon in "${REAL_MONITOR_NAMES[@]}"; do
+  cat > "$TMP/hbhome-4b/.cache/bass-tuner-${mon}.log" <<EOF
+=== $mon $(date -Is) ===
+OK
+exit 0
+EOF
+done
+
+noargs_out="$(env HOME="$TMP/hbhome-4b" "$REPO/scripts/check-monitor-heartbeats.sh" 2>&1)"
+noargs_code=$?
+noargs_ok_count="$(grep -c '^OK' <<<"$noargs_out" || true)"
+expected_count="${#REAL_MONITOR_NAMES[@]}"
+if [[ "$noargs_code" -ne 0 ]]; then
+  echo "FAIL   check-monitor-heartbeats.sh (no args): exited $noargs_code against fresh logs for every real installer monitor (${REAL_MONITOR_NAMES[*]}):"
+  echo "$noargs_out" | sed 's/^/         /'
+  FAIL=1
+elif grep -q "UNKNOWN" <<<"$noargs_out"; then
+  echo "FAIL   check-monitor-heartbeats.sh (no args): reported UNKNOWN against a real installer monitor:"
+  echo "$noargs_out" | sed 's/^/         /'
+  FAIL=1
+elif [[ "$noargs_ok_count" -ne "$expected_count" ]]; then
+  echo "FAIL   check-monitor-heartbeats.sh (no args): checked $noargs_ok_count monitor(s), installer schedules $expected_count (${REAL_MONITOR_NAMES[*]}) -- the default set has drifted from install-monitoring-crons.sh --print-line:"
+  echo "$noargs_out" | sed 's/^/         /'
+  FAIL=1
+else
+  echo "OK     check-monitor-heartbeats.sh (no args): default monitor set matches all $expected_count of install-monitoring-crons.sh --print-line's monitors (${REAL_MONITOR_NAMES[*]})"
+fi
+rm -rf "$TMP/hbhome-4b"
+
 # --- 5. all five are actually on the crontab, not just present on disk ---
 # bt-d30a: this box runs several install-*-cron.sh installers (this repo's
 # own two, plus other projects') that each do a read-modify-write of the
