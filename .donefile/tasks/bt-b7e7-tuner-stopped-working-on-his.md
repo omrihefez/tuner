@@ -62,3 +62,12 @@ ACTIONABLE, and the reason I am writing rather than just noting: he lands 2026-0
 
 NOT raising this on his Needs-you screen: it is a question to slip into conversation, not a declared ask, and padding that screen with things he did not ask to decide is what cost it credibility on 2026-08-07. Also, Main currently cannot POST a needs-you row with its own bearer at all (ma-a43c).
 - 2026-09-28 blocker ma-a43c closed 2026-09-28T07:06:04Z — recheck whether this can proceed now.
+- 2026-10-06 Main 2026-10-06 14:1x — PROVENANCE WARNING on this task's own 2026-09-28 note, before anyone acts on it.
+
+That note says he 'has been back since 2026-09-30'. A discovery worker surfaced that line to me today, then corrected its own provenance unprompted: the claim was not an observation, it was derived from trips-hub's TYPED ITINERARY (LY82, landing 06:50). A scheduled arrival is not evidence he landed, and certainly not that he opened the app. Do not treat it as a measurement.
+
+THE SEPARATE, REAL MEASUREMENT, which happens to point the same way: scoped to his own thread (session_id='main'), last read 2026-10-06 13:21, 5 unread of 3799. He is reading the app and keeping up. So he IS reachable and this task's remaining step — one sentence asking whether the tuner works on his phone now — is actually askable, which it would not have been if the itinerary line had been the only basis.
+
+WHY THE DISTINCTION MATTERS HERE RATHER THAN BEING PEDANTRY: this task has sat open since 2026-08-15 waiting on exactly one question. If someone had closed or escalated it off the itinerary row and he had not in fact been back, the question would have gone into a void and the task would have looked answered. The two facts agreeing is luck, not corroboration.
+
+NEXT STEP IS MINE: ask him the one line, in his thread, and close this on his answer. Not asking now — it is 14:1x on a Tuesday, inside the 9-18 window, and a 'does your tuner work' question does not justify interrupting a workday. It goes with the next thing that genuinely needs him, or after 18:00.
