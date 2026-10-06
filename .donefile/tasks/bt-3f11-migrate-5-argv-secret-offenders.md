@@ -1,7 +1,7 @@
 ---
 id: bt-3f11
 title: Migrate 5 argv-secret offenders in bass-tuner off live credential interpolation on argv (ma-529d)
-status: open
+status: claimed
 priority: p2
 tags:
   - security
@@ -10,6 +10,9 @@ created: 2026-10-06
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-06T01:51:55Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-06T04:10:59Z
 ---
 
 Drained onto this board by Main 2026-10-06 from ~/inbox/meni-board-queue/rescued-bass-tuner.md (queued 2026-10-05 04:40, 24h+ old).
@@ -46,3 +49,6 @@ DONE WHEN: these 5 call sites no longer put a live credential on argv, and
 meniapp's deploy/argv-secret-exposure-baseline.tsv no longer needs these rows
 (note here when done so meniapp can drop them, or drop them yourself if you
 have write access there — path-scoped, do not touch other repos' rows).
+
+## Log
+- 2026-10-06 claimed by capacity-engine
