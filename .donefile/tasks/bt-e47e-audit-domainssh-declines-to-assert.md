@@ -2,7 +2,7 @@
 id: bt-e47e
 title: audit-domains.sh declines to assert HSTS preload on a false per-host premise, and the apex it
   actually depends on is skipped by derive_registry_hosts
-status: open
+status: claimed
 priority: p2
 tags:
   - security
@@ -11,6 +11,9 @@ created: 2026-10-07
 filed:
   owner: meni-worker/board-refill-work-discov-0dfdcd
   at: 2026-10-07T12:31:34Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-07T12:36:56Z
 ---
 
 Two joined problems: the domain audit's HSTS check declines to assert `preload` for a
@@ -115,3 +118,6 @@ about the audit being blind and the comment being wrong, which is workable now a
 independent of that decision.
 
 Filed by the periodic discovery sweep, 2026-10-07.
+
+## Log
+- 2026-10-07 claimed by capacity-engine
