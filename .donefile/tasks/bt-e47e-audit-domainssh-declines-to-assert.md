@@ -2,7 +2,7 @@
 id: bt-e47e
 title: audit-domains.sh declines to assert HSTS preload on a false per-host premise, and the apex it
   actually depends on is skipped by derive_registry_hosts
-status: claimed
+status: done
 priority: p2
 tags:
   - security
@@ -11,9 +11,37 @@ created: 2026-10-07
 filed:
   owner: meni-worker/board-refill-work-discov-0dfdcd
   at: 2026-10-07T12:31:34Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-07T12:36:56Z
+done:
+  at: 2026-10-07T12:51:51Z
+  by: capacity-engine/worker
+  waived: "not app-surface work: audit-domains.sh is a monitoring/cron script invoked directly from
+    the main checkout path (crontab: /home/omri/projects/bass-tuner/scripts/audit-domains.sh, see
+    scripts/install-monitoring-crons.sh:53), not part of the Vercel-deployed bass-tuner PWA this
+    board's activation gate (pwa/ux/correctness/security/deploy/feature/perf/a11y/vercel) exists
+    for. Already live on disk the moment the commit landed on main -- no deploy/restart step exists
+    for it."
+evidence:
+  - type: commit
+    value: 96c6267c38baf4fd01b650bca512619d328c91d7
+    verified: 2026-10-07T12:51:51Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-07T12:51:38Z
+    log: evidence/bt-e47e-2026-10-07T12-51-38Z-test.txt
+    sha256: dda427f7a0813d3c0bc55027e8bb255dfbde286e08cd736ff7562315786928cc
+    bytes: 11081
+  - type: note
+    value: "Fixed check_hsts()'s comment (preload is apex-keyed, not per-host) and added an explicit
+      apex probe (check_apex_hsts, requiring includeSubDomains+preload) since
+      derive_registry_hosts() excludes the apex by construction. Seen red live before closing: curl
+      -sI https://omrihefez.com/ returns only max-age=63072000 (no includeSubDomains, no preload),
+      and running scripts/audit-domains.sh against the real ~/meni/DOMAIN.md produced two DRIFT
+      lines for omrihefez.com confirming the check actually fires. domain-registry.sh untouched; its
+      cross-repo byte-identity test (lib/domain-registry.test.sh) still passes. test-monitoring.sh
+      and check-tunnel-liveness.test.sh unaffected (checked against both the worktree and a control
+      run on unmodified origin/main -- the only control-run differences were pre-existing
+      crontab-drift FAILs unrelated to this change)."
 ---
 
 Two joined problems: the domain audit's HSTS check declines to assert `preload` for a
@@ -121,3 +149,4 @@ Filed by the periodic discovery sweep, 2026-10-07.
 
 ## Log
 - 2026-10-07 claimed by capacity-engine
+- 2026-10-07 done by capacity-engine/worker — commit 96c6267c38ba, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-e47e-2026-10-07T12-51-38Z-test.txt) (evidence waived: not app-surface work: audit-domains.sh is a monitoring/cron script invoked directly from the main checkout path (crontab: /home/omri/projects/bass-tuner/scripts/audit-domains.sh, see scripts/install-monitoring-crons.sh:53), not part of the Vercel-deployed bass-tuner PWA this board's activation gate (pwa/ux/correctness/security/deploy/feature/perf/a11y/vercel) exists for. Already live on disk the moment the commit landed on main -- no deploy/restart step exists for it.)

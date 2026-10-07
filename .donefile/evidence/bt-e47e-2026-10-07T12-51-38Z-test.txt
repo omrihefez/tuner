@@ -1,0 +1,76 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+
+1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked
+  ok — meniapp is derived and checked, not missing
+2. a tombstoned row is never audited
+  ok — tombstoned row excluded
+3. a non-Vercel live host (Cloudflare Tunnel) is SKIPped from the Vercel Deployment-Protection gate, and separately gets its own per-path baseline (bt-d173), not the old bare-echo
+  ok — Cloudflare-Tunnel host is named via SKIP for the Vercel gate, and its own security-header baseline runs and reports separately
+4. a genuine Vercel Deployment-Protection redirect still fails loudly (bt-417b class)
+  ok — the original bt-417b drift detection still fires
+5. AUDIT_SUBS overrides the DOMAIN.md derivation entirely (test-monitoring.sh's bt-a942 self-test relies on this to force a failure)
+  ok — AUDIT_SUBS bypasses DOMAIN_MD entirely (even an unreadable one), so the self-test sabotage still works
+6. an unreadable DOMAIN.md fails loudly instead of running an empty/stale audit
+  ok — missing DOMAIN.md refuses to run rather than silently checking nothing
+7. bt-a2c2: a 200 host with NO security headers at all (the compose.omrihefez.com shape) is reported as DRIFT, not OK
+  ok — a 200 response with zero security headers is DRIFT, and this is exactly the shape the discovery run measured live on compose.omrihefez.com
+8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely
+  ok — report-only CSP satisfies the baseline and a 401 host is correctly exempt
+9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT, and brain/oauth never get the BODY-shaped baseline (bt-b75b: they DO now get their own HSTS-only check)
+  ok — the check FAILS on the exact pre-fix hc-d30f shape (framing headers present, cache header absent); brain/oauth are never curled for the body-shaped baseline but ARE curled for HSTS alone; tik-api/tik-api-vps ARE curled and pass
+10. bt-d173: the SAME check PASSES once Cache-Control: no-store is added — proves this is a real fail/pass check, not a check that only ever passes
+  ok — the check flips to OK the moment the fix is present — this is the same probe, not a different one for each side
+11. bt-d173: meniapp-api's /health (JSON) missing x-content-type-options is DRIFT — the exact live finding this task's own 'done when' names — and CSP/X-Frame-Options/Referrer-Policy are NOT required on it (content-type gate avoids the JSON-API noise problem)
+  ok — a JSON API missing nosniff is DRIFT, named precisely, with no false noise from framing headers that don't apply to it
+11b. bt-135b: tik-api's /health (JSON) missing x-content-type-options is DRIFT — the exact live finding measured on tik-api.omrihefez.com before the fix in the tik-api repo — and tik-api-vps (same origin) is checked independently
+  ok — tik-api missing nosniff is DRIFT (the pre-fix shape), and tik-api-vps is checked as its own row, not coupled to tik-api's result
+12. bt-d173: a 401 on a checked non-Vercel host is exempt from framing headers but NOT from Cache-Control: no-store (mirrors the SUBS-loop 401 exemption, inverted for cache)
+  ok — a 401 refusal is checked for Cache-Control: no-store and never for framing headers — matches the task's own done-when
+13. bt-d173/bt-135b: SKIP text for an exempt host names its OWN reason, not a copy of another host's; a host with no stated reason falls through to the default (still-live code path — no real registry host currently exercises it, so this one row is a deliberate stand-in, not a real label)
+  ok — each SKIPped host states its own actual reason — the SKIP text does not collapse two different causes into one line, and tik-api is no longer in the SKIP set at all
+13b. the still-live default-reason fallback (no real registry host currently exercises it, since tik-api's assessment resolved the last unclassified one) fires for a host in neither dict
+  ok — a host in neither NONVERCEL_CHECK_PATHS nor NONVERCEL_HEADER_SKIP_REASON still gets the default not-yet-assessed reason, not a crash or a false OK
+14. bt-b75b (FAILING shape, check_nonvercel_path/NONVERCEL_CHECK_PATHS side): meniapp-api's /health with every OTHER header present but NO Strict-Transport-Security is DRIFT on a 200 — not gated on content-type the way CSP/X-Frame-Options/Referrer-Policy are
+  ok — a 200 non-Vercel response missing ONLY Strict-Transport-Security is DRIFT — the check fires on the exact live shape this task measured, and fires on a bare JSON 200 with no text/html content-type
+15. bt-b75b (PASSING shape, same probe): the SAME meniapp-api row flips to OK once Strict-Transport-Security is added back — proves this is a real fail/pass check, not one only ever seen passing
+  ok — the same probe flips to OK the moment Strict-Transport-Security is added — this is the fail/pass pair for the check_nonvercel_path side of bt-b75b
+16. bt-b75b (FAILING shape, NONVERCEL_HSTS_ONLY_PATH/brain-oauth side): brain's by-design 404 with NO Strict-Transport-Security is DRIFT — the exact live shape measured 2026-09-30 (brain.omrihefez.com 404, no HSTS) — even though brain is fully exempt from the body-shaped baseline
+  ok — an exempt-from-body-baseline host (brain) still goes DRIFT when it lacks Strict-Transport-Security — the by-design 404 exemption narrows to body-shaped headers only, per this task's done-when #2
+17. bt-b75b: the SAME brain probe flips to OK once Strict-Transport-Security is present on its 404
+  ok — the brain/oauth-side probe is the same fail/pass pair, not a check only ever seen passing
+18. bt-3ba1 (FAILING shape): meni's 307-redirect root is asserted on nothing by itself (header baseline not applicable at /), but its VERCEL_CHECK_PATHS-pinned /login path is now checked — missing x-frame-options there is DRIFT
+  ok — a Vercel host's root redirect alone proves nothing — the pinned /login path is what actually catches the missing header
+19. bt-3ba1 (PASSING shape, same probe): the SAME meni /login flips to OK once x-frame-options is present — proves the per-path check is a real fail/pass check, not one only ever seen passing
+  ok — the pinned-path check flips to OK the moment the fix is present
+20. bt-3ba1 (FAILING shape, SUBS-root HSTS side): a Vercel host missing Strict-Transport-Security at the ROOT is now DRIFT — before this task check_hsts() was never called from the SUBS loop at all, so this was silently OK
+  ok — the SUBS loop now calls check_hsts() unconditionally — a 200 Vercel host missing only HSTS is DRIFT where it used to be silently OK
+21. bt-3ba1 (PASSING shape, same probe): the SAME bass row flips to OK once Strict-Transport-Security is present — proves this is a real fail/pass check
+  ok — the SUBS-root HSTS probe is the same fail/pass pair, not a check only ever seen passing
+22. bt-3ba1: a Vercel host answering 307/401/308 with NO VERCEL_CHECK_PATHS entry fails loudly as UNPINNED instead of printing a silent OK — same idiom check-tunnel-liveness.sh already uses for an unpinned non-Vercel host
+  ok — an auth-gated Vercel host with no VERCEL_CHECK_PATHS entry fails loudly as UNPINNED rather than printing a silent OK
+23. bt-3ba1: a reviewed cross-host alias redirect (the real tuner.omrihefez.com -> bass.omrihefez.com 308, measured live 2026-10-01 running this very fix) is SKIPped from the per-path pin requirement, not flagged UNPINNED — but still gets check_hsts() on its own root response
+  ok — a reviewed cross-host alias redirect is named via its own SKIP reason, never UNPINNED, and still gets the unconditional root HSTS check
+24. bt-8c53 (FAILING shape, pre-fix this was OK): max-age=0 actively instructs the browser to forget the HSTS pin — a presence-only check reported it OK regardless
+  ok — max-age=0 is DRIFT, not OK — the exact gap this task was filed over
+25. bt-8c53 (companion shape): max-age clears the floor but includeSubDomains is absent — compose's exact live shape measured 2026-10-01
+  ok — a high max-age with no includeSubDomains is still DRIFT — compose's own live gap, not a hypothetical
+26. bt-8c53 (PASSING shape, same probe): max-age at the floor plus includeSubDomains together are OK
+  ok — the same probe flips to OK once both the floor and includeSubDomains are satisfied — not a check only ever seen failing
+27. bt-4164 (FAILING shape, SUBS side): bass with the full baseline minus Permissions-Policy is DRIFT, naming permissions-policy precisely — confirmed red against the parent commit (pre-bt-4164), which has no such check at all
+  ok — a 200 Vercel host with every other header present but no Permissions-Policy is DRIFT — the exact bt-4164 gap, not a check only ever seen passing
+28. bt-4164 (PASSING shape, same probe): the SAME bass row flips to OK once Permissions-Policy is added — proves this is a real fail/pass check
+  ok — the same probe flips to OK the moment Permissions-Policy is added back
+29. bt-4164 (SUBS-side exemption): compose, PERMISSIONS_POLICY_EXEMPT'd per cp-8845, stays OK despite sending no Permissions-Policy — named via SKIP, not a silent pass
+  ok — compose's exemption suppresses the DRIFT but is named via SKIP, not silently dropped — this would catch a dangling exemption the moment cp-8845 closes and nobody removed the entry, because the SKIP line would then say so loudly next to a host that actually sends the header
+30. bt-4164 (check_nonvercel_path-side exemption): meni, PERMISSIONS_POLICY_EXEMPT'd per ar-3426, stays OK on its pinned /login path despite sending no Permissions-Policy
+  ok — the same exemption works on the check_nonvercel_path side (meni's VERCEL_CHECK_PATHS-pinned /login), keyed off the same PERMISSIONS_POLICY_EXEMPT map — arch-preview shares meni's ar-3426 entry and is not re-tested separately, same map lookup
+31. bt-e47e (FAILING shape, exact live shape measured 2026-10-07): the apex sending only max-age (no includeSubDomains, no preload) is DRIFT on BOTH counts
+  ok — the apex is actively probed (it is no longer absent from this audit entirely) and goes DRIFT on exactly the shape measured live on 2026-10-07 — not a check only ever seen passing
+32. bt-e47e (PASSING shape, same probe): the apex flips to OK once it sends includeSubDomains and preload together
+  ok — the apex probe is a real fail/pass pair, not one only ever seen failing
+33. bt-e47e: a subdomain sending preload is still never required to (check_hsts() stays as-is; only check_apex_hsts() is stricter)
+  ok — check_hsts() is unchanged for every non-apex host — only the comment's reasoning and the apex's own, separate check changed
+34. bt-e47e: AUDIT_SUBS still bypasses the apex probe entirely (same DOMAIN.md-override convention as every other derivation in this script)
+  ok — AUDIT_SUBS bypasses the apex probe the same way it bypasses the rest of the DOMAIN.md derivation
+
+PASS (36 assertions)
