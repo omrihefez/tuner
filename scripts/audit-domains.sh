@@ -240,10 +240,19 @@ is_refusal_or_redirect_code() {
 #       is free while a host that needs to run lower would have to fight
 #       this check to even deploy.
 #     - includeSubDomains must be present.
-#   preload is deliberately NOT asserted: six live hosts send it and three
-#   don't, and adding it to a host is a one-way trip onto the browser
-#   preload list — that's a call for a human to make per host, not a
-#   default this audit should silently require or silently ignore.
+#   preload is NOT asserted here (bt-e47e corrected the reasoning, not just
+#   the behaviour): preload is not a per-host property to begin with.
+#   hstspreload.org keys a submission on the REGISTRABLE DOMAIN alone —
+#   qualifying requires includeSubDomains AND preload served AT THE APEX,
+#   and the submission then covers the whole tree in one shot. A `preload`
+#   token sent by a subdomain (kidai, meniapp, …) cannot add that host, or
+#   anything, to the list; it is inert there regardless of which way it
+#   goes, so there is no per-host human judgement being deferred by
+#   skipping it — the judgement this comment used to describe doesn't
+#   exist. The apex IS checked for `preload`, in check_apex_hsts() below,
+#   because it is the one host where the directive is load-bearing and
+#   submitting is a real, one-way decision (tracked as follow-up against
+#   iac, not this audit's call to make silently).
 check_hsts() {
   local label="$1" resp="$2" code="$3"
   local hsts_max_age_floor=31536000
@@ -271,6 +280,32 @@ check_hsts() {
     FAIL=1
   else
     echo "OK     $label -> $code (Strict-Transport-Security: $value)"
+  fi
+}
+
+# check_apex_hsts <label> <raw response headers> <status code>
+#   Like check_hsts() above, but ALSO requires `preload` — the apex is the
+#   one host where that directive is load-bearing (hstspreload.org keys
+#   submission on the registrable domain: qualifying requires
+#   includeSubDomains AND preload served at the apex, covering the whole
+#   tree at once). A subdomain sending preload is inert either way (see
+#   check_hsts()'s comment above), which is why that check never requires
+#   it; the apex is the opposite case, so it gets its own, stricter check
+#   rather than a flag threaded through the shared one — the apex is the
+#   only call site that ever uses this (bt-e47e).
+check_apex_hsts() {
+  local label="$1" resp="$2" code="$3"
+  check_hsts "$label" "$resp" "$code"
+
+  local line value
+  line=$(echo "$resp" | grep -i '^strict-transport-security:' | head -1)
+  [ -n "$line" ] || return   # check_hsts() already reported the missing header
+
+  value="${line#*:}"
+  value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/\r$//')"
+  if ! echo "$value" | grep -qi 'preload'; then
+    echo "DRIFT  $label -> $code Strict-Transport-Security missing preload at the apex (bt-e47e: this is the one host where preload is load-bearing): $value"
+    FAIL=1
   fi
 }
 
@@ -362,6 +397,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 }
 
 OTHER_LIVE=()
+APEX_HOST=""
 if [ -n "${AUDIT_SUBS:-}" ]; then
   read -r -a SUBS <<<"$AUDIT_SUBS"
 else
@@ -372,6 +408,27 @@ else
   }
   mapfile -t SUBS < <(derive_registry_hosts "$DOMAIN_MD" vercel | sort -u)
   mapfile -t OTHER_LIVE < <(derive_registry_hosts "$DOMAIN_MD" non-vercel | sort -u)
+  # APEX (bt-e47e): the one row derive_registry_hosts() excludes BY
+  # CONSTRUCTION — its name cell is dot-shaped, which that shared,
+  # cross-repo-duplicated helper treats as "FQDN meant for a different
+  # consumer", not a bare label to append .omrihefez.com onto (see that
+  # file's own header). The apex needs the opposite treatment: it is the
+  # one real, live host that IS legitimately dot-shaped, and it is the
+  # only one, so rather than teach the shared helper a second exclusion
+  # rule just for this row, pull it directly here. Not status-filtered
+  # (🟢/🔵 only) like derive_registry_hosts() — the apex is audited
+  # whatever its current registry status says, which is exactly how this
+  # task found it still missing includeSubDomains/preload while sitting at
+  # 🟠 blank.
+  APEX_HOST="$(awk -F'|' '
+    NF < 8 { next }
+    { name = $2
+      if (name !~ /`/) next
+      if (!match(name, /`[^`]*`/)) next
+      raw = substr(name, RSTART + 1, RLENGTH - 2)
+      if (raw ~ /\./) { print raw; exit }
+    }
+  ' "$DOMAIN_MD")"
 fi
 
 if [ "${#SUBS[@]}" -eq 0 ]; then
@@ -443,5 +500,16 @@ for d in "${SUBS[@]}"; do
     check_hsts "$host" "$resp" "$code"
   fi
 done
+
+# APEX (bt-e47e): not a member of SUBS/OTHER_LIVE — see where APEX_HOST is
+# derived above for why — so it gets its own probe rather than being folded
+# into either loop. Only present when the registry was actually read
+# (AUDIT_SUBS overrides skip it entirely, same as every other DOMAIN.md
+# derivation in this script).
+if [ -n "$APEX_HOST" ]; then
+  resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$APEX_HOST/")
+  code=$(echo "$resp" | head -1 | awk '{print $2}')
+  check_apex_hsts "$APEX_HOST" "$resp" "$code"
+fi
 
 exit $FAIL

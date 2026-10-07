@@ -113,6 +113,14 @@ MENIAPP_API_HEALTH_OK() { printf 'meniapp-api.omrihefez.com\t/health\t200\t\t%s\
 # just what check_nonvercel_path()'s refusal-code branch checks (Cache-
 # Control: no-store + HSTS), matching the measured live shape.
 PLANNER_OK() { printf 'planner.omrihefez.com\t/\t401\t\tcache-control: no-store|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
+# apex (bt-e47e): $FIXTURE (unlike every other DOMAIN*.md fixture in this
+# file) carries the real apex row, so every test using run()/$FIXTURE_MAP
+# now gets it curled for real too. A clean full-compliance row (matching
+# the real live shape of the OTHER hosts that already send all three
+# directives, e.g. kidai/meniapp) keeps tests 1/7/8 at their existing
+# exit-0 expectations; tests 24/25 below exercise the apex check itself
+# failing-then-passing against the exact measured-live shape.
+APEX_OK() { printf 'omrihefez.com\t/\t200\t\tstrict-transport-security: max-age=63072000; includeSubDomains; preload\n'; }
 
 echo "1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked"
 : >"$FIXTURE_MAP"
@@ -120,6 +128,7 @@ printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
+APEX_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0, got $rc: $out"
 grep -q "OK     meniapp.omrihefez.com -> 200" <<<"$out" || fail "expected meniapp to be actively checked, got: $out"
@@ -142,6 +151,7 @@ printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t307\thttps://vercel.com/login\n' >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
+APEX_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 on a vercel.com login redirect, got $rc: $out"
 grep -q "^DRIFT  meniapp.omrihefez.com" <<<"$out" || fail "expected a DRIFT line for the gated host, got: $out"
@@ -169,6 +179,7 @@ printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\n' >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
+APEX_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 when a 200 host is missing its whole security-header baseline, got $rc: $out"
 grep -q "^DRIFT  meniapp.omrihefez.com -> 200 missing security headers:" <<<"$out" || fail "expected a DRIFT line naming the missing headers, got: $out"
@@ -185,6 +196,7 @@ printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: defau
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
+APEX_OK >>"$FIXTURE_MAP"
 out="$(run)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 (report-only CSP counts, 401 is exempt), got $rc: $out"
 grep -q "^OK     bass.omrihefez.com -> 200" <<<"$out" || fail "expected report-only CSP to satisfy the CSP check, got: $out"
@@ -617,6 +629,51 @@ grep -q "^OK     meni.omrihefez.com/login -> 200 (security headers present)" <<<
 grep -q "^SKIP   meni.omrihefez.com/login -> permissions-policy baseline not applicable: exempted per ar-3426 2026-10-01" <<<"$out" \
   || fail "expected a SKIP line naming meni's exemption and the task that tracks it, got: $out"
 ok "the same exemption works on the check_nonvercel_path side (meni's VERCEL_CHECK_PATHS-pinned /login), keyed off the same PERMISSIONS_POLICY_EXEMPT map — arch-preview shares meni's ar-3426 entry and is not re-tested separately, same map lookup"
+
+# --- bt-e47e: the apex gets its own explicit check, not silently excluded
+# by derive_registry_hosts()'s dot-shaped-name guard, and that check
+# requires `preload` where check_hsts() never does (preload is only
+# load-bearing at the apex — see check_hsts()'s own corrected comment).
+echo "31. bt-e47e (FAILING shape, exact live shape measured 2026-10-07): the apex sending only max-age (no includeSubDomains, no preload) is DRIFT on BOTH counts"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
+printf 'omrihefez.com\t/\t404\t\tstrict-transport-security: max-age=63072000\n' >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (apex missing includeSubDomains+preload), got $rc: $out"
+grep -q "^DRIFT  omrihefez.com -> 404 Strict-Transport-Security missing includeSubDomains: max-age=63072000" <<<"$out" \
+  || fail "expected a DRIFT line for the apex's missing includeSubDomains, got: $out"
+grep -q "^DRIFT  omrihefez.com -> 404 Strict-Transport-Security missing preload at the apex" <<<"$out" \
+  || fail "expected a SEPARATE DRIFT line for the apex's missing preload, got: $out"
+ok "the apex is actively probed (it is no longer absent from this audit entirely) and goes DRIFT on exactly the shape measured live on 2026-10-07 — not a check only ever seen passing"
+
+echo "32. bt-e47e (PASSING shape, same probe): the apex flips to OK once it sends includeSubDomains and preload together"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
+APEX_OK >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once the apex sends includeSubDomains+preload, got $rc: $out"
+grep -q "^OK     omrihefez.com -> 200 (Strict-Transport-Security: max-age=63072000; includeSubDomains; preload)" <<<"$out" \
+  || fail "expected the apex's HSTS line to read OK with preload now satisfied, got: $out"
+ok "the apex probe is a real fail/pass pair, not one only ever seen failing"
+
+echo "33. bt-e47e: a subdomain sending preload is still never required to (check_hsts() stays as-is; only check_apex_hsts() is stricter)"
+grep -q "^OK     bass.omrihefez.com -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
+  || fail "expected bass (no preload, per FULL_HEADERS) to stay OK — preload is still not required on a subdomain, got: $out"
+ok "check_hsts() is unchanged for every non-apex host — only the comment's reasoning and the apex's own, separate check changed"
+
+echo "34. bt-e47e: AUDIT_SUBS still bypasses the apex probe entirely (same DOMAIN.md-override convention as every other derivation in this script)"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+out="$(AUDIT_SUBS="bass" CURL_FIXTURE_MAP="$FIXTURE_MAP" CURL_CMD="$CURL_STUB" DOMAIN_MD="$TMP/does-not-exist.md" bash "$SCRIPT")"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (AUDIT_SUBS path has no apex, nothing to fail on), got $rc: $out"
+grep -qE "^(OK|DRIFT)[[:space:]]+omrihefez\.com[[:space:]]" <<<"$out" && fail "expected no apex line at all under AUDIT_SUBS, got: $out"
+ok "AUDIT_SUBS bypasses the apex probe the same way it bypasses the rest of the DOMAIN.md derivation"
 
 echo
 echo "PASS ($pass assertions)"
