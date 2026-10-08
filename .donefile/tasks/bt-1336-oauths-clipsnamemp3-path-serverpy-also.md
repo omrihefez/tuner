@@ -2,7 +2,7 @@
 id: bt-1336
 title: oauth's /clips/<name>.mp3 path (server.py) also bypasses security headers but has no stable
   registry-known filename this audit script can pin without guessing
-status: open
+status: claimed
 priority: p3
 tags:
   - monitoring
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-08T01:15:30Z
 reported: 2026-10-08
+claim:
+  owner: capacity-engine
+  at: 2026-10-08T07:58:07Z
 ---
 
 Named in the finding: server.py
@@ -27,3 +30,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit f5c1942).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-08 claimed by capacity-engine
