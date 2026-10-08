@@ -2,7 +2,7 @@
 id: bt-6791
 title: Wildcard cert renewal calls issuance a success by grepping output for 'success', which also
   matches 'unsuccessful' — a false success exits 0 so nothing alerts
-status: open
+status: claimed
 priority: p2
 tags:
   - reliability
@@ -12,6 +12,9 @@ created: 2026-10-08
 filed:
   owner: meni-worker/board-refill-work-discov-9e7c91
   at: 2026-10-08T13:35:11Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-08T14:14:38Z
 ---
 
 `scripts/renew-wildcard-cert.sh` decides the wildcard certificate was issued by
@@ -112,3 +115,6 @@ DONE WHEN:
 - Do NOT run `--force --i-mean-it` against the live cert to test this. The cert
   is healthy to 2026-12-20 (ma-e61d) and a real issuance mutates DNS in the live
   zone. Drive the verdict logic directly with fixture strings.
+
+## Log
+- 2026-10-08 claimed by capacity-engine
