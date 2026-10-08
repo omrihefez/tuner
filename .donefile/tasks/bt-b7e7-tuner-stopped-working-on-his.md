@@ -2,12 +2,25 @@
 id: bt-b7e7
 title: Tuner stopped working on his device — server, deploy and code all verified healthy, cause is
   client-side
-status: open
+status: done
 priority: p1
 tags:
   - from-omri
   - bug
 created: 2026-08-15
+done:
+  at: 2026-10-08T09:35:32Z
+  by: meni-worker/triage-12-open-gate-owne-0a8f61
+evidence:
+  - type: commit
+    value: 99c1ba9
+    verified: 2026-10-08T09:35:32Z
+  - type: note
+    value: "Closing: the 2026-08-15 'stopped working' report does not stand. On 2026-08-29 he reported
+      tuning detection problems (hum / drop-tuning, commits 6a95acf, 25918d8, 794ef3a), which means
+      the mic was opening and he was using the app after 08-15. The 2026-09-04 fix (99c1ba9) makes
+      any future mic failure name its cause. The courtesy question in his thread (2026-10-06 18:00)
+      stays out there; if he reports a fault, file fresh. Triage ce-9c66 2026-10-08."
 ---
 
 HIS WORDS, 2026-08-15 00:33 IDT: "Tuner app stopped working. Check it out. Needs fixings now"
@@ -84,3 +97,4 @@ WHY ASKING WAS WORTH IT RATHER THAN MORE INVESTIGATION: the 2026-09-04 note alre
 NEXT: close on a yes. On a no, his error text points straight at the branch. If no answer comes, do NOT re-send — one delivery into the channel he chose is the honest amount, and a second ask about a tuner is exactly the noise that gets a channel muted.
 
 Provenance note already on this task stands: the 'he lands 2026-09-30' line came from trips-hub's typed itinerary, not an observation. His reachability is established by the read measurement above, independently.
+- 2026-10-08 done by meni-worker/triage-12-open-gate-owne-0a8f61 — commit 99c1ba9
