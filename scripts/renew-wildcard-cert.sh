@@ -63,6 +63,22 @@ done
 
 log() { echo "[$(date -u +%FT%TZ)] $*"; }
 
+# bt-6791: a plain substring match for "success" also matches "unsuccessful",
+# so "Certificate issuance was unsuccessful" set issue_ok=1. Anchored on
+# non-letter boundaries so it can't match inside a longer word either
+# direction (unsuccessful, successfully-ish, etc).
+issuance_reports_success() {
+  local exit_code="$1" output="$2"
+  [[ "$exit_code" -eq 0 ]] || return 1
+  printf '%s' "$output" | grep -qiE '(^|[^[:alpha:]])success(ful(ly)?)?([^[:alpha:]]|$)'
+}
+
+# Sourced by the test file, not executed standalone -- stop here so the real
+# renewal flow (secrets fetch, DNS writes, ACME issuance) never runs under test.
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+  return 0
+fi
+
 # bt-4923: --force alone is a dry-run description, not an action -- it must
 # require --i-mean-it too, so that a debugging/testing invocation using
 # --force to reach later code (e.g. to test a PATH fix) can't accidentally
@@ -149,11 +165,28 @@ cf() {
 if [[ "$FORCE" -ne 1 ]]; then
   # `vercel certs ls` prints one row per cert; find the wildcard's "expiration"
   # column ("in 88d" style). Skip renewal unless it's due soon.
-  days_left=$(vercel certs ls --non-interactive 2>/dev/null \
+  #
+  # bt-6791: stderr used to be discarded here, so a dead Vercel credential
+  # (df-0733: the CLI's token lives ~8h and only an interactive device code
+  # revives it once dead) surfaced as an unparseable "days-until-expiry"
+  # instead of as the auth failure it actually was -- the script then
+  # proceeded into a renewal attempt that could not work. Capture both
+  # streams so the real cause reaches the log, and treat a non-zero exit as
+  # the auth/CLI failure it is: exit non-zero so run-monitor alerts instead
+  # of limping into a doomed renewal.
+  certs_ls_out=$(vercel certs ls --non-interactive 2>&1)
+  certs_ls_exit=$?
+  days_left=$(printf '%s\n' "$certs_ls_out" \
     | awk -v cn="$CN" '$0 ~ cn {for(i=1;i<=NF;i++) if ($i ~ /^in$/) print $(i+1)}' \
     | head -1 | tr -dc '0-9')
+  if [[ "$certs_ls_exit" -ne 0 ]]; then
+    log "FATAL: 'vercel certs ls' exited $certs_ls_exit -- likely a dead Vercel credential (see df-0733), refusing to proceed into a renewal that cannot work"
+    printf '%s\n' "$certs_ls_out" | sed 's/^/  /' >&2
+    exit 1
+  fi
   if [[ -z "$days_left" ]]; then
-    log "WARN: could not parse days-until-expiry for $CN from 'vercel certs ls'; proceeding to renew to be safe"
+    log "WARN: 'vercel certs ls' exited 0 but days-until-expiry for $CN didn't parse; proceeding to renew to be safe"
+    printf '%s\n' "$certs_ls_out" | sed 's/^/  /' >&2
   elif (( days_left > RENEW_THRESHOLD_DAYS )); then
     log "OK: $CN has ${days_left}d left (> ${RENEW_THRESHOLD_DAYS}d threshold), nothing to do"
     exit 0
@@ -213,7 +246,7 @@ issue_out=$(vercel certs issue "$CN" --non-interactive 2>&1)
 issue_exit=$?
 echo "$issue_out"
 issue_ok=0
-if [[ "$issue_exit" -eq 0 ]] && echo "$issue_out" | grep -qi "success"; then
+if issuance_reports_success "$issue_exit" "$issue_out"; then
   issue_ok=1
 fi
 if [[ "$issue_ok" -ne 1 ]]; then
