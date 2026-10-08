@@ -112,17 +112,33 @@ missing_security_headers() {
 # skipped the headers, so a per-host check needs a per-PATH check too.
 #
 # NONVERCEL_CHECK_PATHS is a deliberate opt-in list, not "check every
-# non-Vercel host" — the registry (~/meni/DOMAIN.md §1) has two hosts whose
-# CORRECT behaviour would misread as drift under this baseline: `brain`
-# answers a bare 404 to every unauthenticated request by design (its auth
-# wall), and `oauth` is intentionally public with no auth wall at all.
+# non-Vercel host" — the registry (~/meni/DOMAIN.md §1) has exactly one host
+# whose CORRECT behaviour would misread as drift under this baseline:
+# `brain` answers a bare 404 to every unauthenticated request by design
+# (its auth wall).
+#
+# `oauth` (bt-0611, reviewed 2026-10-08): previously exempted on the same
+# "no auth wall by design" reasoning as `brain`, which conflates "has no
+# AUTH wall" with "serves no real app response" — those are not the same
+# claim, and for `oauth` the second half is false.
+# `smarthome/oauth-callback/server.py`'s `_html()` helper sets
+# Content-Security-Policy / Referrer-Policy / X-Content-Type-Options on
+# every response it renders, which is the host's own code disagreeing with
+# the exemption that used to sit here. `/health` is its one documented,
+# stable 200 (DOMAIN.md: "`/health` -> 200 `ok` is a liveness probe only"),
+# so it moves into the opt-in list below like `tik-api`'s `/health` — the
+# same class, not the `brain` class. (`/clips/<name>.mp3` is a second real
+# response path on this host that bypasses `_html()` entirely and so ships
+# no headers either, but it has no stable, registry-known path this script
+# can pin without naming a specific clip file; tracked as a follow-up
+# rather than guessed at here.)
 #
 # `tik-api`/`tik-api-vps` (bt-135b): assessed — both are the SAME FastAPI
 # origin (tik-api-tunnel.service on the VPS answers both hostnames; the
 # `-vps` name is the cutover/rollback pair for `tik-api`, not a separate
 # app), a pure JSON API with no HTML page ever served (docs disabled in
 # prod) and every route auth-gated except `/health`. That puts them in the
-# SAME class as `meniapp-api`, not `brain`/`oauth`: nosniff still matters on
+# SAME class as `meniapp-api`, not `brain`: nosniff still matters on
 # a bare JSON body, so they get the per-path baseline rather than a
 # by-design exemption. Root ("/") is a bare 404 with no baseline applicable
 # (same as the check-domains layer above) so it is deliberately NOT in the
@@ -134,26 +150,26 @@ declare -A NONVERCEL_CHECK_PATHS=(
   [meniapp-api]="/health"
   [tik-api]="/health"
   [tik-api-vps]="/health"
+  [oauth]="/health"
 )
 declare -A NONVERCEL_HEADER_SKIP_REASON=(
-  [brain]="by-design auth wall answers a bare 404 to every unauthenticated request; correct behaviour, not drift"
-  [oauth]="intentionally public with no auth wall by design; correct behaviour, not drift"
+  [brain]="by-design auth wall answers a bare 404 to every unauthenticated request; correct behaviour, not drift; reviewed bt-0611 2026-10-08 (oauth's identical-looking exemption did NOT hold up under the same review and was removed, so this one being a one-line reason is itself the decision, not an oversight)"
 )
 
-# STRICT-TRANSPORT-SECURITY (bt-b75b): both skip reasons above are about
-# BODY semantics (a 404 auth wall, a public-by-design page) — neither is a
-# reason to also exempt HSTS, which is a transport-level header set (or not)
-# regardless of what the body looks like. So the skip is narrowed rather
-# than reused: `brain`/`oauth` stay OUT of NONVERCEL_CHECK_PATHS (their
-# 404/public bodies must never be scored against the CSP/XFO/nosniff/
-# Cache-Control baseline meant for a real app response), but each still
-# gets ONE unauthenticated path probed for HSTS alone, via check_hsts_at()
-# below. `brain`: `/` (its by-design 404, verified live 2026-08-23 per
-# DOMAIN.md). `oauth`: `/health`, its one real 200 (DOMAIN.md: "`/health`
-# -> 200 `ok` is a liveness probe only").
+# STRICT-TRANSPORT-SECURITY (bt-b75b): the skip reason above is about BODY
+# semantics (a 404 auth wall) — not a reason to also exempt HSTS, which is
+# a transport-level header set (or not) regardless of what the body looks
+# like. So the skip is narrowed rather than reused: `brain` stays OUT of
+# NONVERCEL_CHECK_PATHS (its 404 body must never be scored against the
+# CSP/XFO/nosniff/Cache-Control baseline meant for a real app response),
+# but it still gets ONE unauthenticated path probed for HSTS alone, via
+# check_hsts_at() below: `/`, its by-design 404, verified live 2026-08-23
+# per DOMAIN.md. (`oauth` used to have an entry here too; bt-0611 moved it
+# into NONVERCEL_CHECK_PATHS above instead, where it now gets the full
+# baseline — including HSTS, via check_nonvercel_path() — rather than HSTS
+# alone.)
 declare -A NONVERCEL_HSTS_ONLY_PATH=(
   [brain]="/"
-  [oauth]="/health"
 )
 
 # VERCEL PER-PATH BASELINE (bt-3ba1): same shape and spirit as

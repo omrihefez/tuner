@@ -12,19 +12,29 @@
 # auth-redirect) had no cross-repo coverage. NONVERCEL_CHECK_PATHS/
 # NONVERCEL_HEADER_SKIP_REASON in audit-domains.sh are hardcoded to the real
 # registry labels (`house`, `meniapp-api`, and — since bt-135b assessed them
-# — `tik-api`/`tik-api-vps` all checked; `brain`/`oauth` explicitly exempt by
+# — `tik-api`/`tik-api-vps` all checked; `brain` explicitly exempt by
 # design; anything else still defaults to "not yet assessed", exercised in
 # test 13b below with a synthetic stand-in since no real host is left
 # unclassified), so the fixtures below otherwise use those exact bare
 # labels rather than test-only stand-ins.
 #
+# bt-0611: `oauth` used to sit alongside `brain` in NONVERCEL_HEADER_SKIP_REASON
+# on the same "no auth wall by design" reasoning, which conflates "has no
+# AUTH wall" with "serves no real app response" — false for oauth, whose
+# `/health` is a real 200 the host's own code sets security headers on via
+# `_html()`. oauth moved into NONVERCEL_CHECK_PATHS (`/health`), the same
+# class as `tik-api`/`meniapp-api`, and is now ACTIVELY checked rather than
+# exempt. Tests 9/10/13 below were rewritten for this (they used to assert
+# oauth stays SKIPped); tests 9b/9c are new and mirror 14/15's fail-then-pass
+# shape for oauth specifically, per this task's "SEEN TO FAIL" requirement.
+#
 # bt-b75b added Strict-Transport-Security, checked unconditionally on every
 # baselined non-Vercel call (check_hsts(), inside check_nonvercel_path() —
 # not gated on 200 or on text/html, because HSTS is a transport directive,
-# not a document protection). `brain`/`oauth` are still exempt from the
+# not a document protection). `brain` is still exempt from the
 # BODY-shaped baseline (CSP/XFO/referrer-policy/nosniff/Cache-Control) for
-# the reasons already stated, but that exemption no longer covers HSTS: each
-# now gets exactly one path curled via check_hsts_at() (NONVERCEL_HSTS_ONLY_PATH)
+# the reasons already stated, but that exemption no longer covers HSTS: it
+# gets exactly one path curled via check_hsts_at() (NONVERCEL_HSTS_ONLY_PATH)
 # for HSTS alone. FULL_HEADERS below carries a Strict-Transport-Security
 # value so tests 1-8 and the "good" fixtures in 9-13 (which are about other
 # headers) don't spuriously go DRIFT; tests 14/15 exercise the HSTS check
@@ -204,12 +214,12 @@ grep -q "^OK     planner.omrihefez.com -> 401" <<<"$out" || fail "expected the 4
 grep -q "^DRIFT  planner" <<<"$out" && fail "a 401 host with a satisfied pinned-path baseline must not be flagged, got: $out"
 ok "report-only CSP satisfies the baseline and a 401 host is correctly exempt"
 
-# --- bt-d173/bt-135b: layer-3 non-Vercel per-(host,path) baseline ---
+# --- bt-d173/bt-135b/bt-0611: layer-3 non-Vercel per-(host,path) baseline ---
 # A dedicated small registry: one Vercel host (bass, so SUBS isn't empty)
-# plus the full non-Vercel cast — the four checked hosts (house, meniapp-api,
+# plus the full non-Vercel cast — the five checked hosts (house, meniapp-api,
 # tik-api, tik-api-vps — bt-135b assessed the latter two as the same JSON-API
-# class as meniapp-api, not a brain/oauth-style exemption) and the two that
-# must stay SKIPped for stated, differing reasons (brain, oauth).
+# class as meniapp-api — and oauth, bt-0611's own reassessment, same class
+# again) and the one that stays SKIPped for a stated, reviewed reason (brain).
 FIXTURE2="$TMP/DOMAIN2.md"
 FIXTURE_MAP2="$TMP/responses2.tsv"
 cat >"$FIXTURE2" <<'EOF'
@@ -219,7 +229,7 @@ cat >"$FIXTURE2" <<'EOF'
 | `house` | House control | house-control | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-d173) |
 | `meniapp-api` | worker orchestration | meniapp | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-d173) |
 | `brain` | Second Brain | second-brain | Cloudflare Tunnel | explicit | 🟢 live | by-design 404 auth wall — must stay SKIPped |
-| `oauth` | OAuth catcher | apartment | Cloudflare Tunnel | explicit | 🟢 live | intentionally public — must stay SKIPped |
+| `oauth` | OAuth catcher | apartment | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked at /health (bt-0611) |
 | `tik-api` | TIK API | tik | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-135b) |
 | `tik-api-vps` | TIK API VPS origin | tik | Cloudflare Tunnel | explicit | 🟢 live | non-Vercel, per-path baseline checked (bt-135b) |
 EOF
@@ -229,9 +239,14 @@ HOUSE_LOGIN_OK() { printf 'house.omrihefez.com\t/login\t200\t\tcontent-type: tex
 TIK_API_HEALTH_OK() { printf 'tik-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
 TIK_API_VPS_HEALTH_OK() { printf 'tik-api-vps.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
 BRAIN_HSTS_OK() { printf 'brain.omrihefez.com\t/\t404\t\tstrict-transport-security: max-age=31536000; includeSubDomains\n'; }
-OAUTH_HSTS_OK() { printf 'oauth.omrihefez.com\t/health\t200\t\tstrict-transport-security: max-age=31536000; includeSubDomains\n'; }
+# oauth/health (bt-0611): the real host's liveness probe body is plain text
+# ("ok"), not HTML — same shape as tik-api's /health — so only nosniff and
+# HSTS are expected to fire here; CSP/X-Frame-Options/Referrer-Policy/
+# Permissions-Policy stay gated on text/html, same as every other JSON/plain
+# non-Vercel path in this file.
+OAUTH_HEALTH_OK() { printf 'oauth.omrihefez.com\t/health\t200\t\tcontent-type: text/plain|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
 
-echo "9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT, and brain/oauth never get the BODY-shaped baseline (bt-b75b: they DO now get their own HSTS-only check)"
+echo "9. bt-d173 (hc-d30f class, FAILING shape): house's refusal-redirect path missing Cache-Control: no-store is DRIFT; brain never gets the BODY-shaped baseline (bt-b75b: it DOES get its own HSTS-only check); oauth DOES now get the full per-path baseline (bt-0611)"
 : >"$FIXTURE_MAP2"
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"   # framing headers present, but NO cache-control — the hc-d30f shape
@@ -240,17 +255,16 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (house's / is missing no-store), got $rc: $out"
 grep -q "^DRIFT  house.omrihefez.com/ -> 307 missing Cache-Control: no-store" <<<"$out" || fail "expected the hc-d30f-class DRIFT line for house's /, got: $out"
 grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" || fail "expected brain's HSTS-only check to run and pass, got: $out"
-grep -q "^OK     oauth.omrihefez.com/health -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" || fail "expected oauth's HSTS-only check to run and pass, got: $out"
+grep -q "^OK     oauth.omrihefez.com/health -> 200" <<<"$out" || fail "expected oauth's per-path baseline check to actually run (and pass, given full headers), got: $out"
 grep -qE "brain\.omrihefez\.com.*(Cache-Control|security headers)" <<<"$out" && fail "brain must never get the body-shaped baseline (Cache-Control/CSP/XFO/nosniff/referrer-policy), got: $out"
-grep -qE "oauth\.omrihefez\.com.*(Cache-Control|security headers)" <<<"$out" && fail "oauth must never get the body-shaped baseline, got: $out"
 grep -q "^OK     tik-api.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api/health to be curled and pass given full headers, got: $out"
 grep -q "^OK     tik-api-vps.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api-vps/health to be curled and pass given full headers, got: $out"
-ok "the check FAILS on the exact pre-fix hc-d30f shape (framing headers present, cache header absent); brain/oauth are never curled for the body-shaped baseline but ARE curled for HSTS alone; tik-api/tik-api-vps ARE curled and pass"
+ok "the check FAILS on the exact pre-fix hc-d30f shape (framing headers present, cache header absent); brain is never curled for the body-shaped baseline but IS curled for HSTS alone; tik-api/tik-api-vps/oauth ARE curled for the full per-path baseline and pass"
 
 echo "10. bt-d173: the SAME check PASSES once Cache-Control: no-store is added — proves this is a real fail/pass check, not a check that only ever passes"
 : >"$FIXTURE_MAP2"
@@ -261,7 +275,7 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once no-store is present (the hc-d30f fix shape), got $rc: $out"
 grep -q "^OK     house.omrihefez.com/ -> 307 (Cache-Control: no-store present" <<<"$out" || fail "expected house's / to read OK once fixed, got: $out"
@@ -277,7 +291,7 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (meniapp-api missing nosniff), got $rc: $out"
 grep -q "^DRIFT  meniapp-api.omrihefez.com/health -> 200 missing security headers: x-content-type-options$" <<<"$out" \
@@ -293,7 +307,7 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 printf 'tik-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (tik-api missing nosniff), got $rc: $out"
 grep -q "^DRIFT  tik-api.omrihefez.com/health -> 200 missing security headers: x-content-type-options$" <<<"$out" \
@@ -301,6 +315,38 @@ grep -q "^DRIFT  tik-api.omrihefez.com/health -> 200 missing security headers: x
 grep -q "^OK     tik-api-vps.omrihefez.com/health -> 200" <<<"$out" \
   || fail "expected tik-api-vps to still read OK independently of tik-api's drift, got: $out"
 ok "tik-api missing nosniff is DRIFT (the pre-fix shape), and tik-api-vps is checked as its own row, not coupled to tik-api's result"
+
+echo "11c. bt-0611 (FAILING shape, SEEN TO FAIL per the task's own done-when): oauth's /health missing x-content-type-options is DRIFT — this is the exact exposure the removed by-design exemption used to hide entirely"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+printf 'oauth.omrihefez.com\t/health\t200\t\tcontent-type: text/plain|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"   # the pre-fix shape: no nosniff, which the old exemption made invisible
+out="$(run2)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (oauth missing nosniff), got $rc: $out"
+grep -q "^DRIFT  oauth.omrihefez.com/health -> 200 missing security headers: x-content-type-options$" <<<"$out" \
+  || fail "expected DRIFT naming x-content-type-options as missing for oauth, got: $out"
+ok "oauth missing nosniff is now caught as DRIFT — before bt-0611 the by-design exemption meant this script would have reported nothing at all for this exact response"
+
+echo "11d. bt-0611: the SAME oauth row flips to OK once x-content-type-options is present — proves this is a real fail/pass check, not a check that only ever passes"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once oauth sends x-content-type-options, got $rc: $out"
+grep -q "^OK     oauth.omrihefez.com/health -> 200" <<<"$out" \
+  || fail "expected oauth/health to flip to OK, got: $out"
+ok "oauth's probe is the same fail/pass pair, not a check only ever seen passing"
 
 echo "12. bt-d173: a 401 on a checked non-Vercel host is exempt from framing headers but NOT from Cache-Control: no-store (mirrors the SUBS-loop 401 exemption, inverted for cache)"
 : >"$FIXTURE_MAP2"
@@ -311,7 +357,7 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1, got $rc: $out"
 line="$(grep "^DRIFT  house.omrihefez.com/ " <<<"$out")"
@@ -320,7 +366,7 @@ grep -q "missing Cache-Control: no-store" <<<"$line" || fail "expected a 401 mis
 grep -qi "x-frame-options\|content-security-policy\|referrer-policy" <<<"$line" && fail "a 401 must never be checked for framing headers, got: $line"
 ok "a 401 refusal is checked for Cache-Control: no-store and never for framing headers — matches the task's own done-when"
 
-echo "13. bt-d173/bt-135b: SKIP text for an exempt host names its OWN reason, not a copy of another host's; a host with no stated reason falls through to the default (still-live code path — no real registry host currently exercises it, so this one row is a deliberate stand-in, not a real label)"
+echo "13. bt-d173/bt-135b/bt-0611: SKIP text for an exempt host names its OWN reason, not a copy of another host's; oauth is no longer exempt at all (bt-0611) and must not appear on any SKIP line naming a reason; a host with no stated reason falls through to the default (still-live code path — no real registry host currently exercises it, so this one row is a deliberate stand-in, not a real label)"
 : >"$FIXTURE_MAP2"
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t401\t\tcache-control: no-store\n' >>"$FIXTURE_MAP2"
@@ -329,12 +375,13 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 grep -q "^SKIP   brain.omrihefez.com.*by-design auth wall" <<<"$out" || fail "expected brain's SKIP reason to name its by-design 404 auth wall, got: $out"
-grep -q "^SKIP   oauth.omrihefez.com.*intentionally public" <<<"$out" || fail "expected oauth's SKIP reason to name it as intentionally public, got: $out"
+grep -q "^SKIP   oauth.omrihefez.com.*intentionally public" <<<"$out" && fail "oauth's by-design exemption was removed (bt-0611) — it must not still print the old SKIP reason, got: $out"
 grep -q "^OK     tik-api.omrihefez.com/health -> 200" <<<"$out" || fail "expected tik-api to now be actively checked, not SKIPped, got: $out"
-ok "each SKIPped host states its own actual reason — the SKIP text does not collapse two different causes into one line, and tik-api is no longer in the SKIP set at all"
+grep -q "^OK     oauth.omrihefez.com/health -> 200" <<<"$out" || fail "expected oauth to now be actively checked, not SKIPped, got: $out"
+ok "brain states its own actual reason and stays the only SKIPped host; tik-api and oauth are both actively checked rather than SKIPped"
 
 echo "13b. the still-live default-reason fallback (no real registry host currently exercises it, since tik-api's assessment resolved the last unclassified one) fires for a host in neither dict"
 : >"$TMP/DOMAIN3.md"
@@ -369,7 +416,7 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (meniapp-api missing Strict-Transport-Security), got $rc: $out"
 grep -q "^DRIFT  meniapp-api.omrihefez.com/health -> 200 missing Strict-Transport-Security$" <<<"$out" \
@@ -387,14 +434,14 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once Strict-Transport-Security is present, got $rc: $out"
 grep -q "^OK     meniapp-api.omrihefez.com/health -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected meniapp-api/health's dedicated HSTS line to flip to OK, got: $out"
 ok "the same probe flips to OK the moment Strict-Transport-Security is added — this is the fail/pass pair for the check_nonvercel_path side of bt-b75b"
 
-echo "16. bt-b75b (FAILING shape, NONVERCEL_HSTS_ONLY_PATH/brain-oauth side): brain's by-design 404 with NO Strict-Transport-Security is DRIFT — the exact live shape measured 2026-09-30 (brain.omrihefez.com 404, no HSTS) — even though brain is fully exempt from the body-shaped baseline"
+echo "16. bt-b75b (FAILING shape, NONVERCEL_HSTS_ONLY_PATH/brain side, oauth moved out of this map by bt-0611): brain's by-design 404 with NO Strict-Transport-Security is DRIFT — the exact live shape measured 2026-09-30 (brain.omrihefez.com 404, no HSTS) — even though brain is fully exempt from the body-shaped baseline"
 : >"$FIXTURE_MAP2"
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
@@ -403,7 +450,7 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 printf 'brain.omrihefez.com\t/\t404\t\t\n' >>"$FIXTURE_MAP2"   # the real measured shape: 404, zero headers
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (brain missing Strict-Transport-Security), got $rc: $out"
 grep -q "^DRIFT  brain.omrihefez.com/ -> 404 missing Strict-Transport-Security$" <<<"$out" \
@@ -419,12 +466,12 @@ printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/jso
 TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
 TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
-OAUTH_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 once brain sends Strict-Transport-Security, got $rc: $out"
 grep -q "^OK     brain.omrihefez.com/ -> 404 (Strict-Transport-Security: max-age=31536000; includeSubDomains)" <<<"$out" \
   || fail "expected brain's HSTS line to flip to OK, got: $out"
-ok "the brain/oauth-side probe is the same fail/pass pair, not a check only ever seen passing"
+ok "the brain-side HSTS-only probe is the same fail/pass pair, not a check only ever seen passing"
 
 # --- bt-3ba1: the Vercel (SUBS) loop gets the same HSTS + per-path coverage
 # the non-Vercel loop already has. Before this task the SUBS loop never
