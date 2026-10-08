@@ -2,7 +2,7 @@
 id: bt-0611
 title: audit-domains.sh exempts oauth from the security-header baseline as 'no auth wall by design'
   — which is why ap-2037's missing CSP/nosniff on our one public surface went unseen
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,32 @@ created: 2026-10-08
 filed:
   owner: meni-worker/board-refill-work-discov-b483dc
   at: 2026-10-08T00:34:31Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-08T00:53:36Z
+done:
+  at: 2026-10-08T01:08:53Z
+  by: capacity-engine/worker
+  waived: "security tag is a false positive for activation-gating here: this change touches only
+    scripts/audit-domains.sh and its test (a repo/process monitoring script per
+    .donefile/config.yml's own 'tags NOT listed' note), not the Vercel-served PWA surface
+    (manifest.json/sw.js/vercel.json/static HTML-CSS-JS). Nothing to deploy or activate."
+evidence:
+  - type: commit
+    value: f5c1942
+    verified: 2026-10-08T01:08:53Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-08T01:08:24Z
+    log: evidence/bt-0611-2026-10-08T01-08-24Z-test.txt
+    sha256: eaa720686fcf0fd235333088cfb17c0397b206501cb588849eca638a19739db6
+    bytes: 11895
+  - type: note
+    value: oauth moved from a blanket NONVERCEL_HEADER_SKIP_REASON exemption into
+      NONVERCEL_CHECK_PATHS[oauth]=/health (same per-path baseline class as tik-api/meniapp-api);
+      brain's exemption reviewed and kept, now dated/tagged bt-0611 so a reviewed exemption no
+      longer looks identical to an unreviewed one. New tests 11c/11d assert oauth missing
+      x-content-type-options is DRIFT, confirmed to fail against the parent commit (fbf5e62) and
+      pass after the fix. /clips/<name>.mp3 on the same host (server.py) also bypasses headers but
+      has no stable registry-known path to pin — filed as follow-up, not guessed at.
 ---
 
 `scripts/audit-domains.sh` exempts `oauth` from the body-shaped security-header
@@ -116,3 +139,4 @@ different response paths with different header sets.
 
 ## Log
 - 2026-10-08 claimed by capacity-engine
+- 2026-10-08 done by capacity-engine/worker — commit f5c1942, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-0611-2026-10-08T01-08-24Z-test.txt) (evidence waived: security tag is a false positive for activation-gating here: this change touches only scripts/audit-domains.sh and its test (a repo/process monitoring script per .donefile/config.yml's own 'tags NOT listed' note), not the Vercel-served PWA surface (manifest.json/sw.js/vercel.json/static HTML-CSS-JS). Nothing to deploy or activate.)
