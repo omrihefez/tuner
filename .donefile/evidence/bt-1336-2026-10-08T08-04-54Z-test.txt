@@ -1,0 +1,2 @@
+$ curl -sI https://oauth.omrihefez.com/clips/2550bf96a0ef639b.mp3 | grep -qi 'x-content-type-options: nosniff' && curl -sI https://oauth.omrihefez.com/clips/2550bf96a0ef639b.mp3 | grep -qi 'content-security-policy'
+
