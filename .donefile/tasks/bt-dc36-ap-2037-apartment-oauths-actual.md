@@ -3,7 +3,7 @@ id: bt-dc36
 title: ap-2037 (apartment, oauth's actual missing CSP/nosniff on the live host) is the companion fix
   this task's audit gap was hiding — still open per last check, worth prioritizing now that the
   auditor can see it
-status: open
+status: claimed
 priority: p2
 tags:
   - security
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-08T01:15:37Z
 reported: 2026-10-08
+claim:
+  owner: capacity-engine
+  at: 2026-10-08T02:52:19Z
 ---
 
 Named in the finding: csp/nosniff
@@ -27,3 +30,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit f5c1942).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-08 claimed by capacity-engine
