@@ -1,0 +1,2 @@
+$ curl -sI https://oauth.omrihefez.com/health | grep -qi content-security-policy && curl -sI https://oauth.omrihefez.com/health | grep -qi 'x-content-type-options: nosniff'
+
