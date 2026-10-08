@@ -2,7 +2,7 @@
 id: bt-0611
 title: audit-domains.sh exempts oauth from the security-header baseline as 'no auth wall by design'
   — which is why ap-2037's missing CSP/nosniff on our one public surface went unseen
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-08
 filed:
   owner: meni-worker/board-refill-work-discov-b483dc
   at: 2026-10-08T00:34:31Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-08T00:53:36Z
 ---
 
 `scripts/audit-domains.sh` exempts `oauth` from the body-shaped security-header
@@ -110,3 +113,6 @@ different response paths with different header sets.
   being evaluated rather than skipped. Do NOT make the evidence a live
   `curl -sI` against oauth.omrihefez.com — that asserts ap-2037's fix, not this
   one, and this task must be closeable before or after that one lands.
+
+## Log
+- 2026-10-08 claimed by capacity-engine
