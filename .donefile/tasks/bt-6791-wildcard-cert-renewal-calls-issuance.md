@@ -2,7 +2,7 @@
 id: bt-6791
 title: Wildcard cert renewal calls issuance a success by grepping output for 'success', which also
   matches 'unsuccessful' — a false success exits 0 so nothing alerts
-status: claimed
+status: done
 priority: p2
 tags:
   - reliability
@@ -12,9 +12,35 @@ created: 2026-10-08
 filed:
   owner: meni-worker/board-refill-work-discov-9e7c91
   at: 2026-10-08T13:35:11Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-08T14:14:38Z
+done:
+  at: 2026-10-08T14:34:49Z
+  by: capacity-engine/worker
+  waived: scripts/renew-wildcard-cert.sh is a cron script (weekly, Mon 06:17 IDT via run-monitor.sh),
+    not Vercel-served app surface -- no deploy/restart applies. Cron execs the file fresh from disk
+    on its next scheduled run, so the fix is already live for that run. Same pattern as this board's
+    vercel-tagged TLS/DNS tasks with no served-content change.
+evidence:
+  - type: commit
+    value: 9b19940f2f6f31aa8b950dfdf3d069b01ecc1eb9
+    verified: 2026-10-08T14:34:49Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/renew-wildcard-cert-issue-ok.test.sh
+    exit: 0
+    at: 2026-10-08T14:34:49Z
+    log: evidence/bt-6791-2026-10-08T14-34-49Z-test.txt
+    sha256: a6f0252072a2c70d4abe1379c6cd6d07df92cf1700b97a55f910d41cd8eb3605
+    bytes: 761
+  - type: note
+    value: "Seen to fail first: echo \"Error: renewal unsuccessful for *.omrihefez.com\" | grep -qi
+      success exits 0 on the pre-fix repo (false positive reproduced); the fixed
+      issuance_reports_success() exits 1 on that string and 0 on a genuine success message. Also
+      fixed: 'vercel certs ls' no longer discards stderr -- a dead Vercel credential now surfaces as
+      an auth FATAL (exit 1, alerting) instead of an unparseable-expiry WARN that proceeded into a
+      doomed renewal. Landed on main via branch hotfix/bt-6791-cert-renewal-grep (repo's own
+      pre-push guard requires main/promote/*/hotfix/* to land on main, caught my first
+      colonless-refspec attempt and refused it). Verified by re-fetching origin/main directly
+      (2781b7e..9b19940) and grepping the function out of origin/main's own content -- not from a
+      monitor/task-notification event."
 ---
 
 `scripts/renew-wildcard-cert.sh` decides the wildcard certificate was issued by
@@ -118,3 +144,4 @@ DONE WHEN:
 
 ## Log
 - 2026-10-08 claimed by capacity-engine
+- 2026-10-08 done by capacity-engine/worker — commit 9b19940f2f6f, test `cd /home/omri/projects/bass-tuner && bash scripts/renew-wildcard-cert-issue-ok.test.sh` exit 0 (log: evidence/bt-6791-2026-10-08T14-34-49Z-test.txt) (evidence waived: scripts/renew-wildcard-cert.sh is a cron script (weekly, Mon 06:17 IDT via run-monitor.sh), not Vercel-served app surface -- no deploy/restart applies. Cron execs the file fresh from disk on its next scheduled run, so the fix is already live for that run. Same pattern as this board's vercel-tagged TLS/DNS tasks with no served-content change.)

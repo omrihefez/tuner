@@ -1,0 +1,14 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/renew-wildcard-cert-issue-ok.test.sh
+
+1. the exact false-positive from bt-6791: a failure message containing 'unsuccessful'
+  ok — '...unsuccessful' with exit 0 is correctly treated as failure
+2. other unsuccessful-shaped failure text from the task
+  ok — all unsuccessful-shaped failure strings correctly treated as failure
+3. a real success message still reads as success
+  ok — genuine success message (exit 0) reads as success
+4. non-zero exit always fails, even with the word success present
+  ok — non-zero exit overrides any success-shaped text
+5. a plain failure with no success-shaped words at all
+  ok — plain failure (non-zero exit, no success text) reads as failure
+
+PASS (5 assertions)
