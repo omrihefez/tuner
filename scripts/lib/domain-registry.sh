@@ -10,8 +10,19 @@
 # DOMAIN.md lives in omrihefez/meni, which workers on this box may not
 # commit to, so the fix reads it at runtime instead of duplicating it.
 #
-# This file is duplicated verbatim in meniapp and bass-tuner (separate git
-# repos, no shared package) — keep the two copies identical.
+# This file is duplicated into meniapp and bass-tuner (separate git repos, no
+# shared package). What must stay in sync is derive_registry_hosts's
+# BEHAVIOUR — same registry in, same host list out — not the file's bytes:
+# this header is allowed to differ per repo (each side names the OTHER
+# repo's audit-domains.sh from its own point of view, by design). ma-6493's
+# meniapp/scripts/check-domain-registry-sync.sh (cron 13 6 * * *) verifies
+# the behavioural claim daily by sourcing both copies against a shared
+# fixture and diffing their output — it is NOT a whole-file identity check,
+# which would go red on this header alone. There is deliberately no
+# .vendored.sh pinned-copy sibling for this file: that convention is for a
+# private copy shadowing one canonical implementation, which isn't this
+# shape (there is no single canonical copy — DOMAIN.md lives in a repo
+# neither side may commit to); the sync check above is the guard instead.
 #
 # Only §1 rows whose Status column is 🟢 live or 🔵 alias qualify. Apex
 # (`omrihefez.com`, whose name cell is already a fully-qualified domain, not
