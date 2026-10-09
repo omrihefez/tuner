@@ -145,3 +145,10 @@ DONE WHEN:
 ## Log
 - 2026-10-08 claimed by capacity-engine
 - 2026-10-08 done by capacity-engine/worker — commit 9b19940f2f6f, test `cd /home/omri/projects/bass-tuner && bash scripts/renew-wildcard-cert-issue-ok.test.sh` exit 0 (log: evidence/bt-6791-2026-10-08T14-34-49Z-test.txt) (evidence waived: scripts/renew-wildcard-cert.sh is a cron script (weekly, Mon 06:17 IDT via run-monitor.sh), not Vercel-served app surface -- no deploy/restart applies. Cron execs the file fresh from disk on its next scheduled run, so the fix is already live for that run. Same pattern as this board's vercel-tagged TLS/DNS tasks with no served-content change.)
+- 2026-10-09 DATE-REFUTED: 2026-10-23 the wildcard cert was measured valid to 2026-12-20 (ma-e61d, done), so this task 2026-10-23 reference is a dead deadline and the dated-constraint sweep should stop raising it.
+
+APPLYING ce-6d9e MECHANISM RATHER THAN LETTING THE SWEEP RE-RAISE IT. The dated-constraints section was still showing 2026-10-23 as "14d away" off this task body, even though the task is DONE and the date was refuted by measurement. ce-6d9e built exactly this suppression — a per-task DATE-REFUTED marker, read by DATE_REFUTED_RE at lib.mjs:12009 — and it had never been applied here. A discovery sweep flagged it as "too small to file against ce-6d9e" and noted it in passing instead, which is how a one-line fix stays undone indefinitely.
+
+That is the same shape as six other findings today: a mechanism that exists, is correct, and is never invoked. The suppression was built, documented, and left unused, so the sweep kept reporting a deadline that nothing was waiting for. Cost is not the sweep line itself — it is that a false dated constraint sitting in the brief trains the reader to discount all of them, and the next real one looks the same.
+
+Used the task-body marker rather than config refuted_dated_constraints because the refutation is specific to THIS task citation: the evidence (ma-e61d) and the dead date belong together where anyone reading bt-6791 will see both. A config entry would suppress the symptom one level away from the reason.
