@@ -1,7 +1,7 @@
 ---
 id: bt-10dd
 title: Flip DOMAIN.md §1 arch-preview row from 🟢 live to retired, citing ar-1fde
-status: open
+status: claimed
 priority: p3
 tags:
   - from-brief
@@ -10,6 +10,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T08:21:25Z
 reported: 2026-10-10
+claim:
+  owner: capacity-engine
+  at: 2026-10-10T08:23:49Z
 ---
 
 Named in the finding: domain.md
@@ -31,3 +34,6 @@ Named file 'domain.md' actually lives in /home/omri/meni — a real repo, but de
 That task's report closed DONE (commit 81dc7e1e118511521ee92297bbd25bf6d5f98348).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-10 claimed by capacity-engine
