@@ -1,0 +1,2 @@
+$ curl -sI https://oauth.omrihefez.com/health | grep -qi 'x-frame-options: DENY' && curl -sI https://oauth.omrihefez.com/health | grep -qi '^permissions-policy:'
+

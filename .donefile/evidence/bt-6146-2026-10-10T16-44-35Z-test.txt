@@ -1,0 +1,2 @@
+$ bash scripts/audit-domains.sh | grep -qv 'DRIFT.*oauth.omrihefez.com'
+
