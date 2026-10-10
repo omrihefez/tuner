@@ -1,0 +1,23 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/lib/domain-registry.test.sh && bash scripts/audit-domains.test.sh >/dev/null && cd /home/omri/projects/meniapp && bash scripts/domain-registry.test.sh >/dev/null && bash scripts/check-domain-registry-sync.test.sh >/dev/null && bash scripts/check-cert-expiry.test.sh
+
+OK: derive_registry_hosts() body is identical in bass-tuner and meniapp
+1. every host far from expiry -> exit 0, no alert
+  ok — exit 0, no notify
+2. THE ma-05ac SHAPE — a cert near expiry -> fails, alerts, names days left
+  ok — exit 1 + alert — a near-expiry cert cannot hide (the exact ma-05ac failure)
+3. a handshake failure is a failure too, not a skip
+  ok — an unreachable host on a hostname the estate serves is treated as a real failure
+4. alerts dedup on the failure set, and clear on recovery
+  ok — one alert per distinct failure set, not one per tick
+  ok — recovers to exit 0 once renewed
+5. --report never alerts, even with failures
+  ok — exit 1, no notify, status line printed
+6. CERT_MIN_DAYS overrides the default 14d threshold
+  ok — the threshold is genuinely configurable
+7. an unparseable cert response is a failure, not a silent pass
+  ok — a cert response that fails to parse still fails the check
+8. the default host list is DERIVED from DOMAIN.md at runtime (ma-20c5), not hand-copied
+  ok — HOSTS tracks DOMAIN.md at runtime: new live rows appear, tombstoned rows disappear, composer stays
+
+PASS (9 assertions)
+2026-10-10T16:02:34Z FAIL [expiring] a.example.com — cert expires in 20d (notAfter: Feb 04 08:00:00 2027 GMT), below the 30d threshold

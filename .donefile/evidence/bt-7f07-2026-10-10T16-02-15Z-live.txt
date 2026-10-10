@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && AUDIT_SUBS=preview.meni bash scripts/audit-domains.sh | tail -1
+
+OK     preview.meni.omrihefez.com/login -> 200 (Strict-Transport-Security: max-age=31536000; includeSubDomains)
