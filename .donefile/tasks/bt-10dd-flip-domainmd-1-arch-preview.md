@@ -1,7 +1,7 @@
 ---
 id: bt-10dd
 title: Flip DOMAIN.md §1 arch-preview row from 🟢 live to retired, citing ar-1fde
-status: blocked
+status: open
 priority: p3
 tags:
   - from-brief
@@ -10,24 +10,6 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T08:21:25Z
 reported: 2026-10-10
-blocked:
-  reason: DOMAIN.md §1 row 26 (arch-preview) still reads 🟢 live; the fix is editing
-    /home/omri/meni/DOMAIN.md, a repo bass-tuner workers cannot commit to. Already queued for Main
-    at ~/inbox/meni-board-queue/2026-10-10-domain-md-arch-preview-still-live.md (pre-existing, not
-    created by this run). bt-f55e's commit 81dc7e1e only added an audit-script exemption citing
-    ar-1fde; it did not touch DOMAIN.md itself.
-  since: 2026-10-10
-  probe:
-    cmd: N=$(grep -cE "^\| \`arch-preview\` \|.*🟢 live \|" /home/omri/meni/DOMAIN.md); [ "$N" = "0" ]
-    exit: 1
-    at: 2026-10-10T08:25:36Z
-    log: evidence/bt-10dd-2026-10-10T08-25-36Z-probe.txt
-    sha256: 909177dd5fad6368f078c79047aec8061442ac512de37001fe6166be1dde5f87
-    bytes: 99
-  gate_owner: main
-  parked_claim:
-    owner: capacity-engine
-    at: 2026-10-10T08:23:49Z
 ---
 
 Named in the finding: domain.md
@@ -52,9 +34,9 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Gate
 PROBE: N=$(grep -cE "^\| \`arch-preview\` \|.*🟢 live \|" /home/omri/meni/DOMAIN.md); [ "$N" = "0" ]
-GATE-OWNER: main
 
 ## Log
 - 2026-10-10 claimed by capacity-engine
 - 2026-10-10 claim by capacity-engine parked (blocked)
 - 2026-10-10 blocked: DOMAIN.md §1 row 26 (arch-preview) still reads 🟢 live; the fix is editing /home/omri/meni/DOMAIN.md, a repo bass-tuner workers cannot commit to. Already queued for Main at ~/inbox/meni-board-queue/2026-10-10-domain-md-arch-preview-still-live.md (pre-existing, not created by this run). bt-f55e's commit 81dc7e1e only added an audit-script exemption citing ar-1fde; it did not touch DOMAIN.md itself. [probe `N=$(grep -cE "^\| \`arch-preview\` \|.*🟢 live \|" /home/omri/meni/DOMAIN.md); [ "$N" = "0" ]` exit 1, owner main]
+- 2026-10-10 unblocked
