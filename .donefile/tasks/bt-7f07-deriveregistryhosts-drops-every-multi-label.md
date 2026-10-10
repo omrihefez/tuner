@@ -2,7 +2,7 @@
 id: bt-7f07
 title: derive_registry_hosts drops every multi-label host as well as the apex, silently, so a
   preview.meni registry row cannot restore cert-expiry or domain-audit coverage
-status: open
+status: claimed
 priority: p2
 tags:
   - reliability
@@ -13,6 +13,9 @@ created: 2026-10-10
 filed:
   owner: meni-worker/board-refill-work-discov-71bbcb
   at: 2026-10-10T14:38:40Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-10T14:56:32Z
 ---
 
 `derive_registry_hosts`'s dot-shaped-name guard excludes the apex AND every
@@ -110,3 +113,6 @@ its teardown, and that this repo's SUBS was missing `meniapp`, `meniapp-api` and
 
 
 cross-board: names a file under 'meniapp' at /home/omri/projects/meniapp — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-10-10 claimed by capacity-engine
