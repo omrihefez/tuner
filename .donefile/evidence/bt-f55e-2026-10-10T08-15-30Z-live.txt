@@ -1,0 +1,2 @@
+$ bash -c "cd /home/omri/projects/bass-tuner; OUT=\$(bash scripts/audit-domains.sh 2>&1); echo \"\$OUT\" | grep -qF \"SKIP   arch-preview.omrihefez.com -> 404 retired, not drift\" || exit 1; N=\$(echo \"\$OUT\" | grep -cE \"^(DRIFT|CHECK)[[:space:]]+arch-preview\.omrihefez\.com\"); [ \"\$N\" = \"0\" ]"
+
