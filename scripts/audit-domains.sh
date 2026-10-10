@@ -51,7 +51,19 @@
 # reported as DRIFT (same severity/verb as the existing Deployment-Protection
 # drift line above), not a separate category, because both mean "this host's
 # posture silently diverged from its siblings."
-REQUIRED_HEADERS=(x-frame-options x-content-type-options referrer-policy)
+#
+# COOP/CORP (bt-1176): same admission test as everything else in this file —
+# measured live 2026-10-10, 7 of 9 Vercel hosts now send both
+# Cross-Origin-Opener-Policy and Cross-Origin-Resource-Policy (bass, compose,
+# meni, preview.meni, meniapp, kidai, tik — the last one only as of tkn-c2a6,
+# which closed after this task was filed). That's the estate norm, so both
+# join REQUIRED_HEADERS rather than getting a separate check. Checked for
+# PRESENCE only, same as the other headers here — no value-level assertion.
+# Remaining gap: trips (th-f5bc, open). planner is unaffected by this
+# addition the same way it's unaffected by every other REQUIRED_HEADERS
+# entry: it never serves a 200 page at its checked path, so the body-shaped
+# baseline (this array) never applies to it.
+REQUIRED_HEADERS=(x-frame-options x-content-type-options referrer-policy cross-origin-opener-policy cross-origin-resource-policy)
 
 # PERMISSIONS-POLICY (bt-4164): added to the baseline on the same admission
 # test bt-a2c2 set above — "what the siblings actually send, not an
@@ -391,15 +403,28 @@ check_hsts_at() {
   check_hsts "$label" "$resp" "$code"
 }
 
-# check_nonvercel_path <host incl. .omrihefez.com> <path>
+# check_nonvercel_path <host incl. .omrihefez.com> <path> [vercel_pinned]
 #   Fetches <host><path> and asserts the baseline appropriate to what came
 #   back, updating the shared FAIL flag. Never touches missing_security_
 #   headers()/REQUIRED_HEADERS — those stay scoped to the SUBS loop so its
 #   existing behaviour and tests are untouched; its own inline
 #   CSP/X-Frame-Options/Referrer-Policy/Permissions-Policy checks below are
 #   the html-gated set for THIS loop, kept separate on purpose.
+#
+#   vercel_pinned (bt-1176): the third, optional arg. The SUBS loop's
+#   307/308/401 branch routes a Vercel host through THIS function (via
+#   VERCEL_CHECK_PATHS) to baseline its one real page — meni/login,
+#   trips/login, tik/login, planner's own "/". Those hosts are part of the
+#   same Vercel census that admitted COOP/CORP into REQUIRED_HEADERS above,
+#   so they need the identical check — but the OTHER_LIVE loop also calls
+#   this function (via NONVERCEL_CHECK_PATHS) for genuinely non-Vercel hosts
+#   (house, oauth, tik-api, meniapp-api) that were never measured as part of
+#   that census; house and oauth are confirmed NOT sending COOP/CORP live
+#   today, and flagging them would be new, out-of-scope noise this task
+#   never asked for. The flag is how one shared function serves both callers
+#   without conflating them: non-empty only on the Vercel-loop call sites.
 check_nonvercel_path() {
-  local host="$1" path="$2"
+  local host="$1" path="$2" vercel_pinned="${3:-}"
   local resp code ctype label="$host$path"
   local pp_exempt="${PERMISSIONS_POLICY_EXEMPT[${host%.omrihefez.com}]:-}"
   resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$host$path")
@@ -434,6 +459,10 @@ check_nonvercel_path() {
         || missing+=("content-security-policy")
       echo "$resp" | grep -qi '^x-frame-options:' || missing+=("x-frame-options")
       echo "$resp" | grep -qi '^referrer-policy:' || missing+=("referrer-policy")
+      if [ -n "$vercel_pinned" ]; then
+        echo "$resp" | grep -qi '^cross-origin-opener-policy:' || missing+=("cross-origin-opener-policy")
+        echo "$resp" | grep -qi '^cross-origin-resource-policy:' || missing+=("cross-origin-resource-policy")
+      fi
       if echo "$resp" | grep -qi '^permissions-policy:'; then
         :
       elif [ -n "$pp_exempt" ]; then
@@ -558,7 +587,7 @@ for d in "${SUBS[@]}"; do
     elif [ -n "${VERCEL_CHECK_PATHS[$d]:-}" ]; then
       read -r -a vpaths <<<"${VERCEL_CHECK_PATHS[$d]}"
       for vp in "${vpaths[@]}"; do
-        check_nonvercel_path "$host" "$vp"
+        check_nonvercel_path "$host" "$vp" vercel
       done
     else
       echo "UNPINNED $host -> $code ${loc:+($loc)} registry lists this as live Vercel but no page is served at / and nobody pinned a VERCEL_CHECK_PATHS entry for it — add one" >&2

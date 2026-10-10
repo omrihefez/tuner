@@ -71,7 +71,7 @@ ok() { echo "  ok — $*"; pass=$((pass + 1)); }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 FIXTURE="$TMP/DOMAIN.md"
 FIXTURE_MAP="$TMP/responses.tsv"   # host<TAB>path<TAB>code<TAB>location<TAB>extra-headers (| separated "name: value")
-FULL_HEADERS="content-security-policy: default-src 'self'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|strict-transport-security: max-age=31536000; includeSubDomains"
+FULL_HEADERS="content-security-policy: default-src 'self'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains"
 
 cat >"$FIXTURE" <<'EOF'
 | Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
@@ -208,7 +208,7 @@ ok "a 200 response with zero security headers is DRIFT, and this is exactly the 
 
 echo "8. a report-only CSP still counts as present (the trips.omrihefez.com shape), and a 401/redirect host is exempt from the header baseline entirely"
 : >"$FIXTURE_MAP"
-printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy-report-only: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP"
 printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
 MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
 PLANNER_OK >>"$FIXTURE_MAP"
@@ -502,7 +502,7 @@ echo "18. bt-3ba1 (FAILING shape): meni's 307-redirect root is asserted on nothi
 : >"$FIXTURE_MAP4"
 BASS_OK >>"$FIXTURE_MAP4"
 printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
-printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP4"
 out="$(run4)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (meni's /login missing x-frame-options), got $rc: $out"
 grep -q "^DRIFT  meni.omrihefez.com/login -> 200 missing security headers: x-frame-options$" <<<"$out" \
@@ -594,7 +594,7 @@ cat >"$FIXTURE6" <<'EOF'
 | `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
 EOF
 run6() { CURL_FIXTURE_MAP="$FIXTURE_MAP6" DOMAIN_MD="$FIXTURE6" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
-BASS_HSTS() { printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|strict-transport-security: %s\n' "$1"; }
+BASS_HSTS() { printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: %s\n' "$1"; }
 
 echo "24. bt-8c53 (FAILING shape, pre-fix this was OK): max-age=0 actively instructs the browser to forget the HSTS pin — a presence-only check reported it OK regardless"
 : >"$FIXTURE_MAP6"
@@ -633,7 +633,7 @@ ok "the same probe flips to OK once both the floor and includeSubDomains are sat
 
 echo "27. bt-4164 (FAILING shape, SUBS side): bass with the full baseline minus Permissions-Policy is DRIFT, naming permissions-policy precisely — confirmed red against the parent commit (pre-bt-4164), which has no such check at all"
 : >"$FIXTURE_MAP6"
-printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP6"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP6"
 out="$(run6)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (bass missing permissions-policy), got $rc: $out"
 grep -q "^DRIFT  bass.omrihefez.com -> 200 missing security headers: permissions-policy$" <<<"$out" \
@@ -661,7 +661,7 @@ EOF
 run7() { CURL_FIXTURE_MAP="$FIXTURE_MAP7" DOMAIN_MD="$FIXTURE7" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
 : >"$FIXTURE_MAP7"
 BASS_OK >>"$FIXTURE_MAP7"
-printf 'compose.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP7"
+printf 'compose.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP7"
 out="$(run7)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 (compose is exempted, not DRIFT), got $rc: $out"
 grep -q "^OK     compose.omrihefez.com -> 200 (security headers present)" <<<"$out" \
@@ -674,7 +674,7 @@ echo "30. bt-4164 (check_nonvercel_path-side exemption): meni, PERMISSIONS_POLIC
 : >"$FIXTURE_MAP4"
 BASS_OK >>"$FIXTURE_MAP4"
 printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
-printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP4"
 out="$(run4)"; rc=$?
 [ "$rc" -eq 0 ] || fail "expected exit 0 (meni/login is exempted, not DRIFT), got $rc: $out"
 grep -q "^OK     meni.omrihefez.com/login -> 200 (security headers present)" <<<"$out" \
@@ -774,6 +774,78 @@ grep -q "^DRIFT  omrihefez.com -> 404 Strict-Transport-Security missing includeS
   || fail "expected the ordinary DRIFT check to run for a 404 that doesn't match the unclaimed signature, got: $out"
 grep -q "^SKIP   omrihefez.com" <<<"$out" && fail "expected no apex-unclaimed SKIP line for a 404 without the matching x-vercel-error header, got: $out"
 ok "the exemption is scoped to the exact measured signature (404 AND x-vercel-error: DEPLOYMENT_NOT_FOUND) — a differently-shaped 404 (this is also test 31's fixture) still falls through to the real check"
+
+# --- bt-1176: Cross-Origin-Opener-Policy / Cross-Origin-Resource-Policy
+# admitted to REQUIRED_HEADERS (same admission test as every other header in
+# this file — 7 of 9 live Vercel hosts send both as of 2026-10-10). Confirmed
+# red against the parent commit (9dda732, pre-bt-1176), which has no such
+# check at all — bass with its existing full baseline minus COOP/CORP read OK
+# there, not DRIFT.
+
+echo "38. bt-1176 (FAILING shape, SUBS side): bass with the full baseline minus COOP/CORP is DRIFT, naming both missing headers precisely"
+: >"$FIXTURE_MAP6"
+printf 'bass.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(self), geolocation=()|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (bass missing coop/corp), got $rc: $out"
+grep -q "^DRIFT  bass.omrihefez.com -> 200 missing security headers: cross-origin-opener-policy,cross-origin-resource-policy$" <<<"$out" \
+  || fail "expected a DRIFT line naming both missing headers, got: $out"
+ok "a 200 Vercel host with every other header present but no COOP/CORP is DRIFT — the exact bt-1176 gap, not a check only ever seen passing"
+
+echo "39. bt-1176 (PASSING shape, same probe): the SAME bass row flips to OK once COOP/CORP are added — proves this is a real fail/pass check"
+: >"$FIXTURE_MAP6"
+BASS_HSTS "max-age=31536000; includeSubDomains" >>"$FIXTURE_MAP6"
+out="$(run6)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once coop/corp are present, got $rc: $out"
+grep -q "^OK     bass.omrihefez.com -> 200 (security headers present)" <<<"$out" \
+  || fail "expected bass to read OK once coop/corp are present (BASS_HSTS already includes them), got: $out"
+ok "the same probe flips to OK the moment COOP/CORP are added back"
+
+echo "40. bt-1176 (FAILING shape, check_nonvercel_path/vercel_pinned side): trips's own live gap — a Vercel host's VERCEL_CHECK_PATHS-pinned /login missing COOP/CORP is DRIFT, the exact shape measured live 2026-10-10"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'trips.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+printf 'trips.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=(self)|strict-transport-security: max-age=63072000; includeSubDomains; preload\n' >>"$FIXTURE_MAP4"
+FIXTURE4_TRIPS="$TMP/DOMAIN4-trips.md"
+cat >"$FIXTURE4_TRIPS" <<'EOF'
+| Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
+|---|---|---|---|---|---|---|
+| `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
+| `trips` | Trips hub | trips-hub | Vercel | wildcard | 🟢 live | 307 at / -> /login, VERCEL_CHECK_PATHS pins /login (bt-3ba1) |
+EOF
+out="$(CURL_FIXTURE_MAP="$FIXTURE_MAP4" DOMAIN_MD="$FIXTURE4_TRIPS" CURL_CMD="$CURL_STUB" bash "$SCRIPT")"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (trips's pinned /login missing coop/corp), got $rc: $out"
+grep -q "^DRIFT  trips.omrihefez.com/login -> 200 missing security headers: cross-origin-opener-policy,cross-origin-resource-policy$" <<<"$out" \
+  || fail "expected the pinned /login path to DRIFT naming both missing headers, got: $out"
+ok "a Vercel host reached only via its VERCEL_CHECK_PATHS-pinned path (not a direct 200 at /) is ALSO checked for COOP/CORP — this is the exact live gap bt-1176 was filed over (trips, th-f5bc still open), proving the check isn't scoped to missing_security_headers() alone"
+
+echo "41. bt-1176 (PASSING shape, same probe): the SAME trips /login flips to OK once COOP/CORP are added"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'trips.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+printf 'trips.omrihefez.com\t/login\t200\t\t%s\n' "content-type: text/html|$FULL_HEADERS" >>"$FIXTURE_MAP4"
+out="$(CURL_FIXTURE_MAP="$FIXTURE_MAP4" DOMAIN_MD="$FIXTURE4_TRIPS" CURL_CMD="$CURL_STUB" bash "$SCRIPT")"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once trips's /login sends coop/corp, got $rc: $out"
+grep -q "^OK     trips.omrihefez.com/login -> 200 (security headers present)" <<<"$out" \
+  || fail "expected trips's /login to flip to OK, got: $out"
+ok "the pinned-path COOP/CORP check flips to OK the moment the fix is present — not a check only ever seen failing"
+
+echo "42. bt-1176 (scope boundary): a genuinely non-Vercel host (NONVERCEL_CHECK_PATHS, no vercel_pinned flag) is NEVER checked for COOP/CORP — house and oauth are confirmed absent live today, and this task's census never covered them; adding the check unconditionally to check_nonvercel_path() would have introduced new, out-of-scope DRIFT here"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (house's missing coop/corp must not count against a non-Vercel host), got $rc: $out"
+grep -q "^OK     house.omrihefez.com/login -> 200" <<<"$out" \
+  || fail "expected house's /login to stay OK despite sending no COOP/CORP, got: $out"
+grep -qE "cross-origin-(opener|resource)-policy" <<<"$out" \
+  && fail "COOP/CORP must never appear in check_nonvercel_path's output for a non-Vercel (NONVERCEL_CHECK_PATHS) host — that would mean the vercel_pinned scoping leaked, got: $out"
+ok "a non-Vercel host reached through NONVERCEL_CHECK_PATHS (no vercel_pinned flag) is never checked for COOP/CORP, keeping this task scoped to the Vercel census it was actually filed over"
 
 echo
 echo "PASS ($pass assertions)"
