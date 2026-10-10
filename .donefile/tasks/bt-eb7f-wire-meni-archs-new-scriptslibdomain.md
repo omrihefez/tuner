@@ -3,7 +3,7 @@ id: bt-eb7f
 title: Wire meni-arch's new scripts/lib/domain-registry.sh into meniapp's
   check-domain-registry-sync.sh daily cron (ma-6493) so a 3-way drift between
   meniapp/bass-tuner/meni-arch's copies is caught, not just the existing 2-way check
-status: open
+status: claimed
 priority: p3
 tags:
   - ops
@@ -13,6 +13,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T21:24:46Z
 reported: 2026-10-11
+claim:
+  owner: capacity-engine
+  at: 2026-10-10T21:27:42Z
 ---
 
 Named in the finding: scripts/lib/domain-registry.sh, check-domain-registry-sync.sh, meniapp/bass-tuner/meni-arch
@@ -36,3 +39,6 @@ That task's report closed DONE (commit ea93fe019276678b32f894e574e72e6347d6317c 
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `ea93fe019276678b32f894e574e72e6347d6317c` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-11 claimed by capacity-engine
