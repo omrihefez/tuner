@@ -26,10 +26,23 @@
 #
 # Only §1 rows whose Status column is 🟢 live or 🔵 alias qualify. Apex
 # (`omrihefez.com`, whose name cell is already a fully-qualified domain, not
-# a bare label) is excluded by construction via the "contains a dot" check,
-# on top of its own 🟠 status already failing the emoji filter. Tombstoned
-# (🔴), needs-attention (🟠), pending-removal (🕯️), held (⛔) and
+# a bare label) is excluded by an anchored `omrihefez\.com$` match on the
+# name, on top of its own 🟠 status already failing the emoji filter.
+# Tombstoned (🔴), needs-attention (🟠), pending-removal (🕯️), held (⛔) and
 # email-infra (✉️) rows are excluded the same way.
+#
+# That exclusion is ANCHORED, not a bare "contains a dot" test, since bt-7f07
+# (2026-10-10). The dot test also dropped every legitimate MULTI-LABEL host in
+# the zone — `preview.meni`, meni-arch's live passkey-gated staging alias —
+# and dropped it SILENTLY, so adding a registry row for such a host could not
+# restore cert-expiry or domain-audit coverage and nothing said why. The
+# anchored form keeps the apex guard load-bearing: §6 contemplates the apex
+# going 🟢 live, at which point the status filter stops excluding it and a
+# bare `omrihefez.com` would reach callers that append `.omrihefez.com`
+# themselves, yielding `omrihefez.com.omrihefez.com`. Measured both ways
+# against a fixture before and after. Do NOT "simplify" this back to a dot
+# test, and do not delete it on the grounds that the status filter already
+# covers today's apex row — it covers only today's STATUS.
 
 # derive_registry_hosts <domain_md_path> [vercel|non-vercel]
 #   Prints one bare subdomain label per line (no .omrihefez.com suffix —
@@ -47,7 +60,7 @@ derive_registry_hosts() {
       if (name !~ /`/) next
       if (!match(name, /`[^`]*`/)) next
       raw = substr(name, RSTART + 1, RLENGTH - 2)
-      if (raw ~ /\./) next
+      if (raw ~ /omrihefez\.com$/) next
       if (status !~ /🟢/ && status !~ /🔵/) next
       is_vercel = (host ~ /Vercel/)
       if (mode == "vercel" && !is_vercel) next
