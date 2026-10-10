@@ -1,7 +1,7 @@
 ---
 id: bt-e8aa
 title: trips.omrihefez.com missing Cross-Origin-Opener-Policy/Cross-Origin-Resource-Policy
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T17:58:14Z
 reported: 2026-10-10
+claim:
+  owner: capacity-engine
+  at: 2026-10-10T18:20:37Z
 ---
 
 Named in the finding: cross-origin-opener-policy/cross-origin-resource-policy
@@ -32,3 +35,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit e88178b).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-10 claimed by capacity-engine
