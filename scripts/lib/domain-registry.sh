@@ -57,11 +57,17 @@ derive_registry_hosts() {
     NF < 8 { next }
     {
       name = $2; host = $5; status = $7
-      if (name !~ /`/) next
-      if (!match(name, /`[^`]*`/)) next
+      is_live = (status ~ /🟢/ || status ~ /🔵/)
+      if (!is_live) next
+      if (name !~ /`/ || !match(name, /`[^`]*`/)) {
+        print "derive_registry_hosts: skipping unrepresentable live/alias row (no backtick-quoted name): " name > "/dev/stderr"
+        next
+      }
       raw = substr(name, RSTART + 1, RLENGTH - 2)
-      if (raw ~ /omrihefez\.com$/) next
-      if (status !~ /🟢/ && status !~ /🔵/) next
+      if (raw ~ /omrihefez\.com$/) {
+        print "derive_registry_hosts: skipping apex-shaped live/alias row (excluded by design): " raw > "/dev/stderr"
+        next
+      }
       is_vercel = (host ~ /Vercel/)
       if (mode == "vercel" && !is_vercel) next
       if (mode == "non-vercel" && is_vercel) next
