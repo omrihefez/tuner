@@ -2,7 +2,7 @@
 id: bt-820a
 title: audit-domains.sh exits 1 every morning on two apex HSTS drifts nobody can fix — no project
   serves the apex, so the header is unconfigurable and no task owns it
-status: claimed
+status: done
 priority: p2
 tags:
   - security
@@ -12,9 +12,31 @@ created: 2026-10-10
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-10T15:58:18Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-10T16:13:12Z
+done:
+  at: 2026-10-10T16:21:55Z
+  by: capacity-engine/worker
+  waived: "not Vercel-deployed: audit-domains.sh runs via cron (10 6 * * *
+    .../bass-tuner/scripts/audit-domains.sh, confirmed in crontab -l) directly against this repo's
+    main checkout on disk, not through Vercel's build. No restart/deploy step exists — the fix is
+    already live on disk the moment it lands on origin/main and the checkout is pulled (done here)."
+evidence:
+  - type: commit
+    value: 9dda732
+    verified: 2026-10-10T16:21:55Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-10T16:21:38Z
+    log: evidence/bt-820a-2026-10-10T16-21-38Z-test.txt
+    sha256: 81b3a79ec25457050153425403691aaaad6f21c2c8a311842bf9462c69732229
+    bytes: 12917
+  - type: note
+    value: apex HSTS findings (missing includeSubDomains + preload on the 404 DEPLOYMENT_NOT_FOUND
+      unclaimed apex) now report as a named, dated SKIP via APEX_UNCLAIMED_SKIP_REASON instead of
+      DRIFT; real cron script re-run confirmed exit 0 on this cause. One unrelated pre-existing
+      DRIFT remains (oauth.omrihefez.com/health missing x-frame-options+permissions-policy,
+      confirmed present on unmodified origin/main via control-worktree run before this change) —
+      filed as a separate FOLLOW-UP, not part of this task's scope.
 ---
 
 `scripts/audit-domains.sh` (cron `10 6`) exits **1 every morning** on two apex
@@ -89,3 +111,4 @@ once the apex returns a 200.
 
 ## Log
 - 2026-10-10 claimed by capacity-engine
+- 2026-10-10 done by capacity-engine/worker — commit 9dda732, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-820a-2026-10-10T16-21-38Z-test.txt) (evidence waived: not Vercel-deployed: audit-domains.sh runs via cron (10 6 * * * .../bass-tuner/scripts/audit-domains.sh, confirmed in crontab -l) directly against this repo's main checkout on disk, not through Vercel's build. No restart/deploy step exists — the fix is already live on disk the moment it lands on origin/main and the checkout is pulled (done here).)
