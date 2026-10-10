@@ -3,7 +3,7 @@ id: bt-eb7f
 title: Wire meni-arch's new scripts/lib/domain-registry.sh into meniapp's
   check-domain-registry-sync.sh daily cron (ma-6493) so a 3-way drift between
   meniapp/bass-tuner/meni-arch's copies is caught, not just the existing 2-way check
-status: claimed
+status: done
 priority: p3
 tags:
   - ops
@@ -13,9 +13,37 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T21:24:46Z
 reported: 2026-10-11
-claim:
-  owner: capacity-engine
-  at: 2026-10-10T21:27:42Z
+done:
+  at: 2026-10-10T21:44:54Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 7b899700
+    repo: meniapp
+    verified: 2026-10-10T21:44:54Z
+  - type: test
+    cmd: cd /home/omri/projects/meniapp && bash scripts/check-domain-registry-sync.test.sh
+    exit: 0
+    at: 2026-10-10T21:44:53Z
+    log: evidence/bt-eb7f-2026-10-10T21-44-53Z-test.txt
+    sha256: 56a0a2c5d205374bf8a0efcca487f49a864623dddbbb4a8adf915b8014b66097
+    bytes: 131
+  - type: note
+    value: "Not a bass-tuner change: the fix is meniapp's scripts/check-domain-registry-sync.sh
+      (ma-6493's daily cron), which checked only meniapp vs bass-tuner. Added a THIRD_LIB for
+      meni-arch's own copy (added in ar-2017) and compare all three pairwise; extended the
+      regression test with a case planting a divergence in meni-arch's copy ALONE (bass-tuner
+      untouched) and proved: (a) it is caught by the new 3-way check, exit 1, DRIFT naming
+      meni-arch=, and (b) the OLD 2-way script, run against the identical planted divergence via a
+      control run on origin/master's pre-fix script, reported 'clean' exit 0 -- a real false
+      negative, now closed. Companion header-comment fix landed in meni-arch itself: commit 6367502b
+      (meni-arch main) removes the 'not yet wired into that sync check' note, now stale. meni-arch
+      has no donefile repo alias on this board so that commit isn't cited as structured evidence
+      here, but it is real and pushed. bass-tuner's own copy of domain-registry.sh needed no change
+      -- it already matched. This task was filed on bass-tuner's board by the auto-filer's heuristic
+      even though the deliverable lives in meniapp/meni-arch; closing here per the task's own
+      guidance ('close with --commit <sha> --repo meniapp and say so -- that is a complete, correct
+      closure')."
 ---
 
 Named in the finding: scripts/lib/domain-registry.sh, check-domain-registry-sync.sh, meniapp/bass-tuner/meni-arch
@@ -42,3 +70,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-11 claimed by capacity-engine
+- 2026-10-11 done by capacity-engine/worker — commit 7b899700 (meniapp), test `cd /home/omri/projects/meniapp && bash scripts/check-domain-registry-sync.test.sh` exit 0 (log: evidence/bt-eb7f-2026-10-10T21-44-53Z-test.txt)

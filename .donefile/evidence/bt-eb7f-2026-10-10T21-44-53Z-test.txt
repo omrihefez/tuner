@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/meniapp && bash scripts/check-domain-registry-sync.test.sh
+
+PASS: all check-domain-registry-sync.sh cases
