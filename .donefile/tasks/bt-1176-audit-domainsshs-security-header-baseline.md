@@ -2,7 +2,7 @@
 id: bt-1176
 title: audit-domains.sh's security-header baseline doesn't check COOP/CORP — 6 of 9 live Vercel
   hosts now send both
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -11,9 +11,30 @@ created: 2026-10-10
 filed:
   owner: meni-worker/revisit-kidai-tik-trips--a12a68
   at: 2026-10-10T17:08:11Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-10T17:34:45Z
+done:
+  at: 2026-10-10T17:53:30Z
+  by: capacity-engine/worker
+  waived: "no activation step applies: audit-domains.sh is a cron-invoked ops script (crontab: '10 6 *
+    * *'), not part of bass-tuner's deployed Vercel app. The repo's own ff-sync-main-checkout.sh
+    cron (every 3min) auto-syncs this checkout to origin/main, so the next 10:06 daily run picks up
+    the new code with no restart. Already live-verified directly: ran the fixed script against
+    production from the feature worktree before merging — trips.omrihefez.com/login correctly
+    reports DRIFT for missing cross-origin-opener-policy/cross-origin-resource-policy (th-f5bc,
+    open), the other 8 hosts stay OK."
+evidence:
+  - type: commit
+    value: e88178b
+    verified: 2026-10-10T17:53:30Z
+  - type: test
+    cmd: bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-10T17:53:07Z
+    log: evidence/bt-1176-2026-10-10T17-53-07Z-test.txt
+    sha256: 5c3be5a928e3dc3ecff077cd43e0e2452f51cf42f6a83d2614d229763a2803c9
+    bytes: 12880
+  - type: note
+    value: "live-verified 2026-10-10: trips (th-f5bc) is the sole remaining gap; tik is now compliant
+      (tkn-c2a6 closed after this task was filed); planner stays exempt (401, no page served)."
 ---
 
 ma-24e3's census (2026-10-10 14:33-14:41Z, 9 live Vercel hosts) found 4/9 sending Cross-Origin-Opener-Policy + Cross-Origin-Resource-Policy, deliberately NOT added to REQUIRED_HEADERS at that count per bt-a2c2's own admission test ('what the siblings actually send, not an aspirational list') -- 4/9 doesn't meet it.
@@ -28,3 +49,4 @@ DONE WHEN: COOP and CORP are added to missing_security_headers()'s checks (same 
 - 2026-10-10 claimed by capacity-engine
 - 2026-10-10 released by capacity-engine
 - 2026-10-10 claimed by capacity-engine
+- 2026-10-10 done by capacity-engine/worker — commit e88178b, test `bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-1176-2026-10-10T17-53-07Z-test.txt) (evidence waived: no activation step applies: audit-domains.sh is a cron-invoked ops script (crontab: '10 6 * * *'), not part of bass-tuner's deployed Vercel app. The repo's own ff-sync-main-checkout.sh cron (every 3min) auto-syncs this checkout to origin/main, so the next 10:06 daily run picks up the new code with no restart. Already live-verified directly: ran the fixed script against production from the feature worktree before merging — trips.omrihefez.com/login correctly reports DRIFT for missing cross-origin-opener-policy/cross-origin-resource-policy (th-f5bc, open), the other 8 hosts stay OK.)
