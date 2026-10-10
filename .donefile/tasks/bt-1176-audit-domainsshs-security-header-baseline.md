@@ -2,7 +2,7 @@
 id: bt-1176
 title: audit-domains.sh's security-header baseline doesn't check COOP/CORP — 6 of 9 live Vercel
   hosts now send both
-status: claimed
+status: open
 priority: p3
 tags:
   - security
@@ -11,9 +11,6 @@ created: 2026-10-10
 filed:
   owner: meni-worker/revisit-kidai-tik-trips--a12a68
   at: 2026-10-10T17:08:11Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-10T17:30:00Z
 ---
 
 ma-24e3's census (2026-10-10 14:33-14:41Z, 9 live Vercel hosts) found 4/9 sending Cross-Origin-Opener-Policy + Cross-Origin-Resource-Policy, deliberately NOT added to REQUIRED_HEADERS at that count per bt-a2c2's own admission test ('what the siblings actually send, not an aspirational list') -- 4/9 doesn't meet it.
@@ -26,3 +23,4 @@ DONE WHEN: COOP and CORP are added to missing_security_headers()'s checks (same 
 
 ## Log
 - 2026-10-10 claimed by capacity-engine
+- 2026-10-10 released by capacity-engine
