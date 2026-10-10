@@ -73,8 +73,12 @@ REQUIRED_HEADERS=(x-frame-options x-content-type-options referrer-policy)
 declare -A PERMISSIONS_POLICY_EXEMPT=(
   [compose]="cp-8845 2026-10-01"
   [meni]="ar-3426 2026-10-01"
-  [arch-preview]="ar-3426 2026-10-01"
 )
+# arch-preview's entry removed here, not just left stale (bt-f55e): ar-1fde
+# retired the host (vercel alias rm, 2026-10-09) and it now 404s by design,
+# so it never reaches the 200 branch this map guards. See
+# VERCEL_RETIRED_SKIP_REASON below for the exemption that actually applies
+# to it now.
 
 # missing_security_headers <raw response headers> <permissions-policy exemption, if any>
 #   Prints a comma-separated list of missing baseline header names (empty if
@@ -184,20 +188,23 @@ declare -A NONVERCEL_HSTS_ONLY_PATH=(
 # purely on status code/content-type — to run the same
 # CSP/X-Frame-Options/nosniff/Referrer-Policy/Cache-Control/HSTS checks used
 # on the non-Vercel side.
-#   meni/arch-preview/trips/tik: "/" redirects (307) to /login, which serves
-#     a real 200 HTML page — checked there.
+#   meni/trips/tik: "/" redirects (307) to /login, which serves a real 200
+#     HTML page — checked there.
 #   planner: "/" itself already returns 401 WITH the full header set (no
 #     separate unauthenticated page exists to redirect to) — checked at "/"
 #     again, this time through check_nonvercel_path()'s refusal-code branch
 #     (Cache-Control: no-store + HSTS) rather than the bare root-level
 #     check_hsts() every Vercel host already gets below.
+#   arch-preview WAS here on this same 307->/login pattern, dropped by
+#     bt-f55e (2026-10-10): ar-1fde retired the host (vercel alias rm,
+#     2026-10-09) so "/" now answers 404, not 307 — see
+#     VERCEL_RETIRED_SKIP_REASON below for the exemption that covers it now.
 # A Vercel host that answers 307/308/401 with NO entry here is not silently
 # OK — it fails loudly as UNPINNED instead (same idiom check-tunnel-
 # liveness.sh uses for an unpinned non-Vercel host), so a new auth-gated
 # Vercel host can't quietly repeat this gap.
 declare -A VERCEL_CHECK_PATHS=(
   [meni]="/login"
-  [arch-preview]="/login"
   [trips]="/login"
   [tik]="/login"
   [planner]="/"
@@ -216,6 +223,23 @@ declare -A VERCEL_CHECK_PATHS=(
 # regardless — this only exempts the pinned-path BODY baseline.
 declare -A VERCEL_ALIAS_SKIP_REASON=(
   [tuner]="308-redirects to bass (bass's own canonical registry row is baselined separately); DOMAIN.md §2 rule 3 alias, no separate page exists here"
+)
+
+# VERCEL_RETIRED_SKIP_REASON (bt-f55e): a host DOMAIN.md §1 still lists 🟢
+# live — derive_registry_hosts() has no way to know otherwise, and that
+# status lives in omrihefez/meni, which this repo may not commit to (same
+# constraint the albumclub/apartments teardowns hit; those got fixed at the
+# registry row instead, which this one cannot until a meni-side worker
+# updates DOMAIN.md) — but that has been deliberately retired at the Vercel
+# alias level and now 404s BY DESIGN, not by drift. Keyed and dated like the
+# sibling exemption maps above. Only takes effect for a 404 response (see
+# the SUBS loop below) — if the host ever serves anything else again,
+# that's new, real signal and falls through to the ordinary CHECK branch
+# rather than being swallowed by this exemption.
+# Remove this entry once DOMAIN.md's own row moves off 🟢 live (then the
+# host drops out of SUBS entirely and this map goes empty for it).
+declare -A VERCEL_RETIRED_SKIP_REASON=(
+  [arch-preview]="ar-1fde 2026-10-09: vercel alias rm retired this host (meni-arch's staging surface moved to preview.meni.omrihefez.com); now 404 by design"
 )
 
 # is_refusal_or_redirect_code <status code>
@@ -510,6 +534,8 @@ for d in "${SUBS[@]}"; do
       echo "UNPINNED $host -> $code ${loc:+($loc)} registry lists this as live Vercel but no page is served at / and nobody pinned a VERCEL_CHECK_PATHS entry for it — add one" >&2
       FAIL=1
     fi
+  elif [[ "$code" == "404" && -n "${VERCEL_RETIRED_SKIP_REASON[$d]:-}" ]]; then
+    echo "SKIP   $host -> $code retired, not drift: ${VERCEL_RETIRED_SKIP_REASON[$d]}"
   else
     echo "CHECK  $host -> $code ${loc:+($loc)}"
     FAIL=1
