@@ -253,6 +253,25 @@ declare -A VERCEL_RETIRED_SKIP_REASON=(
   [arch-preview]="ar-1fde 2026-10-09: vercel alias rm retired this host (meni-arch's staging surface moved to preview.meni.omrihefez.com); now 404 by design"
 )
 
+# APEX_UNCLAIMED_SKIP_REASON (bt-820a): the apex has no Vercel project behind
+# it at all — DOMAIN.md §1 row 23 🟠 blank, "404 DEPLOYMENT_NOT_FOUND — design
+# in §6" — so there is no vercel.json/next.config/header array anywhere in
+# this estate that could add includeSubDomains/preload to it. The
+# max-age=63072000-only header check_apex_hsts() sees is Vercel's platform
+# default for an unclaimed name, not a misconfiguration anyone here can fix,
+# so asserting on it daily is noise, not signal (same reasoning as
+# VERCEL_RETIRED_SKIP_REASON above, applied to "never claimed" instead of
+# "claimed then retired"). Keyed and dated like the sibling exemption maps.
+# Scoped to the EXACT measured signature (404 AND x-vercel-error:
+# DEPLOYMENT_NOT_FOUND, checked at the call site below) so this stops
+# applying the instant the apex serves anything else — a real 200 page per
+# §6, or even a different 404 shape — which then falls through to the
+# ordinary check_apex_hsts() assertion rather than being silently swallowed.
+# Remove this entry once §6 ships and the apex serves a real page.
+declare -A APEX_UNCLAIMED_SKIP_REASON=(
+  [omrihefez.com]="bt-820a 2026-10-10: no Vercel project exists behind the apex (DOMAIN.md §1 row 23 🟠 blank, §6 design unbuilt); 404 DEPLOYMENT_NOT_FOUND is Vercel's platform default for an unclaimed name, not a configurable response"
+)
+
 # is_refusal_or_redirect_code <status code>
 #   401/403 (auth refusal) or 307/308 (auth redirect, e.g. house-control's
 #   `/` -> `/login`): a body here is either absent or a refusal, so the
@@ -562,7 +581,13 @@ done
 if [ -n "$APEX_HOST" ]; then
   resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$APEX_HOST/")
   code=$(echo "$resp" | head -1 | awk '{print $2}')
-  check_apex_hsts "$APEX_HOST" "$resp" "$code"
+  if [[ "$code" == "404" ]] \
+    && echo "$resp" | grep -qi '^x-vercel-error:[[:space:]]*DEPLOYMENT_NOT_FOUND' \
+    && [ -n "${APEX_UNCLAIMED_SKIP_REASON[$APEX_HOST]:-}" ]; then
+    echo "SKIP   $APEX_HOST -> $code apex unclaimed, not drift: ${APEX_UNCLAIMED_SKIP_REASON[$APEX_HOST]}"
+  else
+    check_apex_hsts "$APEX_HOST" "$resp" "$code"
+  fi
 fi
 
 exit $FAIL

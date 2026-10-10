@@ -131,6 +131,12 @@ PLANNER_OK() { printf 'planner.omrihefez.com\t/\t401\t\tcache-control: no-store|
 # exit-0 expectations; tests 24/25 below exercise the apex check itself
 # failing-then-passing against the exact measured-live shape.
 APEX_OK() { printf 'omrihefez.com\t/\t200\t\tstrict-transport-security: max-age=63072000; includeSubDomains; preload\n'; }
+# apex unclaimed (bt-820a): the exact measured-live shape of an apex with no
+# Vercel project behind it — 404 DEPLOYMENT_NOT_FOUND, Vercel's platform
+# default HSTS. Distinct from test 31's 404 fixture below, which omits the
+# x-vercel-error header on purpose to prove the exemption is scoped to this
+# exact signature, not to "404 at the apex" generally.
+APEX_UNCLAIMED() { printf 'omrihefez.com\t/\t404\t\tstrict-transport-security: max-age=63072000|x-vercel-error: DEPLOYMENT_NOT_FOUND\n'; }
 
 echo "1. a Vercel+live host missing from a hand-copied array (the ma-20c5 gap) is now checked"
 : >"$FIXTURE_MAP"
@@ -721,6 +727,53 @@ out="$(AUDIT_SUBS="bass" CURL_FIXTURE_MAP="$FIXTURE_MAP" CURL_CMD="$CURL_STUB" D
 [ "$rc" -eq 0 ] || fail "expected exit 0 (AUDIT_SUBS path has no apex, nothing to fail on), got $rc: $out"
 grep -qE "^(OK|DRIFT)[[:space:]]+omrihefez\.com[[:space:]]" <<<"$out" && fail "expected no apex line at all under AUDIT_SUBS, got: $out"
 ok "AUDIT_SUBS bypasses the apex probe the same way it bypasses the rest of the DOMAIN.md derivation"
+
+# --- bt-820a: the apex has no Vercel project behind it at all (DOMAIN.md §1
+# row 23 🟠 blank, §6 design unbuilt) — its 404 DEPLOYMENT_NOT_FOUND is
+# Vercel's platform default for an unclaimed name, not a fixable
+# misconfiguration, so it needs a named, dated exemption rather than a daily
+# false DRIFT (same idiom as VERCEL_RETIRED_SKIP_REASON above).
+echo "35. bt-820a (FAILING shape before the fix, exact live shape measured 2026-10-10): apex unclaimed (404 DEPLOYMENT_NOT_FOUND) is a named SKIP, not daily DRIFT"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
+APEX_UNCLAIMED >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (apex-unclaimed is a reviewed exemption, not drift), got $rc: $out"
+grep -q "^SKIP   omrihefez.com -> 404 apex unclaimed, not drift: bt-820a" <<<"$out" \
+  || fail "expected a named SKIP line for the apex-unclaimed exemption, got: $out"
+grep -qE "^(DRIFT|CHECK)[[:space:]]+omrihefez\.com" <<<"$out" && fail "expected no DRIFT/CHECK line for the apex while unclaimed, got: $out"
+ok "the apex's measured-live 404 DEPLOYMENT_NOT_FOUND shape is a named, dated exemption rather than a daily false DRIFT that would get waived or cron-silenced"
+
+echo "36. bt-820a: the exemption does NOT apply once the apex serves a real 200 page — falls through to the ordinary (now-compliant) check"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
+APEX_OK >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0, got $rc: $out"
+grep -q "^OK     omrihefez.com -> 200 (Strict-Transport-Security: max-age=63072000; includeSubDomains; preload)" <<<"$out" \
+  || fail "expected the ordinary apex check to run (not SKIPped) once it serves 200, got: $out"
+grep -q "^SKIP   omrihefez.com" <<<"$out" && fail "expected no apex-unclaimed SKIP line once the apex serves a real page, got: $out"
+ok "the apex-unclaimed exemption is scoped to the 404 DEPLOYMENT_NOT_FOUND signature and stops applying the moment the apex serves a real page, same as §6 shipping would do live"
+
+echo "37. bt-820a: a 404 WITHOUT the DEPLOYMENT_NOT_FOUND signature is real signal, not swallowed by the unclaimed exemption — distinguishes 'unclaimed' from 'misconfigured'"
+: >"$FIXTURE_MAP"
+printf 'bass.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+printf 'meniapp.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP"
+MENIAPP_API_HEALTH_OK >>"$FIXTURE_MAP"
+PLANNER_OK >>"$FIXTURE_MAP"
+printf 'omrihefez.com\t/\t404\t\tstrict-transport-security: max-age=63072000\n' >>"$FIXTURE_MAP"
+out="$(run)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (a 404 with no DEPLOYMENT_NOT_FOUND signature is real signal, not exempt), got $rc: $out"
+grep -q "^DRIFT  omrihefez.com -> 404 Strict-Transport-Security missing includeSubDomains" <<<"$out" \
+  || fail "expected the ordinary DRIFT check to run for a 404 that doesn't match the unclaimed signature, got: $out"
+grep -q "^SKIP   omrihefez.com" <<<"$out" && fail "expected no apex-unclaimed SKIP line for a 404 without the matching x-vercel-error header, got: $out"
+ok "the exemption is scoped to the exact measured signature (404 AND x-vercel-error: DEPLOYMENT_NOT_FOUND) — a differently-shaped 404 (this is also test 31's fixture) still falls through to the real check"
 
 echo
 echo "PASS ($pass assertions)"
