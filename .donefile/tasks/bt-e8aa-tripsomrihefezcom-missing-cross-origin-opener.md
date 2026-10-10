@@ -1,0 +1,34 @@
+---
+id: bt-e8aa
+title: trips.omrihefez.com missing Cross-Origin-Opener-Policy/Cross-Origin-Resource-Policy
+status: open
+priority: p3
+tags:
+  - security
+  - http-headers
+created: 2026-10-10
+filed:
+  owner: capacity-engine
+  at: 2026-10-10T17:58:14Z
+reported: 2026-10-10
+---
+
+Named in the finding: cross-origin-opener-policy/cross-origin-resource-policy
+
+Why this is worth doing (from the reporting worker's own FOLLOW-UP line): already tracked as th-f5bc (open) on trips-hub's own board — not re-filed here, just surfaced by this baseline change.
+
+LIKELY ALREADY DONE — verify before building. Work merged after this finding was raised may already cover it:
+- `e88178bd` 2026-10-10 "audit-domains.sh: add COOP/CORP to the security-header baseline (bt-1176)" — scripts/audit-domains.sh, scripts/audit-domains.test.sh (67% of the finding's words)
+
+START HERE: check whether that work satisfies this finding. If it does, close with `--commit <sha>` and say so — that is a complete, correct closure, not a shortcut. If it does not, say in one line what it missed and do the work.
+This is a word/file-path heuristic run at filing time, NOT a proof — it exists so the claimer starts from "verify" instead of spending a whole round rediscovering that it shipped (ce-a792).
+
+<!-- capacity-engine: provenance, not part of the finding -->
+UNVERIFIED CLAIM — auto-filed by the capacity engine from a worker's FOLLOW-UP line. The title above is that worker's own belief at the end of a session, written once, never checked by anything else: a well-formed, confident sentence can still be flatly wrong. Verify it against this repo's CURRENT state before doing anything else, then scope it before claiming (ce-916b).
+
+Discovered while working bt-1176, session `audit-domains-sh-s-secur-b15d66`, dispatched on bass-tuner.
+See 'reported' in this task's frontmatter for the date this finding was originally observed — read any relative time in the title above ("this morning", "currently", "still", "right now") as dated from THAT day, not from when this task was filed.
+Board choice is a GUESS: this follow-up names a file but the engine could not match it to exactly one board's repo, so it stayed on the dispatching board rather than being routed. Verify it belongs here before working it — it may need re-filing on the board that actually owns the named file (ce-3b8d).
+That task's report closed DONE (commit e88178b).
+
+DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
