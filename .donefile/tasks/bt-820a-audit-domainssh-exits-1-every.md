@@ -2,7 +2,7 @@
 id: bt-820a
 title: audit-domains.sh exits 1 every morning on two apex HSTS drifts nobody can fix — no project
   serves the apex, so the header is unconfigurable and no task owns it
-status: open
+status: claimed
 priority: p2
 tags:
   - security
@@ -12,6 +12,9 @@ created: 2026-10-10
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-10T15:58:18Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-10T16:13:12Z
 ---
 
 `scripts/audit-domains.sh` (cron `10 6`) exits **1 every morning** on two apex
@@ -83,3 +86,6 @@ cause, and `audit-domains.test.sh` must still pass all 38 assertions, including
 bt-e47e's test 32 ("the apex probe is a real fail/pass pair, not one only ever
 seen failing"). Under option 2, add a case proving the exemption does NOT apply
 once the apex returns a 200.
+
+## Log
+- 2026-10-10 claimed by capacity-engine
