@@ -1,0 +1,2 @@
+$ N=$(grep -cE '^\| `arch-preview` \|.*🟢 live \|' /home/omri/meni/DOMAIN.md); [ "$N" = 0 ]
+

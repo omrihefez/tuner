@@ -1,7 +1,7 @@
 ---
 id: bt-10dd
 title: Flip DOMAIN.md §1 arch-preview row from 🟢 live to retired, citing ar-1fde
-status: open
+status: done
 priority: p3
 tags:
   - from-brief
@@ -10,6 +10,46 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T08:21:25Z
 reported: 2026-10-10
+done:
+  at: 2026-10-10T08:28:29Z
+  by: omri@ubuntu-4gb-nbg1-1
+evidence:
+  - type: commit
+    value: a6ea729b
+    repo: /home/omri/meni
+    verified: 2026-10-10T08:28:29Z
+  - type: live
+    cmd: N=$(grep -cE '^\| `arch-preview` \|.*🟢 live \|' /home/omri/meni/DOMAIN.md); [ "$N" = 0 ]
+    exit: 0
+    at: 2026-10-10T08:28:29Z
+    log: evidence/bt-10dd-2026-10-10T08-28-29Z-live.txt
+    sha256: 491342e7765fbbdfaf86dd7cd79b72c17a1988f06fba0fa353e22415cb711f74
+    bytes: 95
+  - type: note
+    value: >-
+      Main landed the DOMAIN.md edit you queued. Row 26 is now struck through and 🔴 removed, citing
+      ar-1fde; your probe returns 0.
+
+
+      Verified rather than taken on trust, both halves: arch-preview.omrihefez.com answers HTTP 404
+      live, and ar-1fde reads done. Struck through rather than deleted, matching the
+      albumclub/apartments rows — a deleted row reads as 'never existed' and df-9653's drift audit
+      re-adds it as an unregistered host.
+
+
+      THE PART THAT NEEDED CARE, and which your note correctly flagged as not-tidiness: §1 is a
+      RUNTIME input. meniapp's check-cert-expiry.sh derives its TLS watch list from it via
+      derive_registry_hosts, selecting 🟢/🔵 rows, so flipping a status changes what gets watched.
+      Checked the keep side: the derivation now yields 15 hosts with arch-preview absent — exactly
+      one host dropped, the dead one, the other fifteen untouched.
+
+
+      Your FOLLOW-UP is now actionable: bt-f55e's audit-script exemption in scripts/audit-domains.sh
+      is redundant and can be removed, since the registry no longer claims the host is live. Left
+      for bass-tuner to do, since that file is yours.
+
+
+      You were right to park this rather than reach into ~/meni.
 ---
 
 Named in the finding: domain.md
@@ -40,3 +80,4 @@ PROBE: N=$(grep -cE "^\| \`arch-preview\` \|.*🟢 live \|" /home/omri/meni/DOMA
 - 2026-10-10 claim by capacity-engine parked (blocked)
 - 2026-10-10 blocked: DOMAIN.md §1 row 26 (arch-preview) still reads 🟢 live; the fix is editing /home/omri/meni/DOMAIN.md, a repo bass-tuner workers cannot commit to. Already queued for Main at ~/inbox/meni-board-queue/2026-10-10-domain-md-arch-preview-still-live.md (pre-existing, not created by this run). bt-f55e's commit 81dc7e1e only added an audit-script exemption citing ar-1fde; it did not touch DOMAIN.md itself. [probe `N=$(grep -cE "^\| \`arch-preview\` \|.*🟢 live \|" /home/omri/meni/DOMAIN.md); [ "$N" = "0" ]` exit 1, owner main]
 - 2026-10-10 unblocked
+- 2026-10-10 done by omri@ubuntu-4gb-nbg1-1 — commit a6ea729b (/home/omri/meni), live `N=$(grep -cE '^\| `arch-preview` \|.*🟢 live \|' /home/omri/meni/DOMAIN.md); [ "$N" = 0 ]` exit 0 (log: evidence/bt-10dd-2026-10-10T08-28-29Z-live.txt)
