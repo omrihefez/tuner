@@ -1,0 +1,2 @@
+$ curl -sI https://trips.omrihefez.com/ | grep -qi 'cross-origin-opener-policy: same-origin' && curl -sI https://trips.omrihefez.com/ | grep -qi 'cross-origin-resource-policy: same-origin'
+

@@ -1,7 +1,7 @@
 ---
 id: bt-e8aa
 title: trips.omrihefez.com missing Cross-Origin-Opener-Policy/Cross-Origin-Resource-Policy
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -11,9 +11,25 @@ filed:
   owner: capacity-engine
   at: 2026-10-10T17:58:14Z
 reported: 2026-10-10
-claim:
-  owner: capacity-engine
-  at: 2026-10-10T18:20:37Z
+done:
+  at: 2026-10-10T18:22:47Z
+  by: capacity-engine/worker
+evidence:
+  - type: live
+    cmd: "curl -sI https://trips.omrihefez.com/ | grep -qi 'cross-origin-opener-policy: same-origin' &&
+      curl -sI https://trips.omrihefez.com/ | grep -qi 'cross-origin-resource-policy: same-origin'"
+    exit: 0
+    at: 2026-10-10T18:22:47Z
+    log: evidence/bt-e8aa-2026-10-10T18-22-47Z-live.txt
+    sha256: f5dabd14ea183e1863f84033dfd08805172ec1dc81f627e6d207a1ec4a443de7
+    bytes: 190
+  - type: note
+    value: "Not a real bass-tuner task: duplicate finding auto-filed on the wrong board. The actual fix
+      (COOP/CORP headers on trips.omrihefez.com's next.config) landed on trips-hub's own board as
+      th-f5bc, commit 4d575d8e1641 promoted to main as fb65972d, deployed, done 2026-10-10T18:07Z --
+      minutes before this task (bt-e8aa) was even filed. trips-hub has no repo alias on this board
+      so the commit cannot be cited here; closing on fresh live verification instead, re-run just
+      now and matching th-f5bc's own recorded live evidence."
 ---
 
 Named in the finding: cross-origin-opener-policy/cross-origin-resource-policy
@@ -38,3 +54,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-10 claimed by capacity-engine
+- 2026-10-10 done by capacity-engine/worker — live `curl -sI https://trips.omrihefez.com/ | grep -qi 'cross-origin-opener-policy: same-origin' && curl -sI https://trips.omrihefez.com/ | grep -qi 'cross-origin-resource-policy: same-origin'` exit 0 (log: evidence/bt-e8aa-2026-10-10T18-22-47Z-live.txt)
