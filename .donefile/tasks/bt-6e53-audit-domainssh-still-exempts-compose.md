@@ -2,7 +2,7 @@
 id: bt-6e53
 title: audit-domains.sh still exempts compose and meni from the Permissions-Policy check a week
   after both started sending it, so two hosts are silently unchecked
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,20 @@ created: 2026-10-11
 filed:
   owner: meni-worker/board-refill-work-discov-d8813b
   at: 2026-10-11T15:15:48Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-11T15:20:26Z
+done:
+  at: 2026-10-11T15:36:43Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: da9ce94d183eb135ae4a9195a71e29c4356a2c43
+    verified: 2026-10-11T15:36:43Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-11T15:36:20Z
+    log: evidence/bt-6e53-2026-10-11T15-36-20Z-test.txt
+    sha256: 5d010c84771b06cf2604b85c77545c160b6ba06dc706c22a150f53e6b2e74c15
+    bytes: 16159
 ---
 
 `PERMISSIONS_POLICY_EXEMPT` (`scripts/audit-domains.sh:85-88`) still exempts two hosts that have
@@ -98,3 +109,4 @@ it says nothing about whether the hosts now reach the check.
 
 ## Log
 - 2026-10-11 claimed by capacity-engine
+- 2026-10-11 done by capacity-engine/worker — commit da9ce94d183e, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-6e53-2026-10-11T15-36-20Z-test.txt)
