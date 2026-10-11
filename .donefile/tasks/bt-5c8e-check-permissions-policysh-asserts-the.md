@@ -2,7 +2,7 @@
 id: bt-5c8e
 title: check-permissions-policy.sh asserts the exact header value for bass only, so a widened
   Permissions-Policy on the other seven senders is invisible
-status: open
+status: claimed
 priority: p3
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-11
 filed:
   owner: meni-worker/board-refill-work-discov-d8813b
   at: 2026-10-11T15:15:59Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-11T16:09:52Z
 ---
 
 `scripts/check-permissions-policy.sh` is the estate's only value-level Permissions-Policy
@@ -105,3 +108,6 @@ p3 deliberately. Nothing is currently wrong with any of the eight values — all
 and all are sane. This is the absence of a control, not a live hole, and it should not be
 priced as one. It becomes a real exposure the first time one of these apps starts using a gated
 feature and loosens its own policy to do it.
+
+## Log
+- 2026-10-11 claimed by capacity-engine
