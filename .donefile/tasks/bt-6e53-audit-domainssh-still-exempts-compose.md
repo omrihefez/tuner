@@ -2,7 +2,7 @@
 id: bt-6e53
 title: audit-domains.sh still exempts compose and meni from the Permissions-Policy check a week
   after both started sending it, so two hosts are silently unchecked
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-10-11
 filed:
   owner: meni-worker/board-refill-work-discov-d8813b
   at: 2026-10-11T15:15:48Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-11T15:20:26Z
 ---
 
 `PERMISSIONS_POLICY_EXEMPT` (`scripts/audit-domains.sh:85-88`) still exempts two hosts that have
@@ -92,3 +95,6 @@ that, plus the live run:
 
 Do NOT close this on a grep showing the map is empty. That cannot fail once the commit exists, and
 it says nothing about whether the hosts now reach the check.
+
+## Log
+- 2026-10-11 claimed by capacity-engine
