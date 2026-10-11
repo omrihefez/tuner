@@ -1,0 +1,15 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-permissions-policy.sh
+
+OK     bass.omrihefez.com -> Permissions-Policy: camera=(), microphone=(self), geolocation=()
+OK     compose.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), midi=()
+OK     house.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=()
+OK     kidai.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+OK     meni.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=()
+OK     meniapp.omrihefez.com -> Permissions-Policy: camera=(), microphone=(self), geolocation=()
+OK     oauth.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=()
+OK     planner.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=()
+OK     preview.meni.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=()
+OK     tik.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=()
+OK     trips.omrihefez.com -> Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+OK     tuner.omrihefez.com -> Permissions-Policy: camera=(), microphone=(self), geolocation=()
+check-permissions-policy: 12 header-sending host(s) all match their recorded value, out of 16 derived

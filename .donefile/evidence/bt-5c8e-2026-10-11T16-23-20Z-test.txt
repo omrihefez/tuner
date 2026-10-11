@@ -1,0 +1,20 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-permissions-policy.test.sh
+
+1. BEFORE (the live pre-bt-5c8e shape): bass with NO Permissions-Policy header fails loudly
+  ok — a tracked host (bass) losing its header entirely is a loud DRIFT, not a silent skip
+2. AFTER: bass and house both send their correct recorded value -> exit 0, tombstoned row excluded
+  ok — both hosts match their recorded value: exit 0, tombstoned row excluded
+3. a wrong/widened value (geolocation=* widened from geolocation=()) is DRIFT, not a false pass -- demonstrated red here, then proven red against the parent commit below
+  ok — a widened value (geolocation=* instead of geolocation=()) is caught, not silently accepted
+4. the empty-microphone-allowlist mistake (the original mic-breaking bug) is still caught for bass
+  ok — an empty microphone allowlist (the failure mode that breaks getUserMedia) is still caught
+5. a host sending the header with NO recorded expected value fails loudly as UNPINNED, not a silent OK -- bt-5c8e's actual point: a new header-sending host does not get silent presence-only coverage
+  ok — an unrecorded host that starts sending the header is a loud UNPINNED failure, not a silent gap
+6. an untracked host sending NO header at all is silently skipped (presence-only coverage is audit-domains.sh's job, not this script's)
+  ok — an untracked host sending no header is silently skipped -- not this script's job
+7. HOST LIST comes from the registry (derive_registry_hosts), not a hand-maintained list -- bass and house both appear with no PP_HOSTS override, the tombstoned row never does
+  ok — hosts are derived from the registry in 'all' mode, covering non-Vercel senders like house too
+8. an unreadable DOMAIN.md (and no PP_HOSTS override) refuses to run rather than silently checking nothing
+  ok — missing DOMAIN.md refuses to run rather than silently checking nothing
+
+PASS (8 assertions)

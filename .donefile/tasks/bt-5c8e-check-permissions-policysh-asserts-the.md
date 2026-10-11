@@ -2,7 +2,7 @@
 id: bt-5c8e
 title: check-permissions-policy.sh asserts the exact header value for bass only, so a widened
   Permissions-Policy on the other seven senders is invisible
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -11,9 +11,27 @@ created: 2026-10-11
 filed:
   owner: meni-worker/board-refill-work-discov-d8813b
   at: 2026-10-11T15:15:59Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-11T16:09:52Z
+done:
+  at: 2026-10-11T16:23:25Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: a94c4ceb311e7ffe4155f1dca906ffb20e48201f
+    verified: 2026-10-11T16:23:25Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-permissions-policy.test.sh
+    exit: 0
+    at: 2026-10-11T16:23:20Z
+    log: evidence/bt-5c8e-2026-10-11T16-23-20Z-test.txt
+    sha256: 0df4a6b0f491ed4e7f2b01d56e957090e292f77e650c60b7c53d61f1540f050e
+    bytes: 1934
+  - type: live
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-permissions-policy.sh
+    exit: 0
+    at: 2026-10-11T16:23:20Z
+    log: evidence/bt-5c8e-2026-10-11T16-23-20Z-live.txt
+    sha256: 383b1cb2e29bbd6f3dc1aa4e541e89fbe0a578d2c870418d100b826ff6fd4a02
+    bytes: 1349
 ---
 
 `scripts/check-permissions-policy.sh` is the estate's only value-level Permissions-Policy
@@ -111,3 +129,4 @@ feature and loosens its own policy to do it.
 
 ## Log
 - 2026-10-11 claimed by capacity-engine
+- 2026-10-11 done by capacity-engine/worker — commit a94c4ceb311e, test `cd /home/omri/projects/bass-tuner && bash scripts/check-permissions-policy.test.sh` exit 0 (log: evidence/bt-5c8e-2026-10-11T16-23-20Z-test.txt), live `cd /home/omri/projects/bass-tuner && bash scripts/check-permissions-policy.sh` exit 0 (log: evidence/bt-5c8e-2026-10-11T16-23-20Z-live.txt)
