@@ -309,8 +309,43 @@ const ANNOUNCE_CENTS_STEP = 5;    // round announced cents to this grid, same re
 // is what stops the bass D/G strings from locking onto their 2nd harmonic — the
 // "higher strings won't tune / needle runs left-right" bug. Adapts to tuning + A-ref.
 // e.g. bass standard → ~[34,131] Hz, so G2's 2nd harmonic (196 Hz) is excluded.
+//
+// WHEN A STRING IS LOCKED, narrow to that string alone (±LOCK_RANGE_SEMITONES).
+// Omri, 2026-10-11 22:49, tuning drop D: "I play the g on the bass and it shows
+// much lower freqs. Keep jumping even when I lock the g."
+//
+// Before this, `state.selectedString` affected ONLY which target the reading was
+// compared against (the `idx` pick further down) — it did not narrow what the
+// detector was allowed to return. So locking G2 (98 Hz) left YIN free to pick
+// anything in the whole-tuning window, which in drop D is ~[31,131] Hz and
+// therefore includes 49 Hz: exactly half of 98, and a whisker from the 50 Hz
+// mains hum an amp feeds into the mic. The reading flipped between 98 and 49 and
+// the needle slammed to the rail at -1200 cents — both halves of his report, from
+// one cause. Locking is the user telling us which string this is; the detector
+// should believe it.
+//
+// Drop D is hit harder than standard, as he found: its lowest note is D1 (36.71)
+// vs E1 (41.20), so the window opens ~4 Hz lower and more of the hum's harmonic
+// series falls inside the range YIN may choose from. Same mechanism the mains-hum
+// note below records for ½-step down.
+//
+// WHY ±6 AND NOT TIGHTER: he is often mid-retune when locked — dropping E→D is
+// two semitones, and a slack string on the way there reads lower still. ±6 is a
+// tritone, so it comfortably covers any real detune while excluding BOTH the
+// half-frequency and the double (±12 semitones) by a 6-semitone margin. Tighter
+// would start refusing to read a string he is actively slackening.
+const LOCK_RANGE_SEMITONES = 6;
+
 function freqRange() {
   const notes = currentTuning().notes;
+  const locked = state.selectedString;
+  if (locked !== null && locked !== undefined && notes[locked] !== undefined) {
+    const m = notes[locked];
+    return {
+      minFreq: Math.max(25, midiToFreq(m - LOCK_RANGE_SEMITONES, state.aref)),
+      maxFreq: midiToFreq(m + LOCK_RANGE_SEMITONES, state.aref),
+    };
+  }
   const lo = Math.min(...notes), hi = Math.max(...notes);
   return {
     minFreq: Math.max(25, midiToFreq(lo - 3, state.aref)),
