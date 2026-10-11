@@ -2,7 +2,7 @@
 id: bt-6854
 title: Locking a string didn't constrain the detector, so a locked G read 49Hz (half of 98, on top
   of 50Hz hum) and the needle jumped — drop D hit hardest
-status: open
+status: done
 priority: p1
 tags:
   - from-omri
@@ -11,6 +11,29 @@ created: 2026-10-11
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-11T19:59:56Z
+done:
+  at: 2026-10-11T20:00:09Z
+  by: omri@ubuntu-4gb-nbg1-1
+evidence:
+  - type: commit
+    value: 024a401
+    verified: 2026-10-11T20:00:09Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && node --test test/locked-string-range.test.js
+    exit: 0
+    at: 2026-10-11T20:00:09Z
+    expect: pass 5
+    log: evidence/bt-6854-2026-10-11T20-00-09Z-test.txt
+    sha256: d7bf416e3604f2e5f491384af39cc3a38eeee1b8961a39ae91c5ed7cfee72625
+    bytes: 1253
+  - type: live
+    cmd: curl -s --max-time 10 https://bass.omrihefez.com/tuner.js | grep -c LOCK_RANGE_SEMITONES
+    exit: 0
+    at: 2026-10-11T20:00:09Z
+    expect: "4"
+    log: evidence/bt-6854-2026-10-11T20-00-09Z-live.txt
+    sha256: 39495594a90985fde100cd06091cdaa9e1d97f7ece1035f788f4ebd4838eda1d
+    bytes: 94
 ---
 
 HIS WORDS, 2026-10-11 22:49 IDT, while tuning drop D with the bass in his hands:
@@ -76,3 +99,6 @@ Committed in the main worktree under `DONEFILE_ALLOW_MAIN_COMMIT=1` with the
 guard's condition verified, not assumed: 0 active worker sessions fleet-wide,
 none on this board, and the only uncommitted paths in the repo were these two.
 He was waiting at the bass, so a worktree round-trip was not worth the minutes.
+
+## Log
+- 2026-10-11 done by omri@ubuntu-4gb-nbg1-1 — commit 024a401, test `cd /home/omri/projects/bass-tuner && node --test test/locked-string-range.test.js` exit 0 (--test-expect "pass 5") (log: evidence/bt-6854-2026-10-11T20-00-09Z-test.txt), live `curl -s --max-time 10 https://bass.omrihefez.com/tuner.js | grep -c LOCK_RANGE_SEMITONES` exit 0 (--live-expect "4") (log: evidence/bt-6854-2026-10-11T20-00-09Z-live.txt)

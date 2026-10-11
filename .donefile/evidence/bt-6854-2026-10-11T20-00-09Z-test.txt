@@ -1,0 +1,42 @@
+$ cd /home/omri/projects/bass-tuner && node --test test/locked-string-range.test.js
+
+TAP version 13
+# Subtest: drop D, locked G: the half-frequency is OUT of the search window
+ok 1 - drop D, locked G: the half-frequency is OUT of the search window
+  ---
+  duration_ms: 2.389128
+  type: 'test'
+  ...
+# Subtest: every bass string, every tuning: locked window excludes its own half and double
+ok 2 - every bass string, every tuning: locked window excludes its own half and double
+  ---
+  duration_ms: 1.382158
+  type: 'test'
+  ...
+# Subtest: locked window still tolerates a string mid-retune (E down to D, and slacker)
+ok 3 - locked window still tolerates a string mid-retune (E down to D, and slacker)
+  ---
+  duration_ms: 0.518696
+  type: 'test'
+  ...
+# Subtest: UNLOCKED auto-detect range is unchanged — regression guard
+ok 4 - UNLOCKED auto-detect range is unchanged — regression guard
+  ---
+  duration_ms: 0.640479
+  type: 'test'
+  ...
+# Subtest: an out-of-range selectedString falls back to the whole-tuning window
+ok 5 - an out-of-range selectedString falls back to the whole-tuning window
+  ---
+  duration_ms: 0.444168
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 222.952708

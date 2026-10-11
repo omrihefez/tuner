@@ -1,0 +1,3 @@
+$ curl -s --max-time 10 https://bass.omrihefez.com/tuner.js | grep -c LOCK_RANGE_SEMITONES
+
+4
