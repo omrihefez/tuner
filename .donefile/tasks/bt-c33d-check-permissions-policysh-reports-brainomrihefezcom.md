@@ -1,7 +1,7 @@
 ---
 id: bt-c33d
 title: check-permissions-policy.sh reports brain.omrihefez.com as UNPINNED after sb-6f36 added the header
-status: open
+status: claimed
 priority: p3
 tags:
   - http-headers
@@ -9,6 +9,9 @@ created: 2026-10-11
 filed:
   owner: meni-worker/brain-omrihefez-com-send-4713d1
   at: 2026-10-11T18:56:54Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-11T19:05:39Z
 ---
 
 ## Log
@@ -21,3 +24,4 @@ Fix: add
 to EXPECTED_PP in scripts/check-permissions-policy.sh.
 
 DONE WHEN: PP_HOSTS="brain" bash scripts/check-permissions-policy.sh exits 0 and prints 'OK     brain.omrihefez.com -> ...'.
+- 2026-10-11 claimed by capacity-engine
