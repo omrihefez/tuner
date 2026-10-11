@@ -80,6 +80,7 @@ declare -A EXPECTED_PP=(
   [planner]="camera=(), microphone=(), geolocation=()"                               # estate baseline, grants nothing
   [tik]="camera=(), microphone=(), geolocation=()"                                   # estate baseline, grants nothing
   [oauth]="camera=(), microphone=(), geolocation=()"                                 # estate baseline, grants nothing -- sent despite being a bare stdlib server with no app-level header code (Cloudflare Tunnel origin), measured live 2026-10-11
+  [brain]="camera=(), microphone=(), geolocation=()"                                 # estate baseline, grants nothing -- added by sb-6f36 (second-brain), measured live 2026-10-11
 )
 
 if [ -n "${PP_HOSTS:-}" ]; then
