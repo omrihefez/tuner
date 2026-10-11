@@ -76,16 +76,32 @@ REQUIRED_HEADERS=(x-frame-options x-content-type-options referrer-policy cross-o
 # create false DRIFT on four compliant hosts. Per-host exact values are
 # scripts/check-permissions-policy.sh's job, not this one.
 #
-# PERMISSIONS_POLICY_EXEMPT: the two hosts still measured absent today, each
-# with the task that already tracks it and the date of this admission — a
-# named, dated exemption, not a silent skip, so this baseline doesn't turn
-# permanently red while those tasks are open. Remove the entry (not just
-# flip it) once the sibling task lands and the host sends the header live;
-# the host then falls through to the real check like everyone else.
-declare -A PERMISSIONS_POLICY_EXEMPT=(
-  [compose]="cp-8845 2026-10-01"
-  [meni]="ar-3426 2026-10-01"
-)
+# PERMISSIONS_POLICY_EXEMPT: hosts measured absent today, each with the task
+# that already tracks it and the date of this admission — a named, dated
+# exemption, not a silent skip, so this baseline doesn't turn permanently red
+# while that task is open. Remove the entry (not just flip it) once the
+# sibling task lands and the host sends the header live; the host then falls
+# through to the real check like everyone else. compose (cp-8845) and meni
+# (ar-3426) BOTH did that on 2026-10-04/2026-10-08 and sat here unremoved for
+# a week anyway (bt-6e53) — the entry outliving its own reason is exactly the
+# failure check_permissions_policy_staleness() below now catches on its own,
+# so the map is empty rather than trusted to stay accurate by hand.
+#
+# AUDIT_PERMISSIONS_POLICY_EXEMPT (test-only, same override convention as
+# AUDIT_SUBS above): "host=reason;host2=reason2", REPLACES this map entirely
+# rather than merging. Exists because the map is meant to be empty in
+# production — there is deliberately no real entry left for
+# audit-domains.test.sh to exercise the SKIP/stale-DRIFT branches against, so
+# the test supplies a synthetic one instead of waiting for a real exemption
+# to exist.
+declare -A PERMISSIONS_POLICY_EXEMPT=()
+if [ -n "${AUDIT_PERMISSIONS_POLICY_EXEMPT:-}" ]; then
+  IFS=';' read -r -a _pp_exempt_pairs <<<"$AUDIT_PERMISSIONS_POLICY_EXEMPT"
+  for _pp_pair in "${_pp_exempt_pairs[@]}"; do
+    PERMISSIONS_POLICY_EXEMPT["${_pp_pair%%=*}"]="${_pp_pair#*=}"
+  done
+  unset _pp_exempt_pairs _pp_pair
+fi
 # arch-preview's entry removed here, not just left stale (bt-f55e): ar-1fde
 # retired the host (vercel alias rm, 2026-10-09) and it now 404s by design,
 # so it never reaches the 200 branch this map guards. See
@@ -112,6 +128,25 @@ missing_security_headers() {
   fi
   local IFS=,
   echo "${missing[*]}"
+}
+
+# check_permissions_policy_staleness <label> <raw response headers> <exemption, if any>
+#   bt-6e53: compose (cp-8845) and meni (ar-3426) both started sending
+#   Permissions-Policy — compose on 2026-10-04, meni on 2026-10-08 — and sat
+#   exempt for up to a week anyway, because the exemption short-circuited the
+#   check entirely rather than noticing its own premise (the header is
+#   absent) had stopped holding. Both call sites already have the raw
+#   response in hand for the SAME request this check needs, so this needs no
+#   extra curl and runs in the hermetic test path exactly like everything
+#   else here. Prints a DRIFT line and sets FAIL=1 the moment an exempted
+#   host is caught actually sending the header; no-ops (silently) whenever
+#   pp_exempt is empty, which is every host once the map is empty.
+check_permissions_policy_staleness() {
+  local label="$1" resp="$2" pp_exempt="${3:-}"
+  [ -n "$pp_exempt" ] || return 0
+  echo "$resp" | grep -qi '^permissions-policy:' || return 0
+  echo "DRIFT  $label -> permissions-policy now present despite PERMISSIONS_POLICY_EXEMPT entry ($pp_exempt) — remove the entry, the host has outgrown it (bt-6e53 class)"
+  FAIL=1
 }
 
 # NON-VERCEL PER-(HOST,PATH) BASELINE (bt-d173).
@@ -464,7 +499,7 @@ check_nonvercel_path() {
         echo "$resp" | grep -qi '^cross-origin-resource-policy:' || missing+=("cross-origin-resource-policy")
       fi
       if echo "$resp" | grep -qi '^permissions-policy:'; then
-        :
+        check_permissions_policy_staleness "$label" "$resp" "$pp_exempt"
       elif [ -n "$pp_exempt" ]; then
         echo "SKIP   $label -> permissions-policy baseline not applicable: exempted per $pp_exempt (not a silent skip — tracked separately, bt-4164)"
       else
@@ -569,8 +604,12 @@ for d in "${SUBS[@]}"; do
   elif [[ "$code" == "200" ]]; then
     pp_exempt="${PERMISSIONS_POLICY_EXEMPT[$d]:-}"
     missing="$(missing_security_headers "$resp" "$pp_exempt")"
-    if [ -n "$pp_exempt" ] && ! echo "$resp" | grep -qi '^permissions-policy:'; then
-      echo "SKIP   $host -> permissions-policy baseline not applicable: exempted per $pp_exempt (not a silent skip — tracked separately, bt-4164)"
+    if [ -n "$pp_exempt" ]; then
+      if echo "$resp" | grep -qi '^permissions-policy:'; then
+        check_permissions_policy_staleness "$host" "$resp" "$pp_exempt"
+      else
+        echo "SKIP   $host -> permissions-policy baseline not applicable: exempted per $pp_exempt (not a silent skip — tracked separately, bt-4164)"
+      fi
     fi
     if [ -n "$missing" ]; then
       echo "DRIFT  $host -> $code missing security headers: $missing"

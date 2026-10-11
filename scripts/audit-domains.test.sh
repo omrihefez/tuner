@@ -502,7 +502,7 @@ echo "18. bt-3ba1 (FAILING shape): meni's 307-redirect root is asserted on nothi
 : >"$FIXTURE_MAP4"
 BASS_OK >>"$FIXTURE_MAP4"
 printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
-printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000\n' >>"$FIXTURE_MAP4"
 out="$(run4)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 (meni's /login missing x-frame-options), got $rc: $out"
 grep -q "^DRIFT  meni.omrihefez.com/login -> 200 missing security headers: x-frame-options$" <<<"$out" \
@@ -627,9 +627,20 @@ ok "the same probe flips to OK once both the floor and includeSubDomains are sat
 # 7 of 10 live hosts send it as of 2026-10-01 (measured in the task body);
 # it is now the estate norm per bt-a2c2's own admission test. Checked for
 # PRESENCE, not an exact value, because the senders legitimately disagree on
-# the value itself. The two hosts still measured absent (compose, meni +
-# arch-preview) carry a named, dated exemption (PERMISSIONS_POLICY_EXEMPT)
-# pointing at the task that already tracks each, not a silent skip.
+# the value itself. PERMISSIONS_POLICY_EXEMPT names a host still measured
+# absent, pointing at the task that tracks it, not a silent skip.
+#
+# bt-6e53: compose (cp-8845) and meni (ar-3426) BOTH went live and sat
+# exempt anyway — up to a week, for meni — because the exemption map is
+# meant to be emptied by hand once a sibling task lands, and nobody did.
+# PERMISSIONS_POLICY_EXEMPT is now empty in production (tests 29b/30b below
+# pin that directly: with NO override, compose/meni get the ordinary DRIFT
+# like every other host). Tests 29/30 below now drive the map via
+# AUDIT_PERMISSIONS_POLICY_EXEMPT instead of a real hardcoded entry — there
+# is deliberately no real exemption left to test the SKIP branch against —
+# and 29c/30c pin the staleness guard itself: an exempted host caught
+# actually sending the header DRIFTs instead of silently passing, which is
+# the exact bt-6e53 failure mode.
 
 echo "27. bt-4164 (FAILING shape, SUBS side): bass with the full baseline minus Permissions-Policy is DRIFT, naming permissions-policy precisely — confirmed red against the parent commit (pre-bt-4164), which has no such check at all"
 : >"$FIXTURE_MAP6"
@@ -649,39 +660,77 @@ grep -q "^OK     bass.omrihefez.com -> 200 (security headers present)" <<<"$out"
   || fail "expected bass to read OK once permissions-policy is present (BASS_HSTS already includes it), got: $out"
 ok "the same probe flips to OK the moment Permissions-Policy is added back"
 
-echo "29. bt-4164 (SUBS-side exemption): compose, PERMISSIONS_POLICY_EXEMPT'd per cp-8845, stays OK despite sending no Permissions-Policy — named via SKIP, not a silent pass"
+echo "29. bt-6e53 (SUBS-side exemption, via AUDIT_PERMISSIONS_POLICY_EXEMPT since the real map is now empty): compose, exempted per a synthetic cp-8845 entry, stays OK despite sending no Permissions-Policy — named via SKIP, not a silent pass"
 FIXTURE7="$TMP/DOMAIN7.md"
 FIXTURE_MAP7="$TMP/responses7.tsv"
 cat >"$FIXTURE7" <<'EOF'
 | Subdomain | Purpose / app | Repo | Host | DNS | Status | Notes |
 |---|---|---|---|---|---|---|
 | `bass` | Bass Tuner | bass-tuner | Vercel | wildcard | 🟢 live | canonical |
-| `compose` | Compose | compose | Vercel | explicit | 🟢 live | sends no Permissions-Policy today, tracked on cp-8845 |
+| `compose` | Compose | compose | Vercel | explicit | 🟢 live | sends no Permissions-Policy in this fixture |
 EOF
 run7() { CURL_FIXTURE_MAP="$FIXTURE_MAP7" DOMAIN_MD="$FIXTURE7" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
+run7_exempt() { AUDIT_PERMISSIONS_POLICY_EXEMPT="compose=cp-8845 2026-10-01" CURL_FIXTURE_MAP="$FIXTURE_MAP7" DOMAIN_MD="$FIXTURE7" CURL_CMD="$CURL_STUB" bash "$SCRIPT"; }
+COMPOSE_NO_PP() { printf 'compose.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
 : >"$FIXTURE_MAP7"
 BASS_OK >>"$FIXTURE_MAP7"
-printf 'compose.omrihefez.com\t/\t200\t\tcontent-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP7"
-out="$(run7)"; rc=$?
-[ "$rc" -eq 0 ] || fail "expected exit 0 (compose is exempted, not DRIFT), got $rc: $out"
+COMPOSE_NO_PP >>"$FIXTURE_MAP7"
+out="$(run7_exempt)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (compose is exempted via override, not DRIFT), got $rc: $out"
 grep -q "^OK     compose.omrihefez.com -> 200 (security headers present)" <<<"$out" \
   || fail "expected compose to read OK despite missing permissions-policy, got: $out"
 grep -q "^SKIP   compose.omrihefez.com -> permissions-policy baseline not applicable: exempted per cp-8845 2026-10-01" <<<"$out" \
   || fail "expected a SKIP line naming compose's exemption and the task that tracks it, got: $out"
-ok "compose's exemption suppresses the DRIFT but is named via SKIP, not silently dropped — this would catch a dangling exemption the moment cp-8845 closes and nobody removed the entry, because the SKIP line would then say so loudly next to a host that actually sends the header"
+ok "an exempted host's exemption suppresses the DRIFT but is named via SKIP, not silently dropped — mechanism pinned via the test-only override since bt-6e53 emptied the real map"
 
-echo "30. bt-4164 (check_nonvercel_path-side exemption): meni, PERMISSIONS_POLICY_EXEMPT'd per ar-3426, stays OK on its pinned /login path despite sending no Permissions-Policy"
+echo "29b. bt-6e53 (the real, empty production map): the SAME compose row with NO override is DRIFT, not OK — proves the real cp-8845 exemption is actually gone, not just hidden behind a flag"
+out="$(run7)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (compose is no longer exempted in production), got $rc: $out"
+grep -q "^DRIFT  compose.omrihefez.com -> 200 missing security headers: permissions-policy$" <<<"$out" \
+  || fail "expected compose to DRIFT on permissions-policy now that PERMISSIONS_POLICY_EXEMPT no longer carries its entry, got: $out"
+ok "a host NOT in PERMISSIONS_POLICY_EXEMPT and NOT sending the header is DRIFT — the real map is empty, not merely bypassed for this test run"
+
+echo "29c. bt-6e53 (staleness guard, SUBS side): compose, exempted via override, but THIS TIME the fixture has it actually sending Permissions-Policy — DRIFT names the stale exemption instead of silently reading OK"
+: >"$FIXTURE_MAP7"
+BASS_OK >>"$FIXTURE_MAP7"
+printf 'compose.omrihefez.com\t/\t200\t\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP7"
+out="$(run7_exempt)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (compose's exemption is stale now that it sends the header), got $rc: $out"
+grep -q "^DRIFT  compose.omrihefez.com -> permissions-policy now present despite PERMISSIONS_POLICY_EXEMPT entry (cp-8845 2026-10-01) — remove the entry, the host has outgrown it (bt-6e53 class)" <<<"$out" \
+  || fail "expected the staleness DRIFT line naming the exemption, got: $out"
+ok "check_permissions_policy_staleness() catches an exempted host the moment it actually sends the header, instead of the old silent short-circuit that let compose/meni sit exempt for up to a week after they both went live"
+
+echo "30. bt-6e53 (check_nonvercel_path-side exemption, via AUDIT_PERMISSIONS_POLICY_EXEMPT): meni, exempted per a synthetic ar-3426 entry, stays OK on its pinned /login path despite sending no Permissions-Policy"
+MENI_LOGIN_NO_PP() { printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n'; }
 : >"$FIXTURE_MAP4"
 BASS_OK >>"$FIXTURE_MAP4"
 printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
-printf 'meni.omrihefez.com\t/login\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'self'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP4"
-out="$(run4)"; rc=$?
-[ "$rc" -eq 0 ] || fail "expected exit 0 (meni/login is exempted, not DRIFT), got $rc: $out"
+MENI_LOGIN_NO_PP >>"$FIXTURE_MAP4"
+out="$(AUDIT_PERMISSIONS_POLICY_EXEMPT="meni=ar-3426 2026-10-01" CURL_FIXTURE_MAP="$FIXTURE_MAP4" DOMAIN_MD="$FIXTURE4" CURL_CMD="$CURL_STUB" bash "$SCRIPT")"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (meni/login is exempted via override, not DRIFT), got $rc: $out"
 grep -q "^OK     meni.omrihefez.com/login -> 200 (security headers present)" <<<"$out" \
   || fail "expected meni/login to read OK despite missing permissions-policy, got: $out"
 grep -q "^SKIP   meni.omrihefez.com/login -> permissions-policy baseline not applicable: exempted per ar-3426 2026-10-01" <<<"$out" \
   || fail "expected a SKIP line naming meni's exemption and the task that tracks it, got: $out"
-ok "the same exemption works on the check_nonvercel_path side (meni's VERCEL_CHECK_PATHS-pinned /login), keyed off the same PERMISSIONS_POLICY_EXEMPT map — arch-preview shares meni's ar-3426 entry and is not re-tested separately, same map lookup"
+ok "the same exemption mechanism works on the check_nonvercel_path side (meni's VERCEL_CHECK_PATHS-pinned /login), keyed off the same PERMISSIONS_POLICY_EXEMPT map — pinned via the test-only override since bt-6e53 emptied the real map"
+
+echo "30b. bt-6e53 (the real, empty production map): the SAME meni /login row with NO override is DRIFT, not OK"
+out="$(run4)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (meni is no longer exempted in production), got $rc: $out"
+grep -q "^DRIFT  meni.omrihefez.com/login -> 200 missing security headers: permissions-policy$" <<<"$out" \
+  || fail "expected meni/login to DRIFT on permissions-policy now that PERMISSIONS_POLICY_EXEMPT no longer carries its entry, got: $out"
+ok "a host NOT in PERMISSIONS_POLICY_EXEMPT and NOT sending the header is DRIFT on the check_nonvercel_path side too — the real map is empty, not merely bypassed for this test run"
+
+echo "30c. bt-6e53 (staleness guard, check_nonvercel_path side): meni, exempted via override, but its /login fixture now actually sends Permissions-Policy — DRIFT names the stale exemption instead of silently reading OK"
+: >"$FIXTURE_MAP4"
+BASS_OK >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/\t307\t/login\t%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP4"
+printf 'meni.omrihefez.com\t/login\t200\t\t%s\n' "content-type: text/html|$FULL_HEADERS" >>"$FIXTURE_MAP4"
+out="$(AUDIT_PERMISSIONS_POLICY_EXEMPT="meni=ar-3426 2026-10-01" CURL_FIXTURE_MAP="$FIXTURE_MAP4" DOMAIN_MD="$FIXTURE4" CURL_CMD="$CURL_STUB" bash "$SCRIPT")"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (meni's exemption is stale now that /login sends the header), got $rc: $out"
+grep -q "^DRIFT  meni.omrihefez.com/login -> permissions-policy now present despite PERMISSIONS_POLICY_EXEMPT entry (ar-3426 2026-10-01) — remove the entry, the host has outgrown it (bt-6e53 class)" <<<"$out" \
+  || fail "expected the staleness DRIFT line naming the exemption, got: $out"
+ok "check_permissions_policy_staleness() also fires on the check_nonvercel_path side — the identical silent short-circuit existed there too (the header-present branch used to be a bare no-op regardless of exemption)"
 
 # --- bt-e47e: the apex gets its own explicit check, not silently excluded
 # by derive_registry_hosts()'s dot-shaped-name guard, and that check
