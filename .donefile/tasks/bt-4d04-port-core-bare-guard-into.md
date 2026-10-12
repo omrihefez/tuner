@@ -3,7 +3,7 @@ id: bt-4d04
 title: Port core-bare-guard into donefile's canonical hooks/pre-push.sh template (dn-979a already
   covers this — sequence it AFTER dn-21df-identity-guard-propagation lands, since both touch the
   same shared template/propagation machinery)
-status: claimed
+status: done
 priority: p3
 tags:
   - infra
@@ -14,9 +14,32 @@ filed:
   owner: capacity-engine
   at: 2026-10-12T11:04:26Z
 reported: 2026-10-12
-claim:
-  owner: capacity-engine
-  at: 2026-10-12T13:40:47Z
+done:
+  at: 2026-10-12T13:42:44Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 98ee1b335c69318af46b84c043574c662c295f1e
+    repo: donefile
+    verified: 2026-10-12T13:42:44Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && N=$(grep -c core_bare_guard_check .git/hooks/pre-push);
+      echo N=$N; [ "$N" = "2" ]
+    exit: 0
+    at: 2026-10-12T13:42:44Z
+    log: evidence/bt-4d04-2026-10-12T13-42-44Z-test.txt
+    sha256: f2e3112a303734680106de51ab17e9c85715292c0b757c73084a5a18e15ba054
+    bytes: 126
+  - type: note
+    value: "not real / already fixed: dn-21df (donefile, done 2026-10-12) was widened mid-task by Main
+      to install the core.bare guard alongside the identity guard into donefile's canonical
+      hooks/pre-push.sh template, then propagated it via the already-scheduled hooks-check --all
+      --fix tick to all 5 PER_CLONE boards including bass-tuner. Verified fresh: bass-tuner's live
+      .git/hooks/pre-push is byte-identical (diff, exit 0) to donefile's hooks/pre-push.sh template
+      and carries core_bare_guard_check wired at both entry (line 189) and exit (line 502), plus the
+      ambient GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR scrub (line 151). This is PER_CLONE (not tracked
+      in bass-tuner's own .git) so a fresh clone needs the installer/hooks-check re-run to pick it
+      up again -- durability caveat already recorded on dn-21df, not re-filing it here."
 ---
 
 Named in the finding: hooks/pre-push.sh, template/propagation
@@ -37,3 +60,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-12 claimed by capacity-engine
+- 2026-10-12 done by capacity-engine/worker — commit 98ee1b335c69 (donefile), test `cd /home/omri/projects/bass-tuner && N=$(grep -c core_bare_guard_check .git/hooks/pre-push); echo N=$N; [ "$N" = "2" ]` exit 0 (log: evidence/bt-4d04-2026-10-12T13-42-44Z-test.txt)
