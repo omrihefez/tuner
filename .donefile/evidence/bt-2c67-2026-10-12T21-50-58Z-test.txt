@@ -1,0 +1,43 @@
+$ bash scripts/check-csp-strength.test.sh
+
+1. the live finding this script exists to catch: script-src 'unsafe-inline' goes red
+  ok — script-src 'unsafe-inline' (the real trips finding) goes red
+2. script-src 'unsafe-eval' goes red
+  ok — script-src 'unsafe-eval' goes red
+3. a bare https: wildcard in img-src (the real tik finding) goes red -- a real origin like https://example.com in img-src does NOT trip it
+  ok — bare https: wildcard in img-src (the real tik finding) goes red
+  ok — a real https:// origin in img-src is not a false positive
+4. a bare * wildcard in script-src goes red too
+  ok — bare * wildcard in script-src goes red
+5. style-src 'unsafe-inline' is a DELIBERATE exemption -- must NOT fail on its own
+  ok — style-src 'unsafe-inline' alone passes clean (deliberate estate-wide exemption)
+6. style-src 'unsafe-eval' is NOT exempt -- only 'unsafe-inline' is
+  ok — style-src 'unsafe-eval' still goes red -- only 'unsafe-inline' is exempt
+7. a fully clean CSP passes, tombstoned row excluded
+  ok — a fully clean CSP passes, tombstoned row excluded
+8. a missing CSP header on an UNEXEMPT host is a loud DRIFT
+  ok — a missing CSP header on an unexempt host is a loud DRIFT
+9. a missing CSP header on a DECLARED exemption (e.g. an API/tunnel backend) passes with a named reason, not a silent skip
+  ok — a declared no-CSP exemption passes with its reason stated, not a silent skip
+10. default-src fallback: a host with ONLY default-src 'unsafe-inline' (no explicit script-src) is still caught
+  ok — default-src fallback is used when script-src is absent (browser CSP fallback semantics)
+11. default-src 'none' with no script-src/img-src/style-src at all (the real oauth.omrihefez.com shape) is clean, not a false positive -- including base-uri 'none' (not 'self') being accepted as the stricter, equally safe value
+  ok — default-src 'none' with no further directives is clean, base-uri 'none' accepted
+12. HOST LIST comes from the registry (derive_registry_hosts), not a hand-maintained list -- clean and brain both appear with no CSP_HOSTS override, the tombstoned row never does
+  ok — host list is derived from the registry in 'all' mode, covering a declared exemption too
+13. object-src missing entirely (the real bass/planner/trips finding, bt-2c67) goes red via the default-src fallback
+  ok — object-src missing entirely goes red (the real bass/planner/trips finding)
+14. object-src set but not 'none' (e.g. 'self') still goes red -- not just an absence check
+  ok — object-src 'self' (not 'none') still goes red
+15. base-uri missing entirely goes red -- no default-src fallback covers it
+  ok — base-uri missing entirely goes red
+16. base-uri 'none' alone (distinct from 'self') passes -- both are accepted, isolated from the oauth-shape integration test above
+  ok — base-uri 'none' alone passes (both 'self' and 'none' are accepted)
+17. frame-ancestors missing entirely goes red -- no default-src fallback covers it
+  ok — frame-ancestors missing entirely goes red
+18. frame-ancestors 'self' (present but wrong value) still goes red -- only 'none' is accepted
+  ok — frame-ancestors 'self' (wrong value) still goes red
+19. an unreadable DOMAIN.md (and no CSP_HOSTS override) refuses to run rather than silently checking nothing
+  ok — missing DOMAIN.md refuses to run rather than silently checking nothing
+
+PASS (20 assertions)

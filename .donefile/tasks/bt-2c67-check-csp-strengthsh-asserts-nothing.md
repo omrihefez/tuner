@@ -2,7 +2,7 @@
 id: bt-2c67
 title: check-csp-strength.sh asserts nothing about object-src, so four of six live hosts omit it and
   the monitor reports OK
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -12,9 +12,45 @@ created: 2026-10-12
 filed:
   owner: meni-worker/board-refill-work-discov-ad131e
   at: 2026-10-12T15:36:10Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-12T21:38:28Z
+done:
+  at: 2026-10-12T21:51:01Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 6844de7
+    verified: 2026-10-12T21:51:01Z
+  - type: test
+    cmd: bash scripts/check-csp-strength.test.sh
+    exit: 0
+    at: 2026-10-12T21:50:58Z
+    log: evidence/bt-2c67-2026-10-12T21-50-58Z-test.txt
+    sha256: ce1872bb8bd75305f52bf25b62dc215b69f6726bd02b67265a9d008b6c65ca9b
+    bytes: 3401
+  - type: live
+    cmd: bash scripts/check-monitor-heartbeats.sh csp-strength
+    exit: 0
+    at: 2026-10-12T21:50:58Z
+    log: evidence/bt-2c67-2026-10-12T21-50-58Z-live.txt
+    sha256: 00c3bff674cf086444c01e5dbdae2cd5e6b29ec7013f460d0712099f77f1bcde
+    bytes: 108
+  - type: note
+    value: "object-src/base-uri/frame-ancestors now asserted in check-csp-strength.sh (bt-2c67). Seen
+      FAILING first against the live estate (saved pre-fix run: bass/planner/tuner missing
+      object-src, trips missing object-src + its pre-existing img-src wildcard -- meni/preview.meni
+      had already been fixed on their own boards by the time of this run). base-uri accepts 'self'
+      OR 'none' (oauth.omrihefez.com genuinely ships 'none', a stricter-not-weaker config --
+      requiring only 'self' would have been a false positive on a real host). bass.omrihefez.com's
+      vercel.json gained object-src 'none'; test/vercel-headers.test.js (bt-d517) now asserts it
+      too, confirmed red against the unmodified vercel.json and green after (ad-hoc swap, not stored
+      as evidence since it's not a standing command). Deployed via Vercel's GitHub auto-deploy on
+      push to main (no manual deploy step in this repo) -- verified on the SERVED header
+      post-deploy: bass.omrihefez.com now sends object-src 'none'. Re-ran the live monitor after
+      deploy: bass and tuner (alias, same deployment) are clean; trips still flags on its
+      pre-existing, unrelated img-src wildcard (separate board, out of scope) -- planner
+      (apartment-planner's board) was also clean on this run, ahead of our fix landing, so that
+      drift may already be resolved there independently; not verified further, out of scope here.
+      Heartbeat registration (check-monitor-heartbeats.sh) untouched, confirmed still passing. Full
+      npm test: 126/126 pass."
 ---
 
 ## The gap
@@ -75,3 +111,4 @@ meni-arch; planner is apartment-planner's. This task is the monitor plus bass.
 - 2026-10-13 claimed by capacity-engine
 - 2026-10-13 released by capacity-engine
 - 2026-10-13 claimed by capacity-engine
+- 2026-10-13 done by capacity-engine/worker — commit 6844de7, test `bash scripts/check-csp-strength.test.sh` exit 0 (log: evidence/bt-2c67-2026-10-12T21-50-58Z-test.txt), live `bash scripts/check-monitor-heartbeats.sh csp-strength` exit 0 (log: evidence/bt-2c67-2026-10-12T21-50-58Z-live.txt)
