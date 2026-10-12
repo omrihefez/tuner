@@ -14,7 +14,24 @@
 #   bash scripts/install-ff-sync-cron.sh          # install / update
 #   bash scripts/install-ff-sync-cron.sh --remove
 #   bash scripts/install-ff-sync-cron.sh --print-line   # rendered lines only, no markers (used by check-crontab-drift.sh)
+#   bash scripts/install-ff-sync-cron.sh --allow-empty-base  # bt-59c4: proceed even if crontab -l
+#                                                  # came back empty/failed (genuine first
+#                                                  # install only)
 set -euo pipefail
+
+# bt-59c4: pull --allow-empty-base out of the args before the --print-line/
+# --remove dispatch below sees them, so it composes with both instead of
+# needing its own case arm.
+ALLOW_EMPTY_BASE=0
+_args=()
+for _a in "$@"; do
+  if [ "$_a" = "--allow-empty-base" ]; then
+    ALLOW_EMPTY_BASE=1
+  else
+    _args+=("$_a")
+  fi
+done
+set -- "${_args[@]}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATE_DIR="$HOME/.local/share/meni-hub/ff-sync-bass-tuner-main-checkout"
@@ -47,7 +64,14 @@ fi
 }
 crontab_install_take_lock
 
-current="$(crontab -l 2>/dev/null || true)"
+# Empty/failed-read guard (bt-59c4, ported from meni-arch's ar-9eb3): refuses
+# (table untouched) on a failed or empty read, unless --allow-empty-base was
+# passed explicitly -- see lib/crontab-empty-read-guard.sh.
+. "$(dirname "${BASH_SOURCE[0]}")/lib/crontab-empty-read-guard.sh" || {
+  echo "FATAL: cannot source lib/crontab-empty-read-guard.sh -- refusing to modify the crontab without the empty-read guard" >&2
+  exit 1
+}
+current="$(crontab_install_read_or_refuse "$ALLOW_EMPTY_BASE")" || exit 1
 stripped="$(printf '%s\n' "$current" | awk -v b="$BEGIN" -v e="$END" '
   $0 == b {skip=1} skip==0 {print} $0 == e {skip=0}')"
 

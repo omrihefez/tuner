@@ -25,12 +25,15 @@
 # running this installer with --print-line, so there is exactly one source
 # of truth for the block, this file.
 #
-# Usage: install-cert-renewal-cron.sh [--dry-run] [--force] [--print-line]
+# Usage: install-cert-renewal-cron.sh [--dry-run] [--force] [--print-line] [--allow-empty-base]
 #   --dry-run    print the resulting crontab instead of installing it
 #   --force      install even if the guard reports a monitor would be dropped
 #                (i.e. you are deliberately unscheduling one)
 #   --print-line print the rendered block content, install nothing (used by
 #                scripts/check-crontab-drift.sh as its source of truth)
+#   --allow-empty-base  bt-59c4: proceed even if crontab -l came back
+#                empty/failed (genuine first install only -- never inferred
+#                from the empty read itself)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,12 +41,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=0
 FORCE=0
 PRINT_LINE=0
+ALLOW_EMPTY_BASE=0
 for arg in "$@"; do
   case "$arg" in
     --dry-run)    DRY_RUN=1 ;;
     --force)      FORCE=1 ;;
     --print-line) PRINT_LINE=1 ;;
-    *) echo "usage: install-cert-renewal-cron.sh [--dry-run] [--force] [--print-line]" >&2; exit 2 ;;
+    --allow-empty-base) ALLOW_EMPTY_BASE=1 ;;
+    *) echo "usage: install-cert-renewal-cron.sh [--dry-run] [--force] [--print-line] [--allow-empty-base]" >&2; exit 2 ;;
   esac
 done
 
@@ -113,7 +118,14 @@ crontab_install_take_lock
   exit 1
 }
 
-CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
+# Empty/failed-read guard (bt-59c4, ported from meni-arch's ar-9eb3): refuses
+# (table untouched) on a failed or empty read, unless --allow-empty-base was
+# passed explicitly -- see lib/crontab-empty-read-guard.sh.
+. "$(dirname "${BASH_SOURCE[0]}")/lib/crontab-empty-read-guard.sh" || {
+  echo "FATAL: cannot source lib/crontab-empty-read-guard.sh -- refusing to modify the crontab without the empty-read guard" >&2
+  exit 1
+}
+CURRENT_CRON="$(crontab_install_read_or_refuse "$ALLOW_EMPTY_BASE")" || exit 1
 
 # Monitor names (run-monitor.sh's first argument) on stdin's cron lines.
 # Comment lines are skipped so the BEGIN/END markers never register as entries.
