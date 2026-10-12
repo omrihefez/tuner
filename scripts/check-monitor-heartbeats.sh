@@ -61,6 +61,7 @@ declare -A MAX_AGE_HOURS=(
   [model-ids]=30           # daily 06:14 (bt-5abe)
   [permissions-policy]=30  # daily 06:16 (bt-40c5/bt-b97b, bt-2604)
   [cors-corp-consistency]=30  # daily 06:18 (bt-bfee/bt-405f)
+  [csp-strength]=30        # daily 06:20 (bt-5059)
   # NOTE: does NOT include "heartbeat" itself (this script's own run) --
   # that was tried and rejected in bt-6492: a self-referential entry only
   # reports once the watcher has already run, so it can never catch "the
