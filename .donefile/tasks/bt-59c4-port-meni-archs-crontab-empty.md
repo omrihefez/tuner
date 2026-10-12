@@ -2,7 +2,7 @@
 id: bt-59c4
 title: "bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed
   crontab -l replaces the whole 222-entry table"
-status: open
+status: claimed
 priority: p2
 tags:
   - reliability
@@ -11,6 +11,9 @@ created: 2026-10-12
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-12T16:48:18Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-12T19:42:39Z
 ---
 
 ## What to do
@@ -77,3 +80,4 @@ cross-board: names a file under 'meni-music' at /home/omri/projects/meni-music �
 
 ## Log
 - 2026-10-12 title: 'Port meni-arch's crontab empty-read guard to this repo's 4 cron installer(s) — a failed crontab -l wipes the whole table' -> 'bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed crontab -l replaces the whole 222-entry table'
+- 2026-10-12 claimed by capacity-engine
