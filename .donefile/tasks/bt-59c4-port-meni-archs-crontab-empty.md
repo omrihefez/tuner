@@ -2,7 +2,7 @@
 id: bt-59c4
 title: "bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed
   crontab -l replaces the whole 222-entry table"
-status: claimed
+status: done
 priority: p2
 tags:
   - reliability
@@ -11,9 +11,29 @@ created: 2026-10-12
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-12T16:48:18Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-12T19:42:39Z
+done:
+  at: 2026-10-12T19:56:36Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: e48242d
+    verified: 2026-10-12T19:56:36Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh
+    exit: 0
+    at: 2026-10-12T19:56:33Z
+    log: evidence/bt-59c4-2026-10-12T19-56-33Z-test.txt
+    sha256: 00866c95239d8dd3393356a542f6f56c372174cffb99596d09273b4df599ccf8
+    bytes: 1182
+  - type: note
+    value: Ported meni-arch's crontab-empty-read-guard (ar-9eb3/4d45bf2) to bass-tuner's 3 real cron
+      installers (install-monitoring-crons.sh, install-cert-renewal-cron.sh,
+      install-ff-sync-cron.sh). The task's grep-measured '4 files' included
+      scripts/test-monitoring.sh, which only reads crontab for read-only test assertions and never
+      writes it back -- confirmed not an instance of this bug, left unchanged. New
+      scripts/crontab-empty-read-guard.test.sh (picked up by npm test) proven red against pre-fix
+      origin/main (install-monitoring-crons.sh wrote the crontab on a failed read) and green after
+      the fix, 12/12 checks across all 3 installers. Full npm test suite green.
 ---
 
 ## What to do
@@ -81,3 +101,4 @@ cross-board: names a file under 'meni-music' at /home/omri/projects/meni-music �
 ## Log
 - 2026-10-12 title: 'Port meni-arch's crontab empty-read guard to this repo's 4 cron installer(s) — a failed crontab -l wipes the whole table' -> 'bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed crontab -l replaces the whole 222-entry table'
 - 2026-10-12 claimed by capacity-engine
+- 2026-10-12 done by capacity-engine/worker — commit e48242d, test `cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh` exit 0 (log: evidence/bt-59c4-2026-10-12T19-56-33Z-test.txt)

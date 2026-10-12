@@ -1,0 +1,15 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh
+
+ok: install-monitoring-crons.sh: refuses and never writes when crontab -l fails
+ok: install-monitoring-crons.sh: refuses and never writes when crontab -l returns nothing
+ok: install-monitoring-crons.sh: normal install preserves existing unrelated entries
+ok: install-monitoring-crons.sh: --allow-empty-base allows a genuine first install over an empty read
+ok: install-cert-renewal-cron.sh: refuses and never writes when crontab -l fails
+ok: install-cert-renewal-cron.sh: refuses and never writes when crontab -l returns nothing
+ok: install-cert-renewal-cron.sh: normal install preserves existing unrelated entries
+ok: install-cert-renewal-cron.sh: --allow-empty-base allows a genuine first install over an empty read
+ok: install-ff-sync-cron.sh: refuses and never writes when crontab -l fails
+ok: install-ff-sync-cron.sh: refuses and never writes when crontab -l returns nothing
+ok: install-ff-sync-cron.sh: normal install preserves existing unrelated entries
+ok: install-ff-sync-cron.sh: --allow-empty-base allows a genuine first install over an empty read
+passed 12 checks across 3 installers
