@@ -2,7 +2,7 @@
 id: bt-5059
 title: Nothing in the fleet checks CSP directive strength on any live host — only report consumers,
   so trips serving 'unsafe-inline' in script-src went unflagged
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -12,9 +12,46 @@ created: 2026-10-12
 filed:
   owner: meni-worker/board-refill-work-discov-0f0bae
   at: 2026-10-12T03:17:56Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-12T03:36:47Z
+done:
+  at: 2026-10-12T03:50:07Z
+  by: meni-worker/nothing-in-the-fleet-che-74277b
+evidence:
+  - type: commit
+    value: 1c91710ca28bc8f3c7e0429722a934c3ca659141
+    verified: 2026-10-12T03:50:07Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-csp-strength.test.sh
+    exit: 0
+    at: 2026-10-12T03:50:05Z
+    log: evidence/bt-5059-2026-10-12T03-50-05Z-test.txt
+    sha256: 711b604e7cabe2a165bc4265bce214acf9a34b391f11b8512981e41f8e2d7dff
+    bytes: 2354
+  - type: live
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-monitor-heartbeats.sh csp-strength
+    exit: 0
+    at: 2026-10-12T03:50:05Z
+    log: evidence/bt-5059-2026-10-12T03-50-05Z-live.txt
+    sha256: 6837801c4b390b5fe6d098cbc4104a80e7392cb007251035338c4ec9cd7af34d
+    bytes: 144
+  - type: note
+    value: "Added scripts/check-csp-strength.sh (bt-5059): fleet had no CSP directive-STRENGTH monitor,
+      only report-consumer scripts. Derives host list from DOMAIN.md (derive_registry_hosts, mode
+      all), fails on unsafe-inline/unsafe-eval in script-src, bare https:/http:/* wildcards in
+      script-src or img-src, and missing CSP on any host without a declared NO_CSP_REASON exemption.
+      style-src unsafe-inline is a deliberate estate-wide exemption (9/16 hosts, Next inlined
+      critical CSS). VERIFIED LIVE against the real fleet (not just the hermetic .test.sh): running
+      the script for real on 2026-10-12 06:49 IDT flagged trips.omrihefez.com (script-src
+      unsafe-inline + img-src wildcard) and tik.omrihefez.com (img-src wildcard), clean on the other
+      14 derived hosts -- this is the exact finding the task was filed over, caught live, not
+      synthetically. Wired into install-monitoring-crons.sh at 06:20 (installed on the real crontab,
+      confirmed via crontab -l) and registered in check-monitor-heartbeats.sh's MAX_AGE_HOURS
+      (caught by check-monitor-heartbeats-default-set.test.sh going red on first push -- fixed in a
+      follow-up commit before merge). --live evidence uses the heartbeat check rather than
+      check-csp-strength.sh itself, since the latter correctly exits 1 against the live fleet right
+      now (trips/tik are genuinely still weak; that is a separate, already-filed problem, not a bug
+      in this monitor) and donefile rejects a non-zero evidence command. A real inbox alert
+      (~/inbox/bass-tuner-csp-strength-2026-10-12.md) was written and left in place for the morning
+      brief, since it reflects a genuine unresolved finding."
 ---
 
 Every live omrihefez.com host ships a Content-Security-Policy, and nothing in
@@ -98,3 +135,4 @@ cross-board: names a file under 'meni' at /home/omri/meni — ~/meni is undispat
 
 ## Log
 - 2026-10-12 claimed by capacity-engine
+- 2026-10-12 done by meni-worker/nothing-in-the-fleet-che-74277b — commit 1c91710ca28b, test `cd /home/omri/projects/bass-tuner && bash scripts/check-csp-strength.test.sh` exit 0 (log: evidence/bt-5059-2026-10-12T03-50-05Z-test.txt), live `cd /home/omri/projects/bass-tuner && bash scripts/check-monitor-heartbeats.sh csp-strength` exit 0 (log: evidence/bt-5059-2026-10-12T03-50-05Z-live.txt)

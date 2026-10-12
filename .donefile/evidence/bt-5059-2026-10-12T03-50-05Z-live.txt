@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-monitor-heartbeats.sh csp-strength
+
+OK       csp-strength last ran 0h ago (limit 30h)
