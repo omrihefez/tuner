@@ -22,18 +22,18 @@ evidence:
     cmd: cd /home/omri/projects/bass-tuner && node --test test/locked-string-range.test.js
     exit: 0
     at: 2026-10-11T20:00:09Z
-    expect: pass 5
     log: evidence/bt-6854-2026-10-11T20-00-09Z-test.txt
     sha256: d7bf416e3604f2e5f491384af39cc3a38eeee1b8961a39ae91c5ed7cfee72625
     bytes: 1253
+    expect: pass 5
   - type: live
     cmd: curl -s --max-time 10 https://bass.omrihefez.com/tuner.js | grep -c LOCK_RANGE_SEMITONES
     exit: 0
     at: 2026-10-11T20:00:09Z
-    expect: "4"
     log: evidence/bt-6854-2026-10-11T20-00-09Z-live.txt
     sha256: 39495594a90985fde100cd06091cdaa9e1d97f7ece1035f788f4ebd4838eda1d
     bytes: 94
+    expect: "4"
 ---
 
 HIS WORDS, 2026-10-11 22:49 IDT, while tuning drop D with the bass in his hands:
@@ -102,3 +102,4 @@ He was waiting at the bass, so a worktree round-trip was not worth the minutes.
 
 ## Log
 - 2026-10-11 done by omri@ubuntu-4gb-nbg1-1 — commit 024a401, test `cd /home/omri/projects/bass-tuner && node --test test/locked-string-range.test.js` exit 0 (--test-expect "pass 5") (log: evidence/bt-6854-2026-10-11T20-00-09Z-test.txt), live `curl -s --max-time 10 https://bass.omrihefez.com/tuner.js | grep -c LOCK_RANGE_SEMITONES` exit 0 (--live-expect "4") (log: evidence/bt-6854-2026-10-11T20-00-09Z-live.txt)
+- 2026-10-12 TOLD-OMRI: hub message 68873 at 2026-10-11 22:59 IDT — Fixed and live — reload the tuner and try drop D again.
