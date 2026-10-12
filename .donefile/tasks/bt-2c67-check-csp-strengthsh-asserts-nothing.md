@@ -2,7 +2,7 @@
 id: bt-2c67
 title: check-csp-strength.sh asserts nothing about object-src, so four of six live hosts omit it and
   the monitor reports OK
-status: open
+status: claimed
 priority: p3
 tags:
   - monitoring
@@ -12,6 +12,9 @@ created: 2026-10-12
 filed:
   owner: meni-worker/board-refill-work-discov-ad131e
   at: 2026-10-12T15:36:10Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-12T21:38:28Z
 ---
 
 ## The gap
@@ -71,3 +74,4 @@ meni-arch; planner is apartment-planner's. This task is the monitor plus bass.
 ## Log
 - 2026-10-13 claimed by capacity-engine
 - 2026-10-13 released by capacity-engine
+- 2026-10-13 claimed by capacity-engine
