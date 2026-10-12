@@ -2,7 +2,7 @@
 id: bt-5059
 title: Nothing in the fleet checks CSP directive strength on any live host — only report consumers,
   so trips serving 'unsafe-inline' in script-src went unflagged
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -12,6 +12,9 @@ created: 2026-10-12
 filed:
   owner: meni-worker/board-refill-work-discov-0f0bae
   at: 2026-10-12T03:17:56Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-12T03:36:47Z
 ---
 
 Every live omrihefez.com host ships a Content-Security-Policy, and nothing in
@@ -92,3 +95,6 @@ DONE WHEN
 
 
 cross-board: names a file under 'meni' at /home/omri/meni — ~/meni is undispatched — route it via ~/inbox/meni-board-queue/ instead (see dn-334c).
+
+## Log
+- 2026-10-12 claimed by capacity-engine
