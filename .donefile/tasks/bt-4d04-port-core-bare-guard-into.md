@@ -3,7 +3,7 @@ id: bt-4d04
 title: Port core-bare-guard into donefile's canonical hooks/pre-push.sh template (dn-979a already
   covers this — sequence it AFTER dn-21df-identity-guard-propagation lands, since both touch the
   same shared template/propagation machinery)
-status: open
+status: claimed
 priority: p3
 tags:
   - infra
@@ -14,6 +14,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-12T11:04:26Z
 reported: 2026-10-12
+claim:
+  owner: capacity-engine
+  at: 2026-10-12T13:40:47Z
 ---
 
 Named in the finding: hooks/pre-push.sh, template/propagation
@@ -31,3 +34,6 @@ That task's report closed DONE (commit d6e245548b18864919949f8751208d5a99607541 
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `d6e245548b18864919949f8751208d5a99607541` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-12 claimed by capacity-engine
