@@ -1,0 +1,3 @@
+$ diff /home/omri/projects/donefile/hooks/pre-push.sh /home/omri/projects/bass-tuner/.git/hooks/pre-push && echo NO_DRIFT
+
+NO_DRIFT

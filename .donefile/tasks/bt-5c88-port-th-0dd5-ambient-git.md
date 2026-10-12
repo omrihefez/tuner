@@ -2,7 +2,7 @@
 id: bt-5c88
 title: Port th-0dd5 ambient-GIT_* scrub + core.bare guard to this repo's pre-push hook (per-clone
   hook caveat)
-status: claimed
+status: done
 priority: p3
 tags:
   - infra
@@ -13,9 +13,40 @@ filed:
   owner: meni-worker/port-the-pre-push-ambien-9a509c
   at: 2026-10-12T09:16:05Z
 reported: 2026-10-12
-claim:
-  owner: capacity-engine
-  at: 2026-10-12T14:29:00Z
+done:
+  at: 2026-10-12T14:37:50Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 98ee1b335c69318af46b84c043574c662c295f1e
+    repo: donefile
+    verified: 2026-10-12T14:37:50Z
+  - type: test
+    cmd: diff /home/omri/projects/donefile/hooks/pre-push.sh
+      /home/omri/projects/bass-tuner/.git/hooks/pre-push && echo NO_DRIFT
+    exit: 0
+    at: 2026-10-12T14:37:50Z
+    log: evidence/bt-5c88-2026-10-12T14-37-50Z-test.txt
+    sha256: 8613ec24af025a13f856014ffec10cdae14677d5157eafcbfad63b11064906bd
+    bytes: 132
+  - type: note
+    value: "not real / already fixed: dn-21df (done 2026-10-12T11:25:24Z, commits bb7eef40+98ee1b33 in
+      donefile) ported the th-0dd5 ambient-GIT_* scrub + core.bare guard into donefile's pre-push
+      TEMPLATE (hooks/pre-push.sh) and the hooks-check--fix propagation already carried it to
+      bass-tuner's installed .git/hooks/pre-push (one of the 5 PER_CLONE boards named in dn-21df's
+      own evidence). Read of the installed hook confirms: top-level GIT_* prefix scrub (broader than
+      the literal list -- every ${!GIT_@} var), entry-time core_bare_guard_check sourcing meniapp's
+      canonical lib by absolute path with WARN-not-fail-loud fallback, and an exit-time check folded
+      into the hook's existing run_log EXIT trap (_dn_prepush_on_exit) rather than a second trap.
+      diff against the template shows zero drift. Fresh verification today (2026-10-12): (1)
+      donefile's own vitest suite test/pre-push-hook.test.ts run fresh, 29/29 passing including
+      'repairs a pre-existing core.bare=true on entry (dn-21df, th-0dd5)'; (2) hooks-check reports
+      bass-tuner gated, 0 findings; (3) hand-built hermetic test against a real throwaway repo using
+      bass-tuner's actual installed hook file: a clean push succeeds normally; a push whose own test
+      script corrupts the shared checkout via an explicit GIT_DIR=<worktree-gitdir> git init is
+      caught, repaired (core.bare unset), and REFUSED by git (stderr: 'core-bare-guard: REFUSED ...
+      (th-0dd5/th-5dbe/dn-21df)', 'error: failed to push some refs'). No code changes needed here;
+      closing as already-fixed."
 ---
 
 Port the ambient-GIT_* scrub + shared-checkout core.bare guard (th-0dd5, originated in trips-hub's th-5dbe) to this repo's pre-push hook.
@@ -35,3 +66,4 @@ DONE WHEN: a real push from a linked worktree still succeeds, and a manual `git 
 
 ## Log
 - 2026-10-12 claimed by capacity-engine
+- 2026-10-12 done by capacity-engine/worker — commit 98ee1b335c69 (donefile), test `diff /home/omri/projects/donefile/hooks/pre-push.sh /home/omri/projects/bass-tuner/.git/hooks/pre-push && echo NO_DRIFT` exit 0 (log: evidence/bt-5c88-2026-10-12T14-37-50Z-test.txt)
