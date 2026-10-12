@@ -2,7 +2,7 @@
 id: bt-5c88
 title: Port th-0dd5 ambient-GIT_* scrub + core.bare guard to this repo's pre-push hook (per-clone
   hook caveat)
-status: open
+status: claimed
 priority: p3
 tags:
   - infra
@@ -13,6 +13,9 @@ filed:
   owner: meni-worker/port-the-pre-push-ambien-9a509c
   at: 2026-10-12T09:16:05Z
 reported: 2026-10-12
+claim:
+  owner: capacity-engine
+  at: 2026-10-12T14:29:00Z
 ---
 
 Port the ambient-GIT_* scrub + shared-checkout core.bare guard (th-0dd5, originated in trips-hub's th-5dbe) to this repo's pre-push hook.
@@ -29,3 +32,6 @@ What to add to the hook itself:
 3. An exit-time core_bare_guard_check call that DOES refuse if the checkout was corrupted during this run -- check first whether this hook already sets its own `trap ... EXIT` (bash traps are single-slot per signal); if so, fold the check into that existing handler rather than registering a second one. See capacity-engine's or meniapp's version (branch th-0dd5-core-bare-guard-port / already on meniapp main) for both shapes of this.
 
 DONE WHEN: a real push from a linked worktree still succeeds, and a manual `git --git-dir=<shared .git> config core.bare true` injected before a push is repaired-and-warned-about (entry case) while the same corruption injected BY a gate step during the run IS refused (exit case). Verify both with a hermetic test against a real throwaway repo (copy meniapp's/trips-hub's scripts/lib/core-bare-guard.test.sh, it needs no repo-specific changes beyond the LIB path).
+
+## Log
+- 2026-10-12 claimed by capacity-engine
