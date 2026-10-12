@@ -8,7 +8,7 @@
 
 ### p2
 
-- `bt-59c4` **Port meni-arch's crontab empty-read guard to this repo's 4 cron installer(s) — a failed crontab -l wipes the whole table** — #reliability #cross-board
+- `bt-59c4` **bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed crontab -l replaces the whole 222-entry table** — #reliability #cross-board
 
 ### p3
 

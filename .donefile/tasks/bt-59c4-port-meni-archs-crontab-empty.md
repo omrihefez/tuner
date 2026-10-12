@@ -1,7 +1,7 @@
 ---
 id: bt-59c4
-title: Port meni-arch's crontab empty-read guard to this repo's 4 cron installer(s) — a failed
-  crontab -l wipes the whole table
+title: "bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed
+  crontab -l replaces the whole 222-entry table"
 status: open
 priority: p2
 tags:
@@ -74,3 +74,6 @@ own commit. Root/diagnosis tasks: ma-a745 (meniapp), hc-2b70 (house-control).
 
 
 cross-board: names a file under 'meni-music' at /home/omri/projects/meni-music — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-10-12 title: 'Port meni-arch's crontab empty-read guard to this repo's 4 cron installer(s) — a failed crontab -l wipes the whole table' -> 'bass-tuner: port meni-arch's crontab empty-read guard to its 4 cron installer(s) — a failed crontab -l replaces the whole 222-entry table'
