@@ -72,6 +72,7 @@ test("catch-all rule sets a Content-Security-Policy with the required directives
 
   for (const directive of [
     "default-src 'self'",
+    "object-src 'none'",
     "frame-ancestors 'none'",
     "form-action 'self'",
   ]) {

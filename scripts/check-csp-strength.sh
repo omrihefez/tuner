@@ -29,6 +29,26 @@
 #   - style-src (same fallback) must not carry 'unsafe-eval' or a bare
 #     wildcard. style-src 'unsafe-inline' is NOT checked here -- see the
 #     EXEMPT block below.
+#   - object-src (same default-src fallback -- it IS a fetch directive, so
+#     the browser applies the same inheritance rule) must contain 'none'.
+#     bt-2c67: this is the gap that let four of six sampled hosts past the
+#     monitor with no object-src at all, which falls back to whatever
+#     default-src allows -- usually 'self', which still permits a same-
+#     origin <object>/<embed>: a scriptable context a nonce-based
+#     script-src never gates, because the nonce rule does not apply to it.
+#   - base-uri and frame-ancestors have NO default-src fallback at all --
+#     they are document/navigation directives, not fetch directives, so the
+#     browser never inherits either from default-src -- so each is read
+#     directly, and an ABSENT value is drift on its own rather than
+#     something a strict default-src quietly covers.
+#     frame-ancestors must contain 'none'.
+#     base-uri must contain 'self' OR 'none' -- both close the <base>-tag
+#     hijack ('none' is strictly stronger, since it refuses the tag
+#     outright). Measured live 2026-10-12: oauth.omrihefez.com genuinely
+#     ships `base-uri 'none'` (paired with `default-src 'none'`), which is a
+#     safe, deliberate config, not drift -- a check that only accepted
+#     'self' would flag a real host's stricter-than-required policy as a
+#     finding, which is its own false-positive bug.
 #   - a missing Content-Security-Policy header entirely is DRIFT, unless the
 #     host is a declared NO_CSP_REASON exemption (an API/tunnel backend or a
 #     by-design-404 auth wall that never serves an HTML page for a
@@ -166,13 +186,25 @@ for h in "${HOSTS[@]}"; do
   has_bare_wildcard "$style_src" && reasons+=("style-src has a bare wildcard origin")
   # style-src 'unsafe-inline' deliberately NOT checked -- see EXEMPT comment above.
 
+  object_src="$(effective_directive "$csp" "object-src")"
+  has_keyword "$object_src" "none" || reasons+=("object-src missing 'none' (effective value: ${object_src:-<absent>})")
+
+  # base-uri/frame-ancestors: NO default-src fallback, read directly (bt-2c67).
+  base_uri="$(extract_directive "$csp" "base-uri")"
+  if ! has_keyword "$base_uri" "self" && ! has_keyword "$base_uri" "none"; then
+    reasons+=("base-uri missing 'self' or 'none' (value: ${base_uri:-<absent -- no fallback, any origin may set <base>>})")
+  fi
+
+  frame_ancestors="$(extract_directive "$csp" "frame-ancestors")"
+  has_keyword "$frame_ancestors" "none" || reasons+=("frame-ancestors missing 'none' (value: ${frame_ancestors:-<absent -- no fallback, any origin may frame this page>})")
+
   if [ "${#reasons[@]}" -gt 0 ]; then
     joined="$(printf '%s; ' "${reasons[@]}")"
     joined="${joined%; }"
     echo "DRIFT  $host -> $joined -- csp: $csp" >&2
     FAIL=1
   else
-    echo "OK     $host -> script-src/img-src/style-src clean (style-src 'unsafe-inline' exempt)"
+    echo "OK     $host -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)"
   fi
 done
 
