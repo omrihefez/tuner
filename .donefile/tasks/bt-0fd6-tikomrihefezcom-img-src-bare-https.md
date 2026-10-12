@@ -1,7 +1,7 @@
 ---
 id: bt-0fd6
 title: "tik.omrihefez.com img-src bare https: wildcard"
-status: claimed
+status: open
 priority: p3
 tags:
   - security
@@ -11,9 +11,6 @@ filed:
   owner: capacity-engine
   at: 2026-10-12T03:58:41Z
 reported: 2026-10-12
-claim:
-  owner: capacity-engine
-  at: 2026-10-12T04:06:57Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): filed as tkn-4fcf on tik-next's own board, no equivalent task existed; trips' matching finding is already covered by th-36aa/th-90d8/th-db0a
@@ -35,3 +32,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-12 claimed by capacity-engine
+- 2026-10-12 released by capacity-engine
