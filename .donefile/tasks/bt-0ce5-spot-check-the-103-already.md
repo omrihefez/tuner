@@ -2,7 +2,7 @@
 id: bt-0ce5
 title: Spot-check the ~103 already-waived EVIDENCE_TASK_MISMATCH records on
   capacity-engine/trips-hub/iac/meni-arch/bass-tuner/tik-next/house-control/kidai/meni-music/apartment*
-status: open
+status: dropped
 priority: p3
 tags:
   - donefile
@@ -31,3 +31,6 @@ That task's report closed DONE (commit ebfb3502fd1e — does not resolve here, s
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `ebfb3502fd1e` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-13 dropped: Duplicate of ar-aad4 (meni-arch), which is claimed and carries the measured numbers. The dn-92e7 follow-up that produced this names ten repos as the boards whose waivers need auditing, and the multi-repo fan-out filed one task per named board — but copied the FULL ten-board title onto each, so all ten read as 'audit all ten boards' rather than 'audit mine'. Ten tasks each claiming the whole job is worse than one, and only capacity-engine's cross-board dedup (score 1 against ar-aad4 on every tick) is currently stopping ten workers from each doing the same fleet-wide pass. Keeping ar-aad4 as the single task, since its title is the whole job and it is already claimed. Filed the title-scoping defect separately.
