@@ -48,6 +48,13 @@ repos:
   # commit that dropped the stale rows. Same cross-repo-evidence need as the
   # aliases above.
   meniapp: /home/omri/projects/meniapp
+  # bt-d638 (2026-10-13): this board's trips.omrihefez.com object-src finding
+  # (raised via check-csp-strength.sh, which lives here) is a different
+  # repo's deliverable -- the live CSP header is built by trips-hub's own
+  # lib/csp.ts buildCSP(), not anything in bass-tuner -- so the fix landed
+  # there as th-1ddc. This alias is what lets bt-d638 cite that commit. Same
+  # cross-repo-evidence need as the aliases above.
+  trips-hub: /home/omri/projects/trips-hub
 # bt-a60b (2026-08-05): bass-tuner is a deployed Vercel PWA (vercel.json,
 # .vercel project link, manifest.json, sw.js) whose CI already reasons about
 # the deploy surface (check-sw-cache-bump.js, test/vercel-headers.test.js) -
