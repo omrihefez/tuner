@@ -1,0 +1,6 @@
+$ bash /home/omri/projects/meniapp/scripts/check-guard-inventory.sh
+
+2026-10-13T10:27:49Z FINDINGS: MISSING_GUARD:apartment-planner-ff-sync
+
+
+[donefile] --live-expect "nothing unregistered" NOT found in the output above — recording this as a failing run regardless of the process exit (1)

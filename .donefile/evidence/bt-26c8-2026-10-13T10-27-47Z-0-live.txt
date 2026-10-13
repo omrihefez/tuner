@@ -1,0 +1,3 @@
+$ git -C /home/omri/projects/meniapp show origin/master:deploy/guard-inventory.tsv | grep -c '^apartment-planner-ff-sync'
+
+1
