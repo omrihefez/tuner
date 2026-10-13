@@ -2,7 +2,7 @@
 id: bt-1af4
 title: Nothing asks whether a live omrihefez.com surface is REGISTERED — every host monitor derives
   its list from DOMAIN.md, so none can see a host that was never added to it
-status: open
+status: claimed
 priority: p3
 tags:
   - monitoring
@@ -12,6 +12,9 @@ created: 2026-10-13
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-13T09:28:14Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-13T09:42:27Z
 ---
 
 Every host monitor in the fleet derives its host set FROM `~/meni/DOMAIN.md`, so
@@ -86,3 +89,6 @@ have rebuilt the probe that cannot fail.
 
 
 cross-board: names a file under 'meniapp' at /home/omri/projects/meniapp — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-10-13 claimed by capacity-engine
