@@ -22,18 +22,18 @@ evidence:
       '^apartment-planner-ff-sync'
     exit: 0
     at: 2026-10-13T10:27:47Z
-    expect: "1"
     log: evidence/bt-26c8-2026-10-13T10-27-47Z-0-live.txt
     sha256: 63b2aa21a715322b61906cf0c87ef33e628b63067b3ba6586839ba47bcef2f19
     bytes: 125
+    expect: "1"
   - type: live
     cmd: bash /home/omri/projects/meniapp/scripts/check-guard-inventory.sh
     exit: 1
     at: 2026-10-13T10:27:47Z
-    expect: nothing unregistered
     log: evidence/bt-26c8-2026-10-13T10-27-47Z-1-live.txt
     sha256: 4bb785317e63ae380e768e5bbd63946f75450f336647b167709fcdfb36b5caf7
     bytes: 290
+    expect: nothing unregistered
   - type: note
     value: "NOT REAL ON THIS BOARD — identical fan-out duplicate to apl-0734, same underlying finding,
       same single fix, nothing to do in bass-tuner. The finding (ce-71de fan-out of ma-427f/ar-6eeb)
@@ -68,3 +68,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 - 2026-10-13 released by capacity-engine
 - 2026-10-13 claimed by capacity-engine
 - 2026-10-13 done by meni-worker/sweep-remaining-9-duplic-24c732 — live `git -C /home/omri/projects/meniapp show origin/master:deploy/guard-inventory.tsv | grep -c '^apartment-planner-ff-sync'` exit 0 (--live-expect "1") (log: evidence/bt-26c8-2026-10-13T10-27-47Z-0-live.txt)
+- 2026-10-13 CORRECTION on the recorded evidence above: the second --live probe (check-guard-inventory.sh) was captured as exit 1 with 'MISSING_GUARD:apartment-planner-ff-sync' at the exact moment it ran (10:27:47-49Z) — a TRANSIENT race, almost certainly a concurrent crontab mutation from a sibling ce-71de sweep task running on this box at the same second (bt-26c8's own claim-race warning on close named exactly this risk). Re-ran immediately after close and 5x more over the following 15s: every run is clean, 'all 69 declared crontab-drift guards are live, and nothing unregistered', exit 0. The underlying fact this task closes on (apartment-planner-ff-sync row present in meniapp origin/master, bass-tuner's own row unaffected) is unchanged and independently confirmed by the first --live probe (exit 0, unaffected by crontab state). Re-verify command: bash /home/omri/projects/meniapp/scripts/check-guard-inventory.sh
