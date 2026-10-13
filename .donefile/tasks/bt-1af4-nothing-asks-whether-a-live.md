@@ -122,3 +122,4 @@ cross-board: names a file under 'meniapp' at /home/omri/projects/meniapp — con
 ## Log
 - 2026-10-13 claimed by capacity-engine
 - 2026-10-13 done by capacity-engine — commit 6cb4e8363cf9, test `cd /home/omri/projects/bass-tuner && bash scripts/check-unregistered-live-hosts.test.sh` exit 0 (log: evidence/bt-1af4-2026-10-13T09-59-02Z-test.txt), live `cd /home/omri/projects/bass-tuner && bash scripts/run-monitor.sh unregistered-live-hosts scripts/check-unregistered-live-hosts.sh` exit 0 (log: evidence/bt-1af4-2026-10-13T09-59-02Z-live.txt)
+- 2026-10-13 Stronger live re-check (discriminates pass/fail in its own output, unlike run-monitor.sh's silent-on-stdout wrapper used for the close evidence): cd /home/omri/projects/bass-tuner && bash scripts/check-unregistered-live-hosts.sh | grep -c '^DRIFT' | grep -qx 0 && echo CLEAN -- prints CLEAN only when zero DRIFT lines are present; exits non-zero / omits CLEAN otherwise.
