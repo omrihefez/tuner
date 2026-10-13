@@ -2,7 +2,7 @@
 id: bt-d638
 title: trips.omrihefez.com has no object-src directive, falls back to default-src 'self', flagged by
   check-csp-strength.sh as missing explicit 'none'
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -13,6 +13,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-13T04:58:06Z
 reported: 2026-10-13
+claim:
+  owner: capacity-engine
+  at: 2026-10-13T05:30:16Z
 ---
 
 Named in the finding: check-csp-strength.sh
@@ -35,3 +38,6 @@ That task's report closed DONE (commit 5b0c6337e81afafb3bd7231c31b7de815c302256 
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `5b0c6337e81afafb3bd7231c31b7de815c302256` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-13 claimed by capacity-engine
