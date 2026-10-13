@@ -3,7 +3,7 @@ id: bt-26c8
 title: Sweep remaining 9 duplicate fan-out tasks (iac, tik-api, tik-next, trips-hub, bass-tuner,
   donefile, second-brain, house-control, apartment) with the same RESOLVED-ELSEWHERE note+probe
   apl-0734 already got
-status: open
+status: claimed
 priority: p3
 tags:
   - donefile
@@ -13,6 +13,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-13T09:02:48Z
 reported: 2026-10-13
+claim:
+  owner: capacity-engine
+  at: 2026-10-13T10:26:02Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): only apl-0734 was checked so far per the filing worker's own follow-up; the other 9 are unverified duplicates still sitting open
@@ -32,3 +35,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 ## Log
 - 2026-10-13 claimed by capacity-engine
 - 2026-10-13 released by capacity-engine
+- 2026-10-13 claimed by capacity-engine
