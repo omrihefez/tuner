@@ -2,7 +2,7 @@
 id: bt-d638
 title: trips.omrihefez.com has no object-src directive, falls back to default-src 'self', flagged by
   check-csp-strength.sh as missing explicit 'none'
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -13,9 +13,33 @@ filed:
   owner: capacity-engine
   at: 2026-10-13T04:58:06Z
 reported: 2026-10-13
-claim:
-  owner: capacity-engine
-  at: 2026-10-13T05:30:16Z
+done:
+  at: 2026-10-13T07:06:39Z
+  by: capacity-engine
+evidence:
+  - type: commit
+    value: f9c4ed11eb194ece7aecebcc95b0a426942da873
+    repo: trips-hub
+    verified: 2026-10-13T07:06:39Z
+  - type: test
+    cmd: cd /home/omri/projects/trips-hub && git show
+      f9c4ed11eb194ece7aecebcc95b0a426942da873:lib/csp.ts | grep -n "object-src 'none'"
+    exit: 0
+    at: 2026-10-13T07:06:38Z
+    log: evidence/bt-d638-2026-10-13T07-06-38Z-test.txt
+    sha256: f9c28fc8a7ff1fd282eed454a8fd5b49a01ff71ec804b62798add5594000458b
+    bytes: 158
+  - type: live
+    cmd: curl -sI https://trips.omrihefez.com/ | grep -i object-src
+    exit: 0
+    at: 2026-10-13T07:06:38Z
+    log: evidence/bt-d638-2026-10-13T07-06-38Z-live.txt
+    sha256: 7419b577127819c88f4e21420ac0ac91a310db7d5ab2813a73569e064a659789
+    bytes: 628
+  - type: note
+    value: Misfiled on bass-tuner (check-csp-strength.sh's monitor lives here, already covers object-src
+      for all hosts since 6844de75); the actual fix for trips.omrihefez.com's own header is
+      trips-hub's buildCSP() in lib/csp.ts, done as th-1ddc on trips-hub's board and confirmed live.
 ---
 
 Named in the finding: check-csp-strength.sh
@@ -41,3 +65,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-13 claimed by capacity-engine
+- 2026-10-13 done by capacity-engine — commit f9c4ed11eb19 (trips-hub), test `cd /home/omri/projects/trips-hub && git show f9c4ed11eb194ece7aecebcc95b0a426942da873:lib/csp.ts | grep -n "object-src 'none'"` exit 0 (log: evidence/bt-d638-2026-10-13T07-06-38Z-test.txt), live `curl -sI https://trips.omrihefez.com/ | grep -i object-src` exit 0 (log: evidence/bt-d638-2026-10-13T07-06-38Z-live.txt)
