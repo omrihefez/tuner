@@ -13,6 +13,12 @@ secrets/
 # Cruft
 .DS_Store
 node_modules/
+# bt: bare form too — a trailing slash matches DIRECTORIES ONLY, so a
+# node_modules SYMLINK (the documented way to borrow deps into a worktree)
+# is NOT ignored by the line above and `git add -A` commits it as a
+# mode-120000 blob pointing at an absolute path. Happened on
+# capacity-engine main 2026-10-13.
+node_modules
 .worktrees/
 
 # ce-8dc9: donefile's per-board scratch write path (.donefile/scratch/) must stay
