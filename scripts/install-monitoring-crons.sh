@@ -63,6 +63,7 @@ MODEL_IDS="$REPO/scripts/check-model-ids-resolve.sh"
 PERMISSIONS_POLICY="$REPO/scripts/check-permissions-policy.sh"
 CORS_CORP="$REPO/scripts/check-cors-corp-consistency.sh"
 CSP_STRENGTH="$REPO/scripts/check-csp-strength.sh"
+UNREGISTERED_LIVE_HOSTS="$REPO/scripts/check-unregistered-live-hosts.sh"
 
 # Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
 # copy); runs on the same box as meniapp, so the absolute path always
@@ -112,6 +113,15 @@ END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 # STRENGTH rather than presence -- the gap that let trips.omrihefez.com ship
 # `script-src 'self' 'unsafe-inline'` unflagged. Once daily is enough for the
 # same reason as its siblings.
+# unregistered-live-hosts (bt-1af4) -- :21, right after csp-strength and
+# last of the pre-day-start window. Every check above it derives its host
+# list FROM DOMAIN.md, so none of them can see a live surface that was never
+# added there -- this is the opposite direction: it discovers from the
+# Vercel/Cloudflare SERVING side and fails if something is live with no
+# registry row (the preview.meni-for-months-unwatched class). Once daily is
+# enough -- a new live surface appearing is a deliberate human action
+# (adding a Vercel alias or a tunnel CNAME), not something that needs
+# same-day detection.
 CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 10 6 * * * $RUNNER domain-audit $DOMAIN_AUDIT
 12 6 * * * $RUNNER tunnel-liveness $TUNNEL_LIVENESS
@@ -119,6 +129,7 @@ CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 16 6 * * * $RUNNER permissions-policy $PERMISSIONS_POLICY
 18 6 * * * $RUNNER cors-corp-consistency $CORS_CORP
 20 6 * * * $RUNNER csp-strength $CSP_STRENGTH
+21 6 * * * $RUNNER unregistered-live-hosts $UNREGISTERED_LIVE_HOSTS
 0 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
@@ -276,5 +287,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 06:16 permissions-policy, 06:18 cors-corp-consistency, 06:20 csp-strength, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 06:16 permissions-policy, 06:18 cors-corp-consistency, 06:20 csp-strength, 06:21 unregistered-live-hosts, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
 fi
