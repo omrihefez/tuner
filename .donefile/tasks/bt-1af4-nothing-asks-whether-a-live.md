@@ -2,7 +2,7 @@
 id: bt-1af4
 title: Nothing asks whether a live omrihefez.com surface is REGISTERED — every host monitor derives
   its list from DOMAIN.md, so none can see a host that was never added to it
-status: claimed
+status: done
 priority: p3
 tags:
   - monitoring
@@ -12,9 +12,38 @@ created: 2026-10-13
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-13T09:28:14Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-13T09:42:27Z
+done:
+  at: 2026-10-13T09:59:20Z
+  by: capacity-engine
+evidence:
+  - type: commit
+    value: 6cb4e8363cf9e337167aa003cd5f2e5d8b55eb0e
+    verified: 2026-10-13T09:59:20Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-unregistered-live-hosts.test.sh
+    exit: 0
+    at: 2026-10-13T09:59:02Z
+    log: evidence/bt-1af4-2026-10-13T09-59-02Z-test.txt
+    sha256: ccd4e14cf1eba5219c22e534beb66416f69a1f861dd5729d2f31cd8c9fa20090
+    bytes: 1533
+  - type: live
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/run-monitor.sh unregistered-live-hosts
+      scripts/check-unregistered-live-hosts.sh
+    exit: 0
+    at: 2026-10-13T09:59:02Z
+    log: evidence/bt-1af4-2026-10-13T09-59-02Z-live.txt
+    sha256: 6ebe3bc336af2613b1f22155166c69499adc7cbe943fa93722afc59d522b86ba
+    bytes: 133
+  - type: note
+    value: "Discovers live omrihefez.com surfaces from the serving side (paginated Vercel aliases +
+      Cloudflare CNAMEs resolving to a live cfargotunnel.com tunnel) and diffs against DOMAIN.md.
+      SEEN RED hermetically (7 scenarios incl. multi-page Vercel pagination drift + Cloudflare
+      tunnel drift) AND against real live infra: stripped bass's row from a copy of DOMAIN.md and
+      reran live -> DRIFT exit 1 naming bass.omrihefez.com; restored -> exit 0 clean across all 16
+      real registry hosts. Wired into run-monitor.sh via install-monitoring-crons.sh (06:21 daily,
+      installed live in the real crontab) and check-monitor-heartbeats.sh MAX_AGE_HOURS. Fails
+      closed (exit 2) on any fetch/parse error or an empty registry/discovery set, never read as a
+      clean pass."
 ---
 
 Every host monitor in the fleet derives its host set FROM `~/meni/DOMAIN.md`, so
@@ -92,3 +121,4 @@ cross-board: names a file under 'meniapp' at /home/omri/projects/meniapp — con
 
 ## Log
 - 2026-10-13 claimed by capacity-engine
+- 2026-10-13 done by capacity-engine — commit 6cb4e8363cf9, test `cd /home/omri/projects/bass-tuner && bash scripts/check-unregistered-live-hosts.test.sh` exit 0 (log: evidence/bt-1af4-2026-10-13T09-59-02Z-test.txt), live `cd /home/omri/projects/bass-tuner && bash scripts/run-monitor.sh unregistered-live-hosts scripts/check-unregistered-live-hosts.sh` exit 0 (log: evidence/bt-1af4-2026-10-13T09-59-02Z-live.txt)

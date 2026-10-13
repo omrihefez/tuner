@@ -1,0 +1,18 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-unregistered-live-hosts.test.sh
+
+1. DRIFT: an unregistered Vercel-aliased host AND an unregistered tunnel host are both caught, from different pages/sources
+  ok — catches an unregistered host from page 2 of Vercel alias pagination and an unregistered Cloudflare tunnel CNAME
+2. registered hosts from both sources report OK, not DRIFT
+  ok — a registered host from either source is OK, never DRIFT
+3. email-infra CNAME (not a cfargotunnel target) and the wildcard record itself are never reported as hosts at all
+  ok — non-tunnel CNAMEs (email infra, the wildcard record) are excluded from discovery entirely
+4. AFTER: once ghost-app and rogue-tunnel are added to the registry, the exact same discovery clears to exit 0 — proves this is a real fail/pass probe
+  ok — the check clears to exit 0 once the missing registry rows are added — not a check that can only ever fail
+5. a RETIRED host that still carries a stale non-tunnel CNAME (the real arch-preview shape) is never flagged as live
+  ok — a retired host's stale non-tunnel DNS record is not mistaken for a live surface
+6. CANNOT RUN (exit 2), never a false OK/DRIFT, when Vercel discovery itself fails
+  ok — a failed Vercel discovery fails closed (exit 2), never read as a clean/empty result
+7. CANNOT RUN (exit 2) when the registry itself derives zero live/alias hosts
+  ok — an empty registry fails closed rather than reporting every live host as DRIFT or silently passing
+
+All 7 checks passed.
