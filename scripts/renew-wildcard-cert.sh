@@ -129,7 +129,7 @@ source "$HOME/.meni/auth.env"
 _infisical_token=$(curl -sf -m 30 -X POST \
   https://app.infisical.com/api/v1/auth/universal-auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"clientId\":\"$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID\",\"clientSecret\":\"$INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET\"}" \
+  --data @<(printf '{"clientId":"%s","clientSecret":"%s"}' "$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" "$INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET") \
   | python3 -c "import json,sys; print(json.load(sys.stdin)['accessToken'])") || true
 unset INFISICAL_UNIVERSAL_AUTH_CLIENT_ID INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET
 if [[ -z "${_infisical_token:-}" ]]; then
