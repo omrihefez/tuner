@@ -2,7 +2,7 @@
 id: bt-7727
 title: alert-latch shim and its test shim resolve donefile by absolute path with no CI fallback —
   the only consumer of five without one, and npm test runs it on ubuntu-latest
-status: claimed
+status: done
 priority: p2
 tags:
   - reliability
@@ -12,9 +12,36 @@ created: 2026-10-14
 filed:
   owner: meni-worker/board-refill-work-discov-fed83a
   at: 2026-10-14T03:56:37Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-14T04:06:50Z
+done:
+  at: 2026-10-14T04:26:15Z
+  by: capacity-engine
+evidence:
+  - type: commit
+    value: 54da1a1
+    verified: 2026-10-14T04:26:15Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/lib/alert-latch-ci-fallback.test.sh
+    exit: 0
+    at: 2026-10-14T04:26:15Z
+    log: evidence/bt-7727-2026-10-14T04-26-15Z-test.txt
+    sha256: e109f55dcabcec19813b4d8dbf2e1140d3c2f86cad19710254641bb088a34072
+    bytes: 980
+  - type: note
+    value: "Verified CI was actually red (not just predicted): gh run list showed every run since at
+      least 2026-10-10 failing (e.g. run 38380100889, 2026-10-13), root cause confirmed via job log
+      -- check-monitor-heartbeats.sh's '. lib/alert-latch.sh || exit 2' traps the missing-canonical
+      source error, so check-heartbeat-alert-dedup.test.sh's first case reports 'expected 1 notify,
+      got 0' before the test glob ever reaches alert-latch.test.sh itself (package.json runs
+      scripts/*.test.sh before scripts/lib/*.test.sh and stops on first failure). Fixed both shims
+      with the same [-f...]|| fallback the 4 sibling repos already carry, vendored a FRESH pin
+      spliced from donefile's canonical (not copied from a stale sibling pin -- see dn-766f), and
+      alert-latch.test.sh now skips cleanly (exit 0 + reason) instead of exiting 127 when the shared
+      suite is unreachable. New hermetic test alert-latch-ci-fallback.test.sh proves it via a
+      test-only ALERT_LATCH_CANONICAL override; confirmed it fails against origin/main's pre-fix
+      files (case 2, rc=1) and separately confirmed the pre-fix test shim exits 127 on a missing
+      ALERT_LATCH_TEST path. Full npm test passes locally (25/25 + 5/5 new checks). Landed on main
+      via fast-forward (54da1a1), self-merged (not access-critical, not an attended-deploy
+      surface)."
 ---
 
 This repo's `scripts/lib/alert-latch.sh` shim resolves donefile's canonical by
@@ -118,3 +145,4 @@ cross-board: names a file under 'meniapp' at /home/omri/projects/meniapp — con
 
 ## Log
 - 2026-10-14 claimed by capacity-engine
+- 2026-10-14 done by capacity-engine — commit 54da1a1, test `cd /home/omri/projects/bass-tuner && bash scripts/lib/alert-latch-ci-fallback.test.sh` exit 0 (log: evidence/bt-7727-2026-10-14T04-26-15Z-test.txt)

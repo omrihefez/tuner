@@ -1,0 +1,13 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/lib/alert-latch-ci-fallback.test.sh
+
+1. alert-latch.sh: canonical absent -> falls back to the vendored pin, library still loads
+  ok — missing canonical falls back to the vendored pin and defines notify_and_latch
+2. alert-latch.sh: canonical present -> the real canonical is sourced, not the vendored pin
+  ok — present canonical is sourced; the vendored pin is a fallback, not a default
+3. alert-latch.sh: the vendored pin itself defines every function the canonical does
+  ok — vendored pin defines alert_latch_log / notify_and_latch / notify_and_latch_with_age / notify_now
+4. alert-latch.test.sh: shared suite absent -> skips cleanly (exit 0, reason printed), never 127
+  ok — missing shared suite skips with exit 0 and a printed reason
+5. alert-latch.test.sh: shared suite present -> actually runs it (exec), not a silent skip
+  ok — a present shared suite is run, not skipped
+alert-latch-ci-fallback: all passed
