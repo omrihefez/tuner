@@ -2,7 +2,7 @@
 id: bt-7727
 title: alert-latch shim and its test shim resolve donefile by absolute path with no CI fallback —
   the only consumer of five without one, and npm test runs it on ubuntu-latest
-status: open
+status: claimed
 priority: p2
 tags:
   - reliability
@@ -12,6 +12,9 @@ created: 2026-10-14
 filed:
   owner: meni-worker/board-refill-work-discov-fed83a
   at: 2026-10-14T03:56:37Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-14T04:06:50Z
 ---
 
 This repo's `scripts/lib/alert-latch.sh` shim resolves donefile's canonical by
@@ -112,3 +115,6 @@ Filed read-only by a discovery sweep; no file in this repo was changed.
 
 
 cross-board: names a file under 'meniapp' at /home/omri/projects/meniapp — consider filing there instead (see dn-334c).
+
+## Log
+- 2026-10-14 claimed by capacity-engine
