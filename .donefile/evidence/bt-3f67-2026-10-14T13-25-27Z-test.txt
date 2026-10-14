@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/meniapp && python3 scripts/scan-argv-secret-exposure.py --root /home/omri/projects/bass-tuner
+
+scan-argv-secret-exposure: 40 file(s) scanned, 0 total offender(s), 0 NEW (not in baseline)
