@@ -2,7 +2,7 @@
 id: bt-a5ff
 title: CI red since 2026-10-15 — install-monitoring-crons.sh exec's meniapp's canonical
   lint-crontab-logdirs.sh, unreachable by meni-ci
-status: claimed
+status: done
 priority: p2
 tags:
   - ci
@@ -10,9 +10,20 @@ created: 2026-10-15
 filed:
   owner: meni-worker/8-of-15-repos-have-red-c-cf204d
   at: 2026-10-15T19:31:53Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-15T22:46:45Z
+done:
+  at: 2026-10-15T23:09:43Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 3a61bb7292e528d3f7b126e9b6a25e00a346784f
+    verified: 2026-10-15T23:09:43Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh
+    exit: 0
+    at: 2026-10-15T23:09:40Z
+    log: evidence/bt-a5ff-2026-10-15T23-09-40Z-test.txt
+    sha256: 00866c95239d8dd3393356a542f6f56c372174cffb99596d09273b4df599ccf8
+    bytes: 1182
 ---
 
 Static checks job fails: `install-monitoring-crons.sh: with a real crontab present, installer
@@ -103,3 +114,4 @@ Actions-minutes exhaustion identifiable by `runner_id:0`). kidai (kd-e0cc) and t
 (tkn-7fa3) are the same hosted-sibling-path shape as this one and were deduped against each
 other by the dispatcher at score 1, so a fix here is likely portable to both.
 - 2026-10-16 claimed by capacity-engine
+- 2026-10-16 done by capacity-engine/worker — commit 3a61bb7292e5, test `cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh` exit 0 (log: evidence/bt-a5ff-2026-10-15T23-09-40Z-test.txt)
