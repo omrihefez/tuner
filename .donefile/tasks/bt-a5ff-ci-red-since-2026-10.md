@@ -45,3 +45,57 @@ scripts/lib/core-bare-guard.sh + scripts/install-git-hooks.sh for the shape (tes
 
 Pins get drift coverage automatically: meniapp's scripts/check-vendored-pin-drift.sh discovers
 any *.vendored.sh from its own mandatory "verbatim copy of <repo>'s <path> below" header.
+- 2026-10-15 Main, 2026-10-15 23:45 IDT — carrying the diagnosis here from ce-0d9d, which was a cross-board
+duplicate of this task (capacity-engine's parser filed it on the wrong board; ce-cadf fixes the
+defect). The analysis was done against the real failing run, so it should live where the work is.
+
+**The failing run is 38691612455, on a GitHub-HOSTED runner.** `ci.yml:29` has exactly one
+`runs-on:` and it is `ubuntu-latest`; the run reports a Hosted Compute Agent (Azure westus3,
+image ubuntu-24.04). That matters because a worker initially attributed this to iac-fc0d
+("meni-ci self-hosted runner can't read /home/omri") and parked it there. **That cannot be the
+cause here** — no job in this repo touches the self-hosted runner, so iac-fc0d landing (it is now
+done, 0d083bd0) does not turn this green. Classify by `runs-on` before attributing a cause.
+
+**Step conclusions — it is this repo's own tests, not infrastructure:**
+
+    JOB: Static checks -> failure
+      4. JS syntax check ................. success
+      5. HTML validate ................... success
+      6. Internal link + manifest check .. success
+      7. sw.js cache-bump check .......... success
+      8. Unit tests ...................... FAILURE
+
+**The actual failure:**
+
+    FAIL: install-monitoring-crons.sh: with a real crontab present, installer exited 1 and
+    wrote_crontab=no -- the guard must not block a normal install.
+    stderr: bash: /home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh:
+            No such file or directory
+
+So `install-monitoring-crons.sh` execs **meniapp's `scripts/lint-crontab-logdirs.sh` by absolute
+path**. That path exists only on the fleet box, so on a hosted runner the installer exits 1 and
+the test correctly reports that it refused a normal install. Same class as ce-d302, which was
+capacity-engine's own 26-day instance of exactly this and is now green.
+
+**The fix pattern already exists in this repo, applied to a different call site.** Two log lines
+earlier, in the same job:
+
+    gitdir-scrub lint: meniapp not checked out at
+    /home/omri/projects/meniapp/scripts/lint-testsh-gitdir-scrub.sh
+    -- skipping (expected off the meni VPS, e.g. in CI)
+
+That cross-repo call degrades to a visible skip; `lint-crontab-logdirs.sh` does not. The work is
+to apply the guard this repo already owns to the call site that lacks it. Prefer the
+INCONCLUSIVE convention where the harness counts it over a bare SKIP (ce-d160) — a skip nothing
+tallies is its own blind spot, and that is the residual ce-d302 left behind.
+
+**Do not be misled by `# fail 0` in the log.** The node TAP summary prints
+`# tests 126 / # pass 126 / # fail 0` at 06:18:30, and the shell-harness FAIL above appears at
+06:18:38 — eight seconds later, from a different harness inside the same `npm test`. The TAP
+counts are true and the job still exits 1.
+
+Cross-refs: ce-5e41 holds the fleet-wide triage (8 of 15 repos red, now classified into three
+failure modes — hosted ENOENT, self-hosted EACCES from `ProtectHome=yes`, and account-wide
+Actions-minutes exhaustion identifiable by `runner_id:0`). kidai (kd-e0cc) and tik-next
+(tkn-7fa3) are the same hosted-sibling-path shape as this one and were deduped against each
+other by the dispatcher at score 1, so a fix here is likely portable to both.
