@@ -1,0 +1,2 @@
+$ s=$(cd /home/omri/projects/capacity-engine && node /home/omri/projects/donefile/dist/cli.js show ce-cadf --json) && printf '%s' "$s" | grep -Eq '"status": *"(open|claimed|merged|done)"'
+
