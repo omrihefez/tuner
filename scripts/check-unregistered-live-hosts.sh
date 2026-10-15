@@ -73,6 +73,15 @@
 #                         convention as every other monitor here.
 set -uo pipefail
 
+# bt-e452: cron runs with a minimal PATH that doesn't include ~/.bun/bin,
+# where the vercel CLI actually lives (bun-installed global) -- without it
+# discover_vercel_hosts's bare `vercel` call dies with command-not-found and
+# this monitor exits 2/CANNOT RUN on every scheduled run (same fix already
+# applied to renew-wildcard-cert.sh for the same reason, bt-a428). node
+# itself resolves fine under cron's default PATH, so only the bun bin dir
+# needs adding here.
+export PATH="$HOME/.bun/bin:$PATH"
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/domain-registry.sh
 . "$HERE/lib/domain-registry.sh" || {
