@@ -3,7 +3,7 @@ id: bt-3614
 title: audit-domains.sh, check-tunnel-liveness.sh, check-permissions-policy.sh,
   check-cors-corp-consistency.sh mention vercel in comments only (no runtime call), so none of them
   share this bug — confirmed, no action needed
-status: open
+status: claimed
 priority: p3
 tags:
   - bass-tuner
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-15T06:22:02Z
 reported: 2026-10-15
+claim:
+  owner: capacity-engine
+  at: 2026-10-15T06:23:28Z
 ---
 
 Named in the finding: audit-domains.sh, check-tunnel-liveness.sh, check-permissions-policy.sh, check-cors-corp-consistency.sh
@@ -27,3 +30,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit 48c50f13d179c6ec78e0e8efa2486fcaebff448c).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-15 claimed by capacity-engine
