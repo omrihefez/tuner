@@ -2,7 +2,7 @@
 id: bt-a5ff
 title: CI red since 2026-10-15 — install-monitoring-crons.sh exec's meniapp's canonical
   lint-crontab-logdirs.sh, unreachable by meni-ci
-status: open
+status: claimed
 priority: p2
 tags:
   - ci
@@ -10,6 +10,9 @@ created: 2026-10-15
 filed:
   owner: meni-worker/8-of-15-repos-have-red-c-cf204d
   at: 2026-10-15T19:31:53Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-15T22:46:45Z
 ---
 
 Static checks job fails: `install-monitoring-crons.sh: with a real crontab present, installer
@@ -99,3 +102,4 @@ failure modes — hosted ENOENT, self-hosted EACCES from `ProtectHome=yes`, and 
 Actions-minutes exhaustion identifiable by `runner_id:0`). kidai (kd-e0cc) and tik-next
 (tkn-7fa3) are the same hosted-sibling-path shape as this one and were deduped against each
 other by the dispatcher at score 1, so a fix here is likely portable to both.
+- 2026-10-16 claimed by capacity-engine
