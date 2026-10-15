@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/capacity-engine && n=0; for t in ce-0d9d ce-393c ce-8360 ce-9a8a ce-c2bc; do s=$(node /home/omri/projects/donefile/dist/cli.js show $t 2>/dev/null | grep -m1 "^status:" | awk "{print \$2}"); [ "$s" = "done" ] && n=$((n+1)); done; echo "capacity-engine duplicates closed: $n of 5"; [ "$n" -eq 5 ]
+
+capacity-engine duplicates closed: 5 of 5
