@@ -1,0 +1,2 @@
+$ cd /home/omri/projects/bass-tuner && N=$(grep -ohE '(\$\(vercel\b|=\(vercel\b|^[[:space:]]*vercel\b)' scripts/audit-domains.sh scripts/check-tunnel-liveness.sh scripts/check-permissions-policy.sh scripts/check-cors-corp-consistency.sh | wc -l) || true; [ "$N" = "0" ]
+
