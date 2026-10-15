@@ -67,8 +67,14 @@ UNREGISTERED_LIVE_HOSTS="$REPO/scripts/check-unregistered-live-hosts.sh"
 
 # Shared implementation in meniapp (ma-b531 -- no more per-repo vendored
 # copy); runs on the same box as meniapp, so the absolute path always
-# resolves.
-LINT_LOGDIRS="/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh"
+# resolves on Omri's own box. A hosted CI runner has no /home/omri at all
+# (bt-a5ff), so fall back to the pinned snapshot there -- same
+# shim/vendored-pin convention this repo already uses for
+# crontab-install-lock.sh and stale-checkout-guard.sh, and iac-fc0d completed
+# fleet-wide. -r, not -f: this file is read by `bash "$LINT_LOGDIRS"`, not
+# exec'd, so readability is the property that matters.
+LINT_LOGDIRS="${LINT_LOGDIRS_CANONICAL:-/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh}"
+[ -r "$LINT_LOGDIRS" ] || LINT_LOGDIRS="$SCRIPT_DIR/lint-crontab-logdirs.vendored.sh"
 
 BEGIN_MARK="# BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"
 END_MARK="# END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)"

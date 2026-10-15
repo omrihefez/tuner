@@ -74,8 +74,15 @@ CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
 # defaults derive from the script's OWN location (meniapp), not this repo's,
 # once it's no longer a local vendored copy.
 DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
-# Same consolidation for the log-dir lint (ma-b531): shared implementation
-LINT_LOGDIRS="/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh"
+# Same consolidation for the log-dir lint (ma-b531): shared implementation,
+# falling back to the pinned snapshot when the canonical is unreachable (a
+# hosted CI runner has no /home/omri at all, bt-a5ff) -- same
+# shim/vendored-pin convention this repo already uses for
+# crontab-install-lock.sh and stale-checkout-guard.sh. -r, not -f: this file
+# is read by `bash "$LINT_LOGDIRS"`, not exec'd, so readability is the
+# property that matters.
+LINT_LOGDIRS="${LINT_LOGDIRS_CANONICAL:-/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh}"
+[ -r "$LINT_LOGDIRS" ] || LINT_LOGDIRS="$SCRIPT_DIR/lint-crontab-logdirs.vendored.sh"
 DRIFT_STATE_DIR="/home/omri/.local/share/meni-hub/bass-tuner-crontab-drift"
 DRIFT_LINE="47 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK=\"$BEGIN_MARK\" END_MARK=\"$END_MARK\" EXPECTED_CONTENT_CMD=\"/home/omri/projects/bass-tuner/scripts/install-cert-renewal-cron.sh --print-line\" INSTALLER_HINT=\"scripts/install-cert-renewal-cron.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
 
