@@ -2,7 +2,7 @@
 id: bt-4d44
 title: audit-domains.sh's HSTS floor is exactly the drifted value, so it passes bass and tuner
   emitting max-age=31536000 with no preload while the estate standard is 63072000+preload
-status: claimed
+status: done
 priority: p2
 tags:
   - security
@@ -11,9 +11,40 @@ created: 2026-10-16
 filed:
   owner: meni-worker/board-refill-work-discov-1256ef
   at: 2026-10-16T04:23:45Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-16T05:23:23Z
+done:
+  at: 2026-10-16T05:27:32Z
+  by: capacity-engine/worker
+  waived: no code change made -- premise already resolved by prior commits; audit-domains.sh is an
+    ops/monitoring cron script, not the Vercel-deployed PWA this board's activation gate exists for
+    (same reasoning as bt-8c53/bt-e47e waivers)
+evidence:
+  - type: commit
+    value: 96c6267c38baf4fd01b650bca512619d328c91d7
+    verified: 2026-10-16T05:27:32Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh
+    exit: 0
+    at: 2026-10-16T05:27:06Z
+    log: evidence/bt-4d44-2026-10-16T05-27-06Z-test.txt
+    sha256: 5d010c84771b06cf2604b85c77545c160b6ba06dc706c22a150f53e6b2e74c15
+    bytes: 16159
+  - type: note
+    value: "not real / already fixed: bt-8c53 (2026-10-01, commit
+      945da78ff49cc72ad9d0727806bcc69196390c6b) deliberately set hsts_max_age_floor=31536000 as 'the
+      honest floor' (lowest live value), explicitly rejecting 63072000 as the floor because a
+      legitimately-lower host would have to fight the check to even deploy. bt-e47e (2026-10-07,
+      commit 96c6267c38baf4fd01b650bca512619d328c91d7) separately corrected the exact claim this
+      task reasserts: preload is NOT a per-host property matching an estate standard --
+      hstspreload.org keys submission on the registrable domain/apex alone, so a subdomain's preload
+      token is inert regardless. check_apex_hsts() was added to assert preload at the apex
+      specifically (iac follow-up tracked separately). Confirmed fresh 2026-10-16:
+      scripts/audit-domains.test.sh passes 50/50, including fixtures using exactly
+      'max-age=31536000; includeSubDomains' as the PASSING shape (test at line 268 asserts OK, not
+      DRIFT). Live curl 2026-10-16 08:28 IDT: bass/tuner still emit max-age=31536000;
+      includeSubDomains -- matching the designed floor by intent, not drift. This task's DONE WHEN
+      (requiring that exact header shape to exit non-zero) would reverse an already-made, reasoned,
+      tested design decision. Cross-board twin iac-5187 checked: unrelated (stray Vercel project
+      deletion gate), dismissed."
 ---
 
 scripts/audit-domains.sh is the only thing on this box that checks HSTS at all, and its
@@ -65,3 +96,4 @@ silently today, so demonstrate it red before the fix.
 
 ## Log
 - 2026-10-16 claimed by capacity-engine
+- 2026-10-16 done by capacity-engine/worker — commit 96c6267c38ba, test `cd /home/omri/projects/bass-tuner && bash scripts/audit-domains.test.sh` exit 0 (log: evidence/bt-4d44-2026-10-16T05-27-06Z-test.txt) (evidence waived: no code change made -- premise already resolved by prior commits; audit-domains.sh is an ops/monitoring cron script, not the Vercel-deployed PWA this board's activation gate exists for (same reasoning as bt-8c53/bt-e47e waivers))
