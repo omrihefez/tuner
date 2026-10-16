@@ -2,7 +2,7 @@
 id: bt-4d44
 title: audit-domains.sh's HSTS floor is exactly the drifted value, so it passes bass and tuner
   emitting max-age=31536000 with no preload while the estate standard is 63072000+preload
-status: open
+status: claimed
 priority: p2
 tags:
   - security
@@ -11,6 +11,9 @@ created: 2026-10-16
 filed:
   owner: meni-worker/board-refill-work-discov-1256ef
   at: 2026-10-16T04:23:45Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-16T05:23:23Z
 ---
 
 scripts/audit-domains.sh is the only thing on this box that checks HSTS at all, and its
@@ -59,3 +62,6 @@ max-age is below the estate standard, and bass/tuner emit the standard header. V
 feeding the checker a synthetic response carrying exactly
 `max-age=31536000; includeSubDomains` and requiring a non-zero exit -- that case passes
 silently today, so demonstrate it red before the fix.
+
+## Log
+- 2026-10-16 claimed by capacity-engine
