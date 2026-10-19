@@ -2,7 +2,7 @@
 id: bt-d010
 title: vercel-headers.test.js matches HSTS and Permissions-Policy by SUBSTRING, so deleting
   includeSubDomains or re-allowing camera and geolocation keeps the pre-push suite green
-status: open
+status: claimed
 priority: p3
 tags:
   - http-headers
@@ -10,6 +10,9 @@ created: 2026-10-19
 filed:
   owner: meni-worker/board-refill-work-discov-94eabb
   at: 2026-10-19T05:07:38Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-19T07:06:47Z
 ---
 
 `test/vercel-headers.test.js` checks each required header with a SUBSTRING match against
@@ -79,3 +82,6 @@ DONE WHEN
 3. While in the file, check the other five entries in `REQUIRED_HEADERS` for the same
    prefix-of-the-real-value shape and say what you found, even if the answer is "the
    other five are exact".
+
+## Log
+- 2026-10-19 claimed by capacity-engine
