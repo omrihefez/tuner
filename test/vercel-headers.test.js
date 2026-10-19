@@ -38,14 +38,22 @@ function headerValue(rule, key) {
 
 const CATCH_ALL_SOURCE = "/(.*)";
 
+// bt-d010: the floor audit-domains.sh's check_hsts() already enforces live
+// (see its comment there for why 31536000 is a floor, not a target) -- kept
+// as one named constant here so the HSTS test below never types the number
+// twice and drifts.
+const HSTS_MAX_AGE_FLOOR = 31536000;
+
+// Headers whose full value IS the contract -- checked for exact equality,
+// never a substring, so narrowing a value (dropping a denied feature,
+// weakening a policy) cannot hide inside a shorter expectation.
 const REQUIRED_HEADERS = {
-  "Strict-Transport-Security": "max-age=31536000",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "no-referrer",
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Resource-Policy": "same-origin",
-  "Permissions-Policy": "microphone=(self)",
+  "Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
 };
 
 test("vercel.json has a catch-all header rule", () => {
@@ -53,17 +61,37 @@ test("vercel.json has a catch-all header rule", () => {
   assert.ok(rule, `expected a headers rule with source "${CATCH_ALL_SOURCE}"`);
 });
 
-for (const [key, expectedSubstring] of Object.entries(REQUIRED_HEADERS)) {
+for (const [key, expected] of Object.entries(REQUIRED_HEADERS)) {
   test(`catch-all rule sets ${key}`, () => {
     const rule = findRule(CATCH_ALL_SOURCE);
     const value = headerValue(rule, key);
     assert.ok(value, `missing header "${key}" on the catch-all rule`);
-    assert.ok(
-      value.includes(expectedSubstring),
-      `expected ${key} to include "${expectedSubstring}", got "${value}"`
-    );
+    assert.equal(value, expected);
   });
 }
+
+test("catch-all rule sets a Strict-Transport-Security floor with includeSubDomains", () => {
+  // Structural, not substring: a value can CONTAIN "max-age=31536000" while
+  // missing includeSubDomains (dropping subdomain coverage) or exceeding the
+  // floor safely -- parse the number and check the directive instead of
+  // matching a short literal that is a strict prefix of the real value.
+  const rule = findRule(CATCH_ALL_SOURCE);
+  const value = headerValue(rule, "Strict-Transport-Security");
+  assert.ok(value, 'missing header "Strict-Transport-Security" on the catch-all rule');
+
+  const maxAgeMatch = value.match(/max-age=(\d+)/i);
+  assert.ok(maxAgeMatch, `expected a max-age directive, got "${value}"`);
+  const maxAge = Number(maxAgeMatch[1]);
+  assert.ok(
+    maxAge >= HSTS_MAX_AGE_FLOOR,
+    `expected max-age >= ${HSTS_MAX_AGE_FLOOR}, got ${maxAge} ("${value}")`
+  );
+
+  assert.ok(
+    /includesubdomains/i.test(value),
+    `expected includeSubDomains, got "${value}"`
+  );
+});
 
 test("catch-all rule sets a Content-Security-Policy with the required directives", () => {
   const rule = findRule(CATCH_ALL_SOURCE);
