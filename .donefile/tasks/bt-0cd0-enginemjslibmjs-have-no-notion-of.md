@@ -3,7 +3,7 @@ id: bt-0cd0
 title: engine.mjs/lib.mjs have no notion of bass-tuner having two live auth hosts (preview.meni
   appears nowhere outside this one text entry) — worth a structured second-host field if another
   repo grows the same shape
-status: blocked
+status: open
 priority: p3
 tags:
   - fleet
@@ -13,30 +13,6 @@ filed:
   owner: capacity-engine
   at: 2026-10-19T01:12:24Z
 reported: 2026-10-19
-blocked:
-  reason: "INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on ce-e7ec,
-    which was blocked (gate-owner main) at filing time. A child task must not become a copy button
-    around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an
-    unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: ce-e7ec is unblocked
-    — then re-scope this finding on its own merits (the parent's own work may already cover it) and
-    unblock it too. Parent's reason: DONE on branch ce-e7ec-preview-passkey-entry ff3d5b2b, NOT yet
-    on main, awaiting Main merge: this repo is the fleet's own dispatcher, config.json is read live
-    and auth-recovery-staleness.mjs is library code, so this diff is outside the test/docs-only
-    safe-diff exception (ATTENDED-ONLY) and needs an attended merge"
-  since: 2026-10-19
-  probe:
-    cmd: s=$(cd /home/omri/projects/capacity-engine && node /home/omri/projects/donefile/dist/cli.js
-      show ce-e7ec --json) && printf '%s' "$s" | node -e "const
-      s=JSON.parse(require('fs').readFileSync(0,'utf8'));const
-      ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const
-      ev=(s.evidence||[]).slice().reverse();const
-      c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
-    exit: 1
-    at: 2026-10-19T01:12:31Z
-    log: evidence/bt-0cd0-2026-10-19T01-12-31Z-probe.txt
-    sha256: 129d2ec6212b0051a33fbc71aed2e904a4a9a13ff4716a75f52a21ac5cb68565
-    bytes: 625
-  gate_owner: main
 ---
 
 Named in the finding: engine.mjs/lib.mjs
@@ -59,7 +35,7 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Gate
 PROBE: s=$(cd /home/omri/projects/capacity-engine && node /home/omri/projects/donefile/dist/cli.js show ce-e7ec --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
-GATE-OWNER: main
 
 ## Log
 - 2026-10-19 blocked: INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on ce-e7ec, which was blocked (gate-owner main) at filing time. A child task must not become a copy button around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: ce-e7ec is unblocked — then re-scope this finding on its own merits (the parent's own work may already cover it) and unblock it too. Parent's reason: DONE on branch ce-e7ec-preview-passkey-entry ff3d5b2b, NOT yet on main, awaiting Main merge: this repo is the fleet's own dispatcher, config.json is read live and auth-recovery-staleness.mjs is library code, so this diff is outside the test/docs-only safe-diff exception (ATTENDED-ONLY) and needs an attended merge [probe `s=$(cd /home/omri/projects/capacity-engine && node /home/omri/projects/donefile/dist/cli.js show ce-e7ec --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"` exit 1, owner main]
+- 2026-10-19 unblocked
