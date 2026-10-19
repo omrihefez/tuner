@@ -2,7 +2,7 @@
 id: bt-d010
 title: vercel-headers.test.js matches HSTS and Permissions-Policy by SUBSTRING, so deleting
   includeSubDomains or re-allowing camera and geolocation keeps the pre-push suite green
-status: claimed
+status: done
 priority: p3
 tags:
   - http-headers
@@ -10,9 +10,24 @@ created: 2026-10-19
 filed:
   owner: meni-worker/board-refill-work-discov-94eabb
   at: 2026-10-19T05:07:38Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-19T07:06:47Z
+done:
+  at: 2026-10-19T07:13:34Z
+  by: capacity-engine
+evidence:
+  - type: commit
+    value: 4d5969b71ab11c479db7f23f116cd26a016f2d19
+    verified: 2026-10-19T07:13:34Z
+  - type: test
+    cmd: node --test test/vercel-headers.test.js
+    exit: 0
+    at: 2026-10-19T07:13:34Z
+    log: evidence/bt-d010-2026-10-19T07-13-34Z-test.txt
+    sha256: 077fdc6e9387ec5e7853a0fe24a206c68ad231e7f532abfbec6fee4ff5db4550
+    bytes: 2502
+  - type: note
+    value: "Red demonstrated pre-fix: stripping includeSubDomains and narrowing Permissions-Policy both
+      passed the old substring assertions; after the fix both fail (quoted in report). Other 5
+      REQUIRED_HEADERS entries were already exact matches, not prefixes."
 ---
 
 `test/vercel-headers.test.js` checks each required header with a SUBSTRING match against
@@ -85,3 +100,4 @@ DONE WHEN
 
 ## Log
 - 2026-10-19 claimed by capacity-engine
+- 2026-10-19 done by capacity-engine — commit 4d5969b71ab1, test `node --test test/vercel-headers.test.js` exit 0 (log: evidence/bt-d010-2026-10-19T07-13-34Z-test.txt)
