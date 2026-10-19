@@ -438,7 +438,7 @@ check_hsts_at() {
   check_hsts "$label" "$resp" "$code"
 }
 
-# check_nonvercel_path <host incl. .omrihefez.com> <path> [vercel_pinned]
+# check_nonvercel_path <host incl. .omrihefez.com> <path> [check_coop_corp]
 #   Fetches <host><path> and asserts the baseline appropriate to what came
 #   back, updating the shared FAIL flag. Never touches missing_security_
 #   headers()/REQUIRED_HEADERS — those stay scoped to the SUBS loop so its
@@ -446,20 +446,25 @@ check_hsts_at() {
 #   CSP/X-Frame-Options/Referrer-Policy/Permissions-Policy checks below are
 #   the html-gated set for THIS loop, kept separate on purpose.
 #
-#   vercel_pinned (bt-1176): the third, optional arg. The SUBS loop's
-#   307/308/401 branch routes a Vercel host through THIS function (via
-#   VERCEL_CHECK_PATHS) to baseline its one real page — meni/login,
+#   check_coop_corp (bt-1176, widened by hc-c25c): the third, optional arg.
+#   Originally named `vercel_pinned` and non-empty only on the SUBS loop's
+#   307/308/401 branch, which routes a Vercel host through THIS function
+#   (via VERCEL_CHECK_PATHS) to baseline its one real page — meni/login,
 #   trips/login, tik/login, planner's own "/". Those hosts are part of the
-#   same Vercel census that admitted COOP/CORP into REQUIRED_HEADERS above,
-#   so they need the identical check — but the OTHER_LIVE loop also calls
-#   this function (via NONVERCEL_CHECK_PATHS) for genuinely non-Vercel hosts
-#   (house, oauth, tik-api, meniapp-api) that were never measured as part of
-#   that census; house and oauth are confirmed NOT sending COOP/CORP live
-#   today, and flagging them would be new, out-of-scope noise this task
-#   never asked for. The flag is how one shared function serves both callers
-#   without conflating them: non-empty only on the Vercel-loop call sites.
+#   same Vercel census that admitted COOP/CORP into REQUIRED_HEADERS above.
+#   bt-1176 left the OTHER_LIVE loop's genuinely non-Vercel hosts (house,
+#   oauth, tik-api, meniapp-api) out of that census on purpose — "flagging
+#   them would be new, out-of-scope noise this task never asked for" — and
+#   said so only in this comment, not on any board. hc-c25c (2026-10-19)
+#   closed exactly that gap for house and oauth, which are now confirmed
+#   sending neither header live and are the parameter's other non-empty call
+#   sites. tik-api/meniapp-api/tik-api-vps remain unchecked for COOP/CORP —
+#   a separate judgement call hc-c25c declined to make (JSON-only APIs with
+#   no framable document) — so the parameter is renamed rather than made
+#   unconditional: it is still a real scoping flag, just no longer a proxy
+#   for "is this host on Vercel".
 check_nonvercel_path() {
-  local host="$1" path="$2" vercel_pinned="${3:-}"
+  local host="$1" path="$2" check_coop_corp="${3:-}"
   local resp code ctype label="$host$path"
   local pp_exempt="${PERMISSIONS_POLICY_EXEMPT[${host%.omrihefez.com}]:-}"
   resp=$("${CURL_CMD:-curl}" -s -D - -o /dev/null --max-time 10 "https://$host$path")
@@ -494,7 +499,7 @@ check_nonvercel_path() {
         || missing+=("content-security-policy")
       echo "$resp" | grep -qi '^x-frame-options:' || missing+=("x-frame-options")
       echo "$resp" | grep -qi '^referrer-policy:' || missing+=("referrer-policy")
-      if [ -n "$vercel_pinned" ]; then
+      if [ -n "$check_coop_corp" ]; then
         echo "$resp" | grep -qi '^cross-origin-opener-policy:' || missing+=("cross-origin-opener-policy")
         echo "$resp" | grep -qi '^cross-origin-resource-policy:' || missing+=("cross-origin-resource-policy")
       fi
@@ -577,8 +582,16 @@ for h in "${OTHER_LIVE[@]}"; do
   if [ -n "${NONVERCEL_CHECK_PATHS[$h]:-}" ]; then
     echo "SKIP   $host -> live in the registry but not Vercel-hosted; Deployment-Protection drift does not apply (security-header baseline IS checked below, per path)"
     read -r -a paths <<<"${NONVERCEL_CHECK_PATHS[$h]}"
+    # hc-c25c (2026-10-19): house and oauth are now checked for COOP/CORP too
+    # — the estate's only two live surfaces that were confirmed sending
+    # neither. tik-api/meniapp-api/tik-api-vps stay out of this (JSON-only
+    # APIs, a separate judgement call the task declined to make).
+    coop_corp=""
+    case "$h" in
+      house|oauth) coop_corp=1 ;;
+    esac
     for p in "${paths[@]}"; do
-      check_nonvercel_path "$host" "$p"
+      check_nonvercel_path "$host" "$p" "$coop_corp"
     done
   else
     reason="${NONVERCEL_HEADER_SKIP_REASON[$h]:-security-header baseline not yet assessed for this host}"
@@ -626,7 +639,7 @@ for d in "${SUBS[@]}"; do
     elif [ -n "${VERCEL_CHECK_PATHS[$d]:-}" ]; then
       read -r -a vpaths <<<"${VERCEL_CHECK_PATHS[$d]}"
       for vp in "${vpaths[@]}"; do
-        check_nonvercel_path "$host" "$vp" vercel
+        check_nonvercel_path "$host" "$vp" 1
       done
     else
       echo "UNPINNED $host -> $code ${loc:+($loc)} registry lists this as live Vercel but no page is served at / and nobody pinned a VERCEL_CHECK_PATHS entry for it — add one" >&2

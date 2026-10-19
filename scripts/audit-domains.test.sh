@@ -878,7 +878,27 @@ grep -q "^OK     trips.omrihefez.com/login -> 200 (security headers present)" <<
   || fail "expected trips's /login to flip to OK, got: $out"
 ok "the pinned-path COOP/CORP check flips to OK the moment the fix is present — not a check only ever seen failing"
 
-echo "42. bt-1176 (scope boundary): a genuinely non-Vercel host (NONVERCEL_CHECK_PATHS, no vercel_pinned flag) is NEVER checked for COOP/CORP — house and oauth are confirmed absent live today, and this task's census never covered them; adding the check unconditionally to check_nonvercel_path() would have introduced new, out-of-scope DRIFT here"
+echo "42. bt-1176 (scope boundary, narrowed by hc-c25c): meniapp-api/tik-api/tik-api-vps (JSON-only APIs, no framable document) are NEVER checked for COOP/CORP — a separate judgement call hc-c25c explicitly declined to make. house and oauth, which WERE that task's own gap, are covered separately below (tests 43-46)."
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 (all hosts fully compliant, including house/login's COOP/CORP via HOUSE_LOGIN_OK/FULL_HEADERS), got $rc: $out"
+grep -q "^OK     meniapp-api.omrihefez.com/health -> 200" <<<"$out" \
+  || fail "expected meniapp-api/health to stay OK despite sending no COOP/CORP, got: $out"
+grep -qE "meniapp-api\.omrihefez\.com.*cross-origin-(opener|resource)-policy" <<<"$out" \
+  && fail "COOP/CORP must never appear in check_nonvercel_path's output for meniapp-api/tik-api/tik-api-vps — that would mean the check_coop_corp scoping leaked past its declared boundary, got: $out"
+grep -qE "tik-api(-vps)?\.omrihefez\.com.*cross-origin-(opener|resource)-policy" <<<"$out" \
+  && fail "COOP/CORP must never appear in check_nonvercel_path's output for tik-api/tik-api-vps either, got: $out"
+ok "meniapp-api/tik-api/tik-api-vps (no check_coop_corp flag) are never checked for COOP/CORP, keeping that boundary exactly where hc-c25c left it"
+
+echo "43. hc-c25c (FAILING shape): house's /login missing COOP/CORP is now DRIFT — the exact live gap this task was filed over (measured 2026-10-19: house.omrihefez.com sends neither header)"
 : >"$FIXTURE_MAP2"
 BASS_OK >>"$FIXTURE_MAP2"
 printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
@@ -889,12 +909,58 @@ TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
 BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
 OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
 out="$(run2)"; rc=$?
-[ "$rc" -eq 0 ] || fail "expected exit 0 (house's missing coop/corp must not count against a non-Vercel host), got $rc: $out"
+[ "$rc" -eq 1 ] || fail "expected exit 1 (house's /login missing coop/corp), got $rc: $out"
+grep -q "^DRIFT  house.omrihefez.com/login -> 200 missing security headers: cross-origin-opener-policy,cross-origin-resource-policy$" <<<"$out" \
+  || fail "expected a DRIFT line naming both missing headers for house's /login, got: $out"
+ok "house's own live gap is caught: a 200 HTML page missing only COOP/CORP is DRIFT, not OK"
+
+echo "44. hc-c25c (PASSING shape, same probe): the SAME house /login flips to OK once COOP/CORP are added — proves this is a real fail/pass check, not one only ever seen failing"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+OAUTH_HEALTH_OK >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once house's /login sends coop/corp (HOUSE_LOGIN_OK already carries FULL_HEADERS), got $rc: $out"
 grep -q "^OK     house.omrihefez.com/login -> 200" <<<"$out" \
-  || fail "expected house's /login to stay OK despite sending no COOP/CORP, got: $out"
-grep -qE "cross-origin-(opener|resource)-policy" <<<"$out" \
-  && fail "COOP/CORP must never appear in check_nonvercel_path's output for a non-Vercel (NONVERCEL_CHECK_PATHS) host — that would mean the vercel_pinned scoping leaked, got: $out"
-ok "a non-Vercel host reached through NONVERCEL_CHECK_PATHS (no vercel_pinned flag) is never checked for COOP/CORP, keeping this task scoped to the Vercel census it was actually filed over"
+  || fail "expected house's /login to flip to OK, got: $out"
+ok "the same probe flips to OK the moment house sends COOP/CORP"
+
+echo "45. hc-c25c (FAILING shape): oauth's /health missing COOP/CORP is now DRIFT — oauth's real /health is served by _html() (text/html, confirmed in smarthome/oauth-callback/server.py and live 2026-10-19), so the html-gated COOP/CORP check applies to it; a dedicated text/html fixture is used here rather than the shared OAUTH_HEALTH_OK helper (which models the plain-text shape every OTHER test in this file relies on for the nosniff/HSTS-only assertions) so this new check does not disturb them"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+printf 'oauth.omrihefez.com\t/health\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'none'"'"'; style-src '"'"'unsafe-inline'"'"'; base-uri '"'"'none'"'"'; form-action '"'"'none'"'"'; frame-ancestors '"'"'none'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|strict-transport-security: max-age=63072000; includeSubDomains; preload\n' >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 1 ] || fail "expected exit 1 (oauth's /health missing coop/corp), got $rc: $out"
+grep -q "^DRIFT  oauth.omrihefez.com/health -> 200 missing security headers: cross-origin-opener-policy,cross-origin-resource-policy$" <<<"$out" \
+  || fail "expected a DRIFT line naming both missing headers for oauth's /health, got: $out"
+ok "oauth's own live gap is caught on its real (text/html) content-type: a 200 page missing only COOP/CORP is DRIFT, not OK"
+
+echo "46. hc-c25c (PASSING shape, same probe): the SAME oauth /health flips to OK once COOP/CORP are added — proves this is a real fail/pass check, not one only ever seen failing"
+: >"$FIXTURE_MAP2"
+BASS_OK >>"$FIXTURE_MAP2"
+printf 'house.omrihefez.com\t/\t307\t/login\tcache-control: no-store|%s\n' "$FULL_HEADERS" >>"$FIXTURE_MAP2"
+HOUSE_LOGIN_OK >>"$FIXTURE_MAP2"
+printf 'meniapp-api.omrihefez.com\t/health\t200\t\tcontent-type: application/json|x-content-type-options: nosniff|strict-transport-security: max-age=31536000; includeSubDomains\n' >>"$FIXTURE_MAP2"
+TIK_API_HEALTH_OK >>"$FIXTURE_MAP2"
+TIK_API_VPS_HEALTH_OK >>"$FIXTURE_MAP2"
+BRAIN_HSTS_OK >>"$FIXTURE_MAP2"
+printf 'oauth.omrihefez.com\t/health\t200\t\tcontent-type: text/html|content-security-policy: default-src '"'"'none'"'"'; style-src '"'"'unsafe-inline'"'"'; base-uri '"'"'none'"'"'; form-action '"'"'none'"'"'; frame-ancestors '"'"'none'"'"'|x-frame-options: DENY|x-content-type-options: nosniff|referrer-policy: no-referrer|permissions-policy: camera=(), microphone=(), geolocation=()|cross-origin-opener-policy: same-origin|cross-origin-resource-policy: same-origin|strict-transport-security: max-age=63072000; includeSubDomains; preload\n' >>"$FIXTURE_MAP2"
+out="$(run2)"; rc=$?
+[ "$rc" -eq 0 ] || fail "expected exit 0 once oauth's /health sends coop/corp, got $rc: $out"
+grep -q "^OK     oauth.omrihefez.com/health -> 200" <<<"$out" \
+  || fail "expected oauth's /health to flip to OK, got: $out"
+ok "the same probe flips to OK the moment oauth sends COOP/CORP"
 
 echo
 echo "PASS ($pass assertions)"
