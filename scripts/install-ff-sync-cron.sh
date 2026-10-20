@@ -44,9 +44,8 @@ LINE="1-59/3 * * * * mkdir -p $STATE_DIR && $REPO_ROOT/scripts/ff-sync-main-chec
 # Recurring drift check (ma-707b, mirrors tik-api's ff-sync installer) —
 # shared implementation in meniapp (ma-c616), called by absolute path since
 # this entry runs on the meni VPS, same box meniapp lives on.
-DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
 DRIFT_STATE_DIR="$HOME/.local/share/meni-hub/bass-tuner-ff-sync-crontab-drift"
-DRIFT_LINE="52 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=bass-tuner-ff-sync BEGIN_MARK=\"$BEGIN\" END_MARK=\"$END\" EXPECTED_CONTENT_CMD=\"$REPO_ROOT/scripts/install-ff-sync-cron.sh --print-line\" INSTALLER_HINT=\"scripts/install-ff-sync-cron.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
+DRIFT_LINE="52 * * * * $REPO_ROOT/scripts/run-crontab-drift.sh bass-tuner-ff-sync install-ff-sync-cron.sh $DRIFT_STATE_DIR"
 
 LINES="$LINE
 $DRIFT_LINE"

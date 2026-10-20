@@ -145,9 +145,8 @@ CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 # tracked separately) so it rides along with the wholesale block rewrite
 # below and the DROPPED guard's monitor-name comparison, which only matches
 # run-monitor.sh invocations and so never sees this line as a monitor.
-DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
 DRIFT_STATE_DIR="${DRIFT_STATE_DIR_OVERRIDE:-$HOME/.local/share/meni-hub/bass-tuner-monitoring-crontab-drift}"
-DRIFT_LINE="58 * * * * mkdir -p $DRIFT_STATE_DIR && BLOCK_LABEL=bass-tuner-monitoring BEGIN_MARK=\"$BEGIN_MARK\" END_MARK=\"$END_MARK\" EXPECTED_CONTENT_CMD=\"$REPO/scripts/install-monitoring-crons.sh --print-line\" INSTALLER_HINT=\"scripts/install-monitoring-crons.sh\" $DRIFT_CHECK >> $DRIFT_STATE_DIR/cron.log 2>&1"
+DRIFT_LINE="58 * * * * $REPO/scripts/run-crontab-drift.sh bass-tuner-monitoring install-monitoring-crons.sh $DRIFT_STATE_DIR"
 CRON_LINES="$CRON_LINES
 $DRIFT_LINE"
 
