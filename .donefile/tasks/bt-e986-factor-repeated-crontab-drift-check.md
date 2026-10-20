@@ -2,7 +2,7 @@
 id: bt-e986
 title: Factor repeated crontab-drift check boilerplate (83 lines >400 chars) into one shared wrapper
   script
-status: open
+status: claimed
 priority: p3
 tags:
   - cron
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T14:29:14Z
 reported: 2026-10-20
+claim:
+  owner: capacity-engine
+  at: 2026-10-20T14:33:40Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): each installer inlines BEGIN_MARK/END_MARK/mkdir drift check, up to 789 chars/line; cross-repo refactor
@@ -24,3 +27,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed DONE (commit 9ad1be6).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-20 claimed by capacity-engine
