@@ -3,7 +3,7 @@ id: bt-684f
 title: Other boards still hold the flag in blocked-task text (bass-tuner bt-0ead/bt-3f11, iac-2c5c,
   capacity-engine ce-4cc7/ce-df7d/ce-144c/ce-c54b/ce-4abb, meniapp ma-8345/ma-86ca, iac-d6fb,
   donefile dn-c229)
-status: open
+status: claimed
 priority: p3
 tags:
   - security
@@ -13,6 +13,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T06:08:10Z
 reported: 2026-10-20
+claim:
+  owner: capacity-engine
+  at: 2026-10-20T06:18:18Z
 ---
 
 Named in the finding: bt-0ead/bt-3f11, ce-4cc7/ce-df7d/ce-144c/ce-c54b/ce-4abb, ma-8345/ma-86ca
@@ -30,3 +33,6 @@ That task's report closed DONE (commit 23c2566571d9 — does not resolve here, s
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `23c2566571d9` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-20 claimed by capacity-engine
