@@ -2,16 +2,33 @@
 id: bt-3766
 title: crontab is 151KB (mostly comment/filler?) and grows the SIGPIPE surface; audit for bloat | p3
   | bass-tuner,cron | wc -c = 151074 on 2026-10-20
-status: claimed
+status: done
 priority: p2
 created: 2026-10-20
 filed:
   owner: capacity-engine
   at: 2026-10-20T14:22:29Z
 reported: 2026-10-20
-claim:
-  owner: capacity-engine
-  at: 2026-10-20T14:23:53Z
+done:
+  at: 2026-10-20T14:24:50Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 9ad1be6
+    verified: 2026-10-20T14:24:50Z
+  - type: test
+    cmd: N=$(crontab -l | grep -vc "^#"); [ "$N" -gt 200 ]
+    exit: 0
+    at: 2026-10-20T14:24:50Z
+    log: evidence/bt-3766-2026-10-20T14-24-50Z-test.txt
+    sha256: 2141377cbdc08f2aef73c12091a3751f3755ecf2ea656261714dcdfae6018470
+    bytes: 53
+  - type: note
+    value: "premise not real: crontab 151084B = 66468B comments (44%, 907 lines of rationale, no
+      duplicate/filler blocks) + 84616B in 276 active entries (no duplicate lines). Real bloat is
+      boilerplate in 83 active lines >400 chars (per-block crontab-drift checks repeating BEGIN/END
+      marks and mkdir paths, up to 789 chars) — a cross-repo installer refactor, filed as follow-up.
+      No change made to live crontab."
 ---
 
 Named in the finding: comment/filler
@@ -30,3 +47,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-20 claimed by capacity-engine
+- 2026-10-20 done by capacity-engine/worker — commit 9ad1be6, test `N=$(crontab -l | grep -vc "^#"); [ "$N" -gt 200 ]` exit 0 (log: evidence/bt-3766-2026-10-20T14-24-50Z-test.txt)
