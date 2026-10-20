@@ -1,0 +1,6 @@
+$ N=$(crontab -l | awk "/^# BEGIN bass-tuner/{f=1} f&&length>400{n++} /^# END bass-tuner/{f=0} END{print n+0}"); echo "bass-tuner long lines: $N"; [ "$N" = "0" ] && git -C /home/omri/projects/bass-tuner grep -c "run-crontab-drift.sh" origin/main -- scripts/install-ff-sync-cron.sh scripts/install-monitoring-crons.sh scripts/install-cert-renewal-cron.sh
+
+bass-tuner long lines: 0
+origin/main:scripts/install-cert-renewal-cron.sh:1
+origin/main:scripts/install-ff-sync-cron.sh:1
+origin/main:scripts/install-monitoring-crons.sh:1
