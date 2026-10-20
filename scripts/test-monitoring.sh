@@ -299,14 +299,14 @@ read_crontab_locked() {
 
 CRON="$(read_crontab_locked)"
 for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-tunnel-liveness.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
-  if echo "$CRON" | grep -q "$pat"; then
+  if grep -qF -- "$pat" <<<"$CRON"; then
     echo "OK     $pat is scheduled in crontab"
   else
     found=0
     for attempt in 1 2 3 4 5 6 7 8; do
       sleep 1
       CRON="$(read_crontab_locked)"
-      if echo "$CRON" | grep -q "$pat"; then
+      if grep -qF -- "$pat" <<<"$CRON"; then
         found=1
         break
       fi
