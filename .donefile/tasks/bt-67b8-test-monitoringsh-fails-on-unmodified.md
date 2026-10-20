@@ -1,7 +1,7 @@
 ---
 id: bt-67b8
 title: "test-monitoring.sh FAILs on unmodified main: renew-wildcard-cert.sh missing from crontab"
-status: open
+status: claimed
 priority: p3
 tags:
   - bass-tuner
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T13:57:15Z
 reported: 2026-10-20
+claim:
+  owner: capacity-engine
+  at: 2026-10-20T13:59:13Z
 ---
 
 Named in the finding: test-monitoring.sh, renew-wildcard-cert.sh
@@ -26,3 +29,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit adfbd2379b46c375cededff35b3047069291a2bf).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-20 claimed by capacity-engine
