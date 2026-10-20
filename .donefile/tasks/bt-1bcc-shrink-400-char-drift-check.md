@@ -1,7 +1,7 @@
 ---
 id: bt-1bcc
 title: Shrink >400-char drift-check lines in other repos' installers (bass-tuner, etc.)
-status: open
+status: claimed
 priority: p3
 tags:
   - cron
@@ -10,6 +10,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T15:52:50Z
 reported: 2026-10-20
+claim:
+  owner: capacity-engine
+  at: 2026-10-20T18:29:56Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): 66 of 67 live long lines are non-trips-hub blocks (the 67th is trips-hub-alias-drift); trips-hub's own lines are already <400
@@ -25,3 +28,6 @@ That task's report closed DONE (commit edcf1017 — does not resolve here, see b
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `edcf1017` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-20 claimed by capacity-engine
