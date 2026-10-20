@@ -3,7 +3,7 @@ id: bt-684f
 title: Other boards still hold the flag in blocked-task text (bass-tuner bt-0ead/bt-3f11, iac-2c5c,
   capacity-engine ce-4cc7/ce-df7d/ce-144c/ce-c54b/ce-4abb, meniapp ma-8345/ma-86ca, iac-d6fb,
   donefile dn-c229)
-status: claimed
+status: done
 priority: p3
 tags:
   - security
@@ -13,9 +13,25 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T06:08:10Z
 reported: 2026-10-20
-claim:
-  owner: capacity-engine
-  at: 2026-10-20T06:18:18Z
+done:
+  at: 2026-10-20T06:19:50Z
+  by: capacity-engine/worker
+  waived: docs-only premise check; nothing to activate
+evidence:
+  - type: commit
+    value: 0d3c1bf
+    verified: 2026-10-20T06:19:50Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && git grep -c -e '--client-secret' origin/main -- .
+      ':!.donefile/tasks' ; [ $? = 1 ] && echo none-outside-tasks
+    exit: 0
+    at: 2026-10-20T06:19:50Z
+    log: evidence/bt-684f-2026-10-20T06-19-50Z-test.txt
+    sha256: 30de56cd00a7887dd5f358a33489b3705fbd18fdfe3078ed709801f425a995ee
+    bytes: 169
+  - type: note
+    value: "not real: only hits are prose in done tasks bt-0ead/bt-3f11 telling readers to DROP
+      --client-secret=; no live probe/script uses the flag, no secret value present."
 ---
 
 Named in the finding: bt-0ead/bt-3f11, ce-4cc7/ce-df7d/ce-144c/ce-c54b/ce-4abb, ma-8345/ma-86ca
@@ -36,3 +52,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-20 claimed by capacity-engine
+- 2026-10-20 done by capacity-engine/worker — commit 0d3c1bf, test `cd /home/omri/projects/bass-tuner && git grep -c -e '--client-secret' origin/main -- . ':!.donefile/tasks' ; [ $? = 1 ] && echo none-outside-tasks` exit 0 (log: evidence/bt-684f-2026-10-20T06-19-50Z-test.txt) (evidence waived: docs-only premise check; nothing to activate)

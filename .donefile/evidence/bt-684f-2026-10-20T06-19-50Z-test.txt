@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && git grep -c -e '--client-secret' origin/main -- . ':!.donefile/tasks' ; [ $? = 1 ] && echo none-outside-tasks
+
+none-outside-tasks
