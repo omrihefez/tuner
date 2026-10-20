@@ -1,0 +1,5 @@
+$ cd /home/omri/projects/bass-tuner && C=$(crontab -l) && for L in bass-tuner-ff-sync bass-tuner-monitoring; do N=$(awk "/^# BEGIN $L/,/^# END $L/" <<<"$C" | awk '!/^#/ && NF>5 && ($1=="0" || $1 ~ /^\*\/[0-9]+$/)' | wc -l); echo "$L minute-0/bare-star lines: $N"; [ "$N" = "0" ] || exit 1; done; grep -c "^1-59/3 .*ff-sync-main-checkout" <<<"$C"
+
+bass-tuner-ff-sync minute-0/bare-star lines: 0
+bass-tuner-monitoring minute-0/bare-star lines: 0
+3

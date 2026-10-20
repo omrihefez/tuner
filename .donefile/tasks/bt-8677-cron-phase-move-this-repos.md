@@ -1,7 +1,7 @@
 ---
 id: bt-8677
 title: "Cron phase: move this repo's */N and minute-0 cron jobs off minute 0 (df-6573 stampede)"
-status: claimed
+status: done
 priority: p2
 tags:
   - from-omri
@@ -11,9 +11,23 @@ created: 2026-10-20
 filed:
   owner: omri@ubuntu-4gb-nbg1-1
   at: 2026-10-20T09:58:51Z
-claim:
-  owner: capacity-engine
-  at: 2026-10-20T13:43:52Z
+done:
+  at: 2026-10-20T13:48:37Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: adfbd2379b46c375cededff35b3047069291a2bf
+    verified: 2026-10-20T13:48:37Z
+  - type: test
+    cmd: "cd /home/omri/projects/bass-tuner && C=$(crontab -l) && for L in bass-tuner-ff-sync
+      bass-tuner-monitoring; do N=$(awk \"/^# BEGIN $L/,/^# END $L/\" <<<\"$C\" | awk '!/^#/ && NF>5
+      && ($1==\"0\" || $1 ~ /^\\*\\/[0-9]+$/)' | wc -l); echo \"$L minute-0/bare-star lines: $N\"; [
+      \"$N\" = \"0\" ] || exit 1; done; grep -c \"^1-59/3 .*ff-sync-main-checkout\" <<<\"$C\""
+    exit: 0
+    at: 2026-10-20T13:48:36Z
+    log: evidence/bt-8677-2026-10-20T13-48-36Z-test.txt
+    sha256: dc436b34e1fe9fb6b91b312012bbc75ee04b3ea8aefa3d4738453c6e49dbf3ca
+    bytes: 446
 ---
 
 Child of ~/meni df-6573 (from-omri, p1). Measured 2026-10-20 12:55 IDT against the live crontab: 43 cron entries fire at exactly minute 0 of 04:00, 00:00, 06:00, 10:00, 12:00 and 18:00 (247 entries total). Minute 0 is where every */N lines up (*/3, */5, */10, */15, */30 all share phase 0), so the box stampedes and capacity-engine pauses dispatch on load. Today alone it paused twice, and the pre-push gate flaked on load (ce-7264).
@@ -33,3 +47,4 @@ Verify: crontab -l | awk '/^# BEGIN <label>/,/^# END <label>/' | awk '!/^#/ && N
 
 ## Log
 - 2026-10-20 claimed by capacity-engine
+- 2026-10-20 done by capacity-engine/worker — commit adfbd2379b46, test `cd /home/omri/projects/bass-tuner && C=$(crontab -l) && for L in bass-tuner-ff-sync bass-tuner-monitoring; do N=$(awk "/^# BEGIN $L/,/^# END $L/" <<<"$C" | awk '!/^#/ && NF>5 && ($1=="0" || $1 ~ /^\*\/[0-9]+$/)' | wc -l); echo "$L minute-0/bare-star lines: $N"; [ "$N" = "0" ] || exit 1; done; grep -c "^1-59/3 .*ff-sync-main-checkout" <<<"$C"` exit 0 (log: evidence/bt-8677-2026-10-20T13-48-36Z-test.txt)
