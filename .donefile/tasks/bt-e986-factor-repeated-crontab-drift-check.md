@@ -2,7 +2,7 @@
 id: bt-e986
 title: Factor repeated crontab-drift check boilerplate (83 lines >400 chars) into one shared wrapper
   script
-status: claimed
+status: done
 priority: p3
 tags:
   - cron
@@ -12,9 +12,27 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T14:29:14Z
 reported: 2026-10-20
-claim:
-  owner: capacity-engine
-  at: 2026-10-20T14:33:40Z
+done:
+  at: 2026-10-20T14:58:15Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: 54e69cf1c6c06202daaa6a487af1a2b7aaf76a7b
+    verified: 2026-10-20T14:58:15Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/run-crontab-drift.test.sh && bash
+      scripts/crontab-empty-read-guard.test.sh
+    exit: 0
+    at: 2026-10-20T14:58:13Z
+    log: evidence/bt-e986-2026-10-20T14-58-13Z-test.txt
+    sha256: 4b87862f46bcb34d923c04918881706c91b37d85c78548e77ec63a44c7e09de4
+    bytes: 1450
+  - type: note
+    value: "Scope: the 83 long crontab lines span ~30 repos' installers; only 3 are bass-tuner's
+      (cert-renewal, ff-sync, monitoring). Their DRIFT_LINEs now call scripts/run-crontab-drift.sh
+      <label> <installer> <state-dir> (~180-210 chars vs ~790 expanded). Other repos need the same
+      on their own boards. Test fails if a line re-inlines BEGIN_MARK or exceeds 250 chars. Live
+      crontab unchanged until installers are rerun. Feature commit 52df79c."
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): each installer inlines BEGIN_MARK/END_MARK/mkdir drift check, up to 789 chars/line; cross-repo refactor
@@ -30,3 +48,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-20 claimed by capacity-engine
+- 2026-10-20 done by capacity-engine/worker — commit 54e69cf1c6c0, test `cd /home/omri/projects/bass-tuner && bash scripts/run-crontab-drift.test.sh && bash scripts/crontab-empty-read-guard.test.sh` exit 0 (log: evidence/bt-e986-2026-10-20T14-58-13Z-test.txt)
