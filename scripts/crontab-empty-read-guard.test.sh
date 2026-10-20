@@ -77,7 +77,10 @@ run_installer() {
   local script="$1" mode="$2"; shift 2
   local calls="$TMP/calls.txt" write="$TMP/write.txt" state="$TMP/state.txt"
   : > "$calls"; rm -f "$write" "$state"
-  PATH="$STUB_DIR:$PATH" \
+  # bt-e986: this test is about the empty-read guard, not staleness. Without
+  # this, any commit that changes a rendered block fails here until it is on
+  # origin/main (the stale-checkout guard compares against origin's render).
+  PATH="$STUB_DIR:$PATH" ALLOW_STALE_CRONTAB_WRITE=1 \
     CRONTAB_STUB_MODE="$mode" CRONTAB_STUB_CALLS="$calls" CRONTAB_STUB_WRITE="$write" \
     CRONTAB_STUB_STATE="$state" CRONTAB_STUB_DATA="$REAL_CRONTAB" \
     CRONTAB_INSTALL_LOCK_FILE="$TMP/lock-$$" \
