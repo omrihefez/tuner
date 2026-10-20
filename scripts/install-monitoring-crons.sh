@@ -136,7 +136,7 @@ CRON_LINES="5 6 * * * $RUNNER fallback-cert $FALLBACK_CERT
 18 6 * * * $RUNNER cors-corp-consistency $CORS_CORP
 20 6 * * * $RUNNER csp-strength $CSP_STRENGTH
 21 6 * * * $RUNNER unregistered-live-hosts $UNREGISTERED_LIVE_HOSTS
-0 7 * * * $RUNNER heartbeat $HEARTBEAT
+7 7 * * * $RUNNER heartbeat $HEARTBEAT
 22 */2 * * * $RUNNER stale-deploy $STALE_DEPLOY"
 
 # Recurring drift check (ma-707b) — shared implementation in meniapp
@@ -293,5 +293,5 @@ if [ "$DRY_RUN" = "1" ]; then
   printf '%s\n' "$NEW_CRON" | sed 's/^/    /' >&2
 else
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 06:16 permissions-policy, 06:18 cors-corp-consistency, 06:20 csp-strength, 06:21 unregistered-live-hosts, 07:00 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
+  echo "[install-monitoring-crons] installed crons: 06:05 fallback-cert, 06:10 domain-audit, 06:12 tunnel-liveness, 06:14 model-ids, 06:16 permissions-policy, 06:18 cors-corp-consistency, 06:20 csp-strength, 06:21 unregistered-live-hosts, 07:07 heartbeat (daily), :22/2h stale-deploy, :58 hourly drift-check (see: crontab -l)"
 fi

@@ -553,7 +553,7 @@ cat > "$FAKE_CRONTAB_FILE" <<FAKECRONEOF
 # BEGIN bass-tuner-monitoring (scripts/install-monitoring-crons.sh)
 5 6 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh
 10 6 * * * $RUNNER domain-audit $REPO/scripts/audit-domains.sh
-0 7 * * * $RUNNER heartbeat $REPO/scripts/check-monitor-heartbeats.sh
+7 7 * * * $RUNNER heartbeat $REPO/scripts/check-monitor-heartbeats.sh
 # END bass-tuner-monitoring (scripts/install-monitoring-crons.sh)
 0 3 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh --hand-added-different-schedule-bt-d428-selftest
 5 6 * * * $RUNNER fallback-cert $REPO/scripts/check-fallback-cert.sh

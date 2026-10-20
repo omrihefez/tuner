@@ -38,7 +38,8 @@ STATE_DIR="$HOME/.local/share/meni-hub/ff-sync-bass-tuner-main-checkout"
 
 BEGIN="# BEGIN bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)"
 END="# END bass-tuner-ff-sync (scripts/install-ff-sync-cron.sh)"
-LINE="*/3 * * * * mkdir -p $STATE_DIR && $REPO_ROOT/scripts/ff-sync-main-checkout.sh >> $STATE_DIR/cron.log 2>&1"
+# bt-8677: phase 1-59/3 (K=1 from cksum of label), off minute 0 (df-6573)
+LINE="1-59/3 * * * * mkdir -p $STATE_DIR && $REPO_ROOT/scripts/ff-sync-main-checkout.sh >> $STATE_DIR/cron.log 2>&1"
 
 # Recurring drift check (ma-707b, mirrors tik-api's ff-sync installer) —
 # shared implementation in meniapp (ma-c616), called by absolute path since
