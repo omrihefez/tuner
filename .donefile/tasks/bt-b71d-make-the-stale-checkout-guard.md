@@ -2,7 +2,7 @@
 id: bt-b71d
 title: Make the stale-checkout guard skippable per-test so render-changing commits don't need an
   ALLOW_STALE_CRONTAB_WRITE workaround
-status: claimed
+status: done
 priority: p3
 tags:
   - cron
@@ -12,9 +12,22 @@ filed:
   owner: capacity-engine
   at: 2026-10-20T15:04:23Z
 reported: 2026-10-20
-claim:
-  owner: capacity-engine
-  at: 2026-10-20T15:27:43Z
+done:
+  at: 2026-10-20T15:28:44Z
+  by: capacity-engine
+evidence:
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh && grep -q
+      "ALLOW_STALE_CRONTAB_WRITE=1" scripts/crontab-empty-read-guard.test.sh
+    exit: 0
+    at: 2026-10-20T15:28:42Z
+    log: evidence/bt-b71d-2026-10-20T15-28-42Z-test.txt
+    sha256: e96beb17fd8f85f98baabf5acb92ea150f5f7893603876193744302ddb03ac1d
+    bytes: 1264
+  - type: note
+    value: "already fixed by bt-e986 (54e69cf): test sets ALLOW_STALE_CRONTAB_WRITE=1 on its own
+      installer runs, so render-changing commits push without a manual workaround. Premise dead;
+      test passes fresh (12 checks)."
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): crontab-empty-read-guard.test.sh failed pre-push on this change because the guard compares against origin/main's render
@@ -30,3 +43,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-20 claimed by capacity-engine
+- 2026-10-20 done by capacity-engine — test `cd /home/omri/projects/bass-tuner && bash scripts/crontab-empty-read-guard.test.sh && grep -q "ALLOW_STALE_CRONTAB_WRITE=1" scripts/crontab-empty-read-guard.test.sh` exit 0 (log: evidence/bt-b71d-2026-10-20T15-28-42Z-test.txt)
