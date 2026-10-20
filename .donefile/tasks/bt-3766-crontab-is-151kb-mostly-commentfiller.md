@@ -2,13 +2,16 @@
 id: bt-3766
 title: crontab is 151KB (mostly comment/filler?) and grows the SIGPIPE surface; audit for bloat | p3
   | bass-tuner,cron | wc -c = 151074 on 2026-10-20
-status: open
+status: claimed
 priority: p2
 created: 2026-10-20
 filed:
   owner: capacity-engine
   at: 2026-10-20T14:22:29Z
 reported: 2026-10-20
+claim:
+  owner: capacity-engine
+  at: 2026-10-20T14:23:53Z
 ---
 
 Named in the finding: comment/filler
@@ -24,3 +27,6 @@ Board choice is a GUESS: this follow-up names a file but the engine could not ma
 That task's report closed DONE (commit 646eac57e60b6c3139cbebee4a4daee8eb6fb3e4).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-20 claimed by capacity-engine
