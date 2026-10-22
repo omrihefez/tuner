@@ -13,23 +13,20 @@ filed:
   at: 2026-10-22T10:35:05Z
 reported: 2026-10-22
 blocked:
-  reason: "Premise live but untestable on Hobby: team omris-projects-b1cad393 is still
-    billing.plan=pro (iac-1467 done; Omri presses Downgrade himself). Personal scope rejected by CLI
-    ('cannot set Personal Account as scope'), so no Hobby team to test against. Newest
-    *.omrihefez.com cert has 59d left (not 89d); script threshold is 45d, so first real renewal
-    ~2026-11-05. After downgrade, run: scripts/renew-wildcard-cert.sh --force --i-mean-it (attended)
-    or wait for the cron and check log."
+  reason: "Waits on the Vercel downgrade Omri was already told about via iac-1467 (hub msg 73949, the
+    iac-1467 told pin). Not a new ask: the probe flips when billing.plan=hobby, then Main/fleet
+    verifies renew-wildcard-cert.sh. No needs-you card needed."
   since: 2026-10-22
   probe:
     cmd: python3 -c "import json,os,urllib.request as
       u;t=json.load(open(os.path.expanduser('~/.local/share/com.vercel.cli/auth.json')))['token'];d=json.load(u.urlopen(u.Request('https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ',headers={'Authorization':'Bearer
       '+t})));assert d['billing']['plan']=='hobby',d['billing']['plan']"
     exit: 1
-    at: 2026-10-22T10:56:48Z
+    at: 2026-10-22T11:18:56Z
     log: evidence/bt-41b2-2026-10-22T10-56-48Z-probe.txt
     sha256: 990cabe2fa9e538d2e1f314c4c21efca73e0f3898ac5fd98fdd221bac8f5b43a
     bytes: 430
-  gate_owner: omri
+  gate_owner: main
   parked_claim:
     owner: capacity-engine
     at: 2026-10-22T10:54:49Z
@@ -50,9 +47,10 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Gate
 PROBE: python3 -c "import json,os,urllib.request as u;t=json.load(open(os.path.expanduser('~/.local/share/com.vercel.cli/auth.json')))['token'];d=json.load(u.urlopen(u.Request('https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ',headers={'Authorization':'Bearer '+t})));assert d['billing']['plan']=='hobby',d['billing']['plan']"
-GATE-OWNER: omri
+GATE-OWNER: main
 
 ## Log
 - 2026-10-22 claimed by capacity-engine
 - 2026-10-22 claim by capacity-engine parked (blocked)
 - 2026-10-22 blocked: Premise live but untestable on Hobby: team omris-projects-b1cad393 is still billing.plan=pro (iac-1467 done; Omri presses Downgrade himself). Personal scope rejected by CLI ('cannot set Personal Account as scope'), so no Hobby team to test against. Newest *.omrihefez.com cert has 59d left (not 89d); script threshold is 45d, so first real renewal ~2026-11-05. After downgrade, run: scripts/renew-wildcard-cert.sh --force --i-mean-it (attended) or wait for the cron and check log. [probe `python3 -c "import json,os,urllib.request as u;t=json.load(open(os.path.expanduser('~/.local/share/com.vercel.cli/auth.json')))['token'];d=json.load(u.urlopen(u.Request('https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ',headers={'Authorization':'Bearer '+t})));assert d['billing']['plan']=='hobby',d['billing']['plan']"` exit 1, owner omri]
+- 2026-10-22 blocked reason updated: "Premise live but untestable on Hobby: team omris-projects-b1cad393 is still billing.plan=pro (iac-1467 done; Omri presses Downgrade himself). Personal scope rejected by CLI ('cannot set Personal Account as scope'), so no Hobby team to test against. Newest *.omrihefez.com cert has 59d left (not 89d); script threshold is 45d, so first real renewal ~2026-11-05. After downgrade, run: scripts/renew-wildcard-cert.sh --force --i-mean-it (attended) or wait for the cron and check log." -> "Waits on the Vercel downgrade Omri was already told about via iac-1467 (hub msg 73949, the iac-1467 told pin). Not a new ask: the probe flips when billing.plan=hobby, then Main/fleet verifies renew-wildcard-cert.sh. No needs-you card needed."
