@@ -1,0 +1,5 @@
+$ python3 -c "import json,os,urllib.request as u;t=json.load(open(os.path.expanduser('~/.local/share/com.vercel.cli/auth.json')))['token'];d=json.load(u.urlopen(u.Request('https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ',headers={'Authorization':'Bearer '+t})));assert d['billing']['plan']=='hobby',d['billing']['plan']"
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+AssertionError: pro
