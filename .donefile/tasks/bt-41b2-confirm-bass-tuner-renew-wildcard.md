@@ -2,7 +2,7 @@
 id: bt-41b2
 title: Confirm bass-tuner renew-wildcard-cert.sh (vercel certs issue) still works on Hobby at the
   next renewal
-status: open
+status: claimed
 priority: p3
 tags:
   - vercel
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-22T10:35:05Z
 reported: 2026-10-22
+claim:
+  owner: capacity-engine
+  at: 2026-10-22T10:54:49Z
 ---
 
 Named in the finding: renew-wildcard-cert.sh
@@ -26,3 +29,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed PARTIAL.
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-22 claimed by capacity-engine
