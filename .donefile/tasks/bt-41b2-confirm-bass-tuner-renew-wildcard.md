@@ -2,7 +2,7 @@
 id: bt-41b2
 title: Confirm bass-tuner renew-wildcard-cert.sh (vercel certs issue) still works on Hobby at the
   next renewal
-status: open
+status: claimed
 priority: p3
 tags:
   - vercel
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-22T10:35:05Z
 reported: 2026-10-22
+claim:
+  owner: capacity-engine
+  at: 2026-10-23T15:35:53Z
 ---
 
 Named in the finding: renew-wildcard-cert.sh
@@ -38,3 +41,4 @@ PROBE: python3 -c "import json,os,urllib.request as u;t=json.load(open(os.path.e
 - 2026-10-22 blocker iac-1467 closed 2026-10-22T10:30:45Z — recheck whether this can proceed now.
 - 2026-10-23 Gate verified cleared 2026-10-23 18:27 IDT (ce-ff25): team omris-projects-b1cad393 billing.plan=hobby, status=active, period=None. renew-wildcard-cert.sh default run on Hobby exits 0 ('57d left > 45d threshold') so the vercel certs read path works; --force dry-run ok. ISSUANCE ('vercel certs issue') still unproven on Hobby: first real cron renewal crosses 45d around 2026-11-04 -- verify from the cron log then, or run --force --i-mean-it attended.
 - 2026-10-23 unblocked
+- 2026-10-23 claimed by capacity-engine
