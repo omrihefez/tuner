@@ -2,7 +2,7 @@
 id: bt-41b2
 title: Confirm bass-tuner renew-wildcard-cert.sh (vercel certs issue) still works on Hobby at the
   next renewal
-status: claimed
+status: done
 priority: p3
 tags:
   - vercel
@@ -12,9 +12,28 @@ filed:
   owner: capacity-engine
   at: 2026-10-22T10:35:05Z
 reported: 2026-10-22
-claim:
-  owner: capacity-engine
-  at: 2026-10-23T15:35:53Z
+done:
+  at: 2026-10-23T15:37:21Z
+  by: meni-worker/confirm-bass-tuner-renew-aaac60
+  waived: no code change; verification-only, nothing to activate
+evidence:
+  - type: commit
+    value: 793ea64e9d1782c0160431a8fc6fc22f92c55802
+    verified: 2026-10-23T15:37:21Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && export PATH="$HOME/.bun/bin:$PATH" && vercel certs ls
+      --non-interactive 2>&1 | grep -E "\*\.omrihefez\.com" | grep -E "in (8[5-9]|9[0-9])d" | grep
+      -c omrihefez
+    exit: 0
+    at: 2026-10-23T15:37:19Z
+    log: evidence/bt-41b2-2026-10-23T15-37-19Z-test.txt
+    sha256: 89178142a608e9f6146d66411dda2a5d1dde90d39c04d01e862d88284cc65eea
+    bytes: 202
+  - type: note
+    value: "Verified 2026-10-23 18:37 IDT: scripts/renew-wildcard-cert.sh --force --i-mean-it on Hobby
+      team ran end to end rc=0 (ACME challenge, Cloudflare TXT, propagation, 'vercel certs issue'
+      Success, TXT cleaned up). New cert_JTyU8Xf5... *.omrihefez.com in 90d. No code change. Test is
+      time-bound: passes only while a ~90d wildcard exists (until ~Oct 28)."
 ---
 
 Named in the finding: renew-wildcard-cert.sh
@@ -42,3 +61,4 @@ PROBE: python3 -c "import json,os,urllib.request as u;t=json.load(open(os.path.e
 - 2026-10-23 Gate verified cleared 2026-10-23 18:27 IDT (ce-ff25): team omris-projects-b1cad393 billing.plan=hobby, status=active, period=None. renew-wildcard-cert.sh default run on Hobby exits 0 ('57d left > 45d threshold') so the vercel certs read path works; --force dry-run ok. ISSUANCE ('vercel certs issue') still unproven on Hobby: first real cron renewal crosses 45d around 2026-11-04 -- verify from the cron log then, or run --force --i-mean-it attended.
 - 2026-10-23 unblocked
 - 2026-10-23 claimed by capacity-engine
+- 2026-10-23 done by meni-worker/confirm-bass-tuner-renew-aaac60 — commit 793ea64e9d17, test `cd /home/omri/projects/bass-tuner && export PATH="$HOME/.bun/bin:$PATH" && vercel certs ls --non-interactive 2>&1 | grep -E "\*\.omrihefez\.com" | grep -E "in (8[5-9]|9[0-9])d" | grep -c omrihefez` exit 0 (log: evidence/bt-41b2-2026-10-23T15-37-19Z-test.txt) (evidence waived: no code change; verification-only, nothing to activate)

@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && export PATH="$HOME/.bun/bin:$PATH" && vercel certs ls --non-interactive 2>&1 | grep -E "\*\.omrihefez\.com" | grep -E "in (8[5-9]|9[0-9])d" | grep -c omrihefez
+
+1
