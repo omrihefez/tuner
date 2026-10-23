@@ -2,7 +2,7 @@
 id: bt-d1bc
 title: Verify renew-wildcard-cert.sh on Hobby after downgrade (cron log ~2026-11-05 or attended
   --force --i-mean-it)
-status: open
+status: blocked
 priority: p3
 tags:
   - vercel
@@ -12,6 +12,29 @@ filed:
   owner: capacity-engine/backfill
   at: 2026-10-23T00:40:23Z
 reported: 2026-10-22
+blocked:
+  reason: "INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on bt-41b2,
+    which was blocked (gate-owner main) at filing time. A child task must not become a copy button
+    around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an
+    unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: bt-41b2 is unblocked
+    — then re-scope this finding on its own merits (the parent's own work may already cover it) and
+    unblock it too. Parent's reason: Waits on the Vercel downgrade Omri was already told about via
+    iac-1467 (hub msg 73949, the iac-1467 told pin). Not a new ask: the probe flips when
+    billing.plan=hobby, then Main/fleet verifies renew-wildcard-cert.sh. No needs-you card needed."
+  since: 2026-10-23
+  probe:
+    cmd: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show
+      bt-41b2 --json) && printf '%s' "$s" | node -e "const
+      s=JSON.parse(require('fs').readFileSync(0,'utf8'));const
+      ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const
+      ev=(s.evidence||[]).slice().reverse();const
+      c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
+    exit: 1
+    at: 2026-10-23T00:40:31Z
+    log: evidence/bt-d1bc-2026-10-23T00-40-31Z-probe.txt
+    sha256: e6f9d5ede49fa460dd5900062a9a9a5529a7326e39e70b5bdce1e1028fb0278c
+    bytes: 620
+  gate_owner: main
 ---
 
 Named in the finding: renew-wildcard-cert.sh
@@ -27,3 +50,10 @@ See 'reported' in this task's frontmatter for the date this finding was original
 INHERITED RESTRICTION — the parent this was raised on, bt-41b2, was BLOCKED (gate-owner main) when this was auto-filed, so this task is parked with it rather than becoming a way around it (ce-ce4f). It unblocks when bt-41b2 does; re-scope it then, since the parent's own work may already cover it.
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Gate
+PROBE: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show bt-41b2 --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
+GATE-OWNER: main
+
+## Log
+- 2026-10-23 blocked: INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on bt-41b2, which was blocked (gate-owner main) at filing time. A child task must not become a copy button around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: bt-41b2 is unblocked — then re-scope this finding on its own merits (the parent's own work may already cover it) and unblock it too. Parent's reason: Waits on the Vercel downgrade Omri was already told about via iac-1467 (hub msg 73949, the iac-1467 told pin). Not a new ask: the probe flips when billing.plan=hobby, then Main/fleet verifies renew-wildcard-cert.sh. No needs-you card needed. [probe `s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show bt-41b2 --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"` exit 1, owner main]
