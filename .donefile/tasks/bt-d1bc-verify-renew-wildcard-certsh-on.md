@@ -2,7 +2,7 @@
 id: bt-d1bc
 title: Verify renew-wildcard-cert.sh on Hobby after downgrade (cron log ~2026-11-05 or attended
   --force --i-mean-it)
-status: claimed
+status: done
 priority: p3
 tags:
   - vercel
@@ -12,9 +12,30 @@ filed:
   owner: capacity-engine/backfill
   at: 2026-10-23T00:40:23Z
 reported: 2026-10-22
-claim:
-  owner: capacity-engine
-  at: 2026-10-23T18:26:05Z
+done:
+  at: 2026-10-23T18:28:40Z
+  by: capacity-engine/worker
+  waived: verification-only; bt-41b2 already ran the script on Hobby, nothing to activate
+evidence:
+  - type: commit
+    value: 793ea64e9d1782c0160431a8fc6fc22f92c55802
+    verified: 2026-10-23T18:28:40Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && export PATH="$HOME/.bun/bin:$PATH" && python3 -c "import
+      json,os,urllib.request as
+      u;t=json.load(open(os.path.expanduser(\"~/.local/share/com.vercel.cli/auth.json\")))[\"token\"];d=json.load(u.urlopen(u.Request(\"https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ\",headers={\"Authorization\":\"Bearer
+      \"+t})));assert d[\"billing\"][\"plan\"]==\"hobby\",d[\"billing\"][\"plan\"]" && vercel certs
+      ls --non-interactive 2>&1 | grep -E "\*\.omrihefez\.com" | grep -cE "in (6[0-9]|[7-9][0-9])d"
+    exit: 0
+    at: 2026-10-23T18:28:37Z
+    log: evidence/bt-d1bc-2026-10-23T18-28-37Z-test.txt
+    sha256: 2c6a7ae6c168caac92f911f1882b5b57c3d499f0f64b99f1367260512bc1ae05
+    bytes: 543
+  - type: note
+    value: "premise already dead: bt-41b2 ran scripts/renew-wildcard-cert.sh --force --i-mean-it on the
+      Hobby team, rc=0, new cert in 90d. Rechecked 2026-10-23 21:30 IDT: billing.plan=hobby,
+      cert_JTyU8Xf5 *.omrihefez.com in 90d. Test is time-bound (needs >=60d wildcard cert, true
+      until ~Nov 22)."
 ---
 
 Named in the finding: renew-wildcard-cert.sh
@@ -40,3 +61,4 @@ PROBE: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefil
 - 2026-10-23 unblocked
 - 2026-10-23 AUTO-UNBLOCKED by gate-probe-monitor.mjs (ce-9279): this park's own UNBLOCK PREDICATE — "bt-41b2 is unblocked" — is now satisfied (donefile show bt-41b2 reads status "done"). Re-scope this finding on its own merits per the park's original instruction: the parent's own work may already cover it.
 - 2026-10-23 claimed by capacity-engine
+- 2026-10-23 done by capacity-engine/worker — commit 793ea64e9d17, test `cd /home/omri/projects/bass-tuner && export PATH="$HOME/.bun/bin:$PATH" && python3 -c "import json,os,urllib.request as u;t=json.load(open(os.path.expanduser(\"~/.local/share/com.vercel.cli/auth.json\")))[\"token\"];d=json.load(u.urlopen(u.Request(\"https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ\",headers={\"Authorization\":\"Bearer \"+t})));assert d[\"billing\"][\"plan\"]==\"hobby\",d[\"billing\"][\"plan\"]" && vercel certs ls --non-interactive 2>&1 | grep -E "\*\.omrihefez\.com" | grep -cE "in (6[0-9]|[7-9][0-9])d"` exit 0 (log: evidence/bt-d1bc-2026-10-23T18-28-37Z-test.txt) (evidence waived: verification-only; bt-41b2 already ran the script on Hobby, nothing to activate)
