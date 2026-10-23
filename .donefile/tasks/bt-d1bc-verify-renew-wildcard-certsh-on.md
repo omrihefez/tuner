@@ -2,7 +2,7 @@
 id: bt-d1bc
 title: Verify renew-wildcard-cert.sh on Hobby after downgrade (cron log ~2026-11-05 or attended
   --force --i-mean-it)
-status: open
+status: claimed
 priority: p3
 tags:
   - vercel
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine/backfill
   at: 2026-10-23T00:40:23Z
 reported: 2026-10-22
+claim:
+  owner: capacity-engine
+  at: 2026-10-23T18:26:05Z
 ---
 
 Named in the finding: renew-wildcard-cert.sh
@@ -36,3 +39,4 @@ PROBE: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefil
 - 2026-10-23 blocker bt-41b2 closed 2026-10-23T15:37:21Z — recheck whether this can proceed now.
 - 2026-10-23 unblocked
 - 2026-10-23 AUTO-UNBLOCKED by gate-probe-monitor.mjs (ce-9279): this park's own UNBLOCK PREDICATE — "bt-41b2 is unblocked" — is now satisfied (donefile show bt-41b2 reads status "done"). Re-scope this finding on its own merits per the park's original instruction: the parent's own work may already cover it.
+- 2026-10-23 claimed by capacity-engine
