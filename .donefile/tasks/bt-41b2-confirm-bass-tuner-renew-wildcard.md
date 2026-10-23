@@ -22,7 +22,7 @@ blocked:
       u;t=json.load(open(os.path.expanduser('~/.local/share/com.vercel.cli/auth.json')))['token'];d=json.load(u.urlopen(u.Request('https://api.vercel.com/v2/teams/team_1JqV1IChqxsh933CUDYmVvGQ',headers={'Authorization':'Bearer
       '+t})));assert d['billing']['plan']=='hobby',d['billing']['plan']"
     exit: 1
-    at: 2026-10-22T11:18:56Z
+    at: 2026-10-23T12:14:07Z
     log: evidence/bt-41b2-2026-10-22T10-56-48Z-probe.txt
     sha256: 990cabe2fa9e538d2e1f314c4c21efca73e0f3898ac5fd98fdd221bac8f5b43a
     bytes: 430
