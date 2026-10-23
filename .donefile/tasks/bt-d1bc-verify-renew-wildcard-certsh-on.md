@@ -30,7 +30,7 @@ blocked:
       ev=(s.evidence||[]).slice().reverse();const
       c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
     exit: 1
-    at: 2026-10-23T00:40:31Z
+    at: 2026-10-23T12:14:16Z
     log: evidence/bt-d1bc-2026-10-23T00-40-31Z-probe.txt
     sha256: e6f9d5ede49fa460dd5900062a9a9a5529a7326e39e70b5bdce1e1028fb0278c
     bytes: 620
