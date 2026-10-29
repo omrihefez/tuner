@@ -34,3 +34,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-10-29 claimed by capacity-engine
+- 2026-10-29 PREMISE-PROBE: ! git -C /home/omri/projects/trips-hub grep -q 'data: https: blob:' origin/main -- lib/csp.ts && bash /home/omri/projects/bass-tuner/scripts/check-csp-strength.sh
