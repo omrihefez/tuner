@@ -2,7 +2,7 @@
 id: bt-11d5
 title: "Confirm live trips CSP img-src has no bare https: after dev->main promotion, then run
   bass-tuner check-csp-strength.sh"
-status: claimed
+status: blocked
 priority: p3
 tags:
   - csp
@@ -12,9 +12,22 @@ filed:
   owner: capacity-engine
   at: 2026-10-29T07:47:13Z
 reported: 2026-10-29
-claim:
-  owner: capacity-engine
-  at: 2026-10-29T07:48:51Z
+blocked:
+  reason: "Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on
+    trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh
+    after promotion."
+  since: 2026-10-29
+  probe:
+    cmd: git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts
+    exit: 1
+    at: 2026-10-29T07:50:08Z
+    log: evidence/bt-11d5-2026-10-29T07-50-08Z-probe.txt
+    sha256: 3adaea3917270b2c4a45dd0b565a616a6af75e3650b18787f353c0259fa8b5b3
+    bytes: 91
+  gate_owner: main
+  parked_claim:
+    owner: capacity-engine
+    at: 2026-10-29T07:48:51Z
 ---
 
 Named in the finding: check-csp-strength.sh
@@ -32,6 +45,12 @@ PROVENANCE COMMIT DOES NOT RESOLVE HERE — `dd9c4f0e` does not exist in this re
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
 
+## Gate
+PROBE: git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts
+GATE-OWNER: main
+
 ## Log
 - 2026-10-29 claimed by capacity-engine
 - 2026-10-29 PREMISE-PROBE: ! git -C /home/omri/projects/trips-hub grep -q 'data: https: blob:' origin/main -- lib/csp.ts && bash /home/omri/projects/bass-tuner/scripts/check-csp-strength.sh
+- 2026-10-29 claim by capacity-engine parked (blocked)
+- 2026-10-29 blocked: Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh after promotion. [probe `git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts` exit 1, owner main]
