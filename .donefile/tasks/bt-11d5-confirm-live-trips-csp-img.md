@@ -2,7 +2,7 @@
 id: bt-11d5
 title: "Confirm live trips CSP img-src has no bare https: after dev->main promotion, then run
   bass-tuner check-csp-strength.sh"
-status: blocked
+status: open
 priority: p3
 tags:
   - csp
@@ -12,23 +12,6 @@ filed:
   owner: capacity-engine
   at: 2026-10-29T07:47:13Z
 reported: 2026-10-29
-blocked:
-  reason: Waits on trips-hub's own 15-min promote cron (scripts/promote.mjs, load-gated) carrying
-    th-c4c1 dd9c4f0e dev->main; not an attended merge. Then re-run check-csp-strength.sh once the
-    deploy watchdog ships main (~16min).
-  since: 2026-10-29
-  probe:
-    cmd: git -C /home/omri/projects/trips-hub fetch -q origin main && git -C
-      /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts
-    exit: 1
-    at: 2026-10-29T07:51:34Z
-    log: evidence/bt-11d5-2026-10-29T07-51-34Z-probe.txt
-    sha256: 6c0a7c85e8c48a8217098439c83596355ec614de8043cfd6c6d75f1fc5108e5a
-    bytes: 152
-  gate_owner: fleet
-  parked_claim:
-    owner: capacity-engine
-    at: 2026-10-29T07:48:51Z
 ---
 
 Named in the finding: check-csp-strength.sh
@@ -48,7 +31,6 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Gate
 PROBE: git -C /home/omri/projects/trips-hub fetch -q origin main && git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts
-GATE-OWNER: fleet
 
 ## Log
 - 2026-10-29 claimed by capacity-engine
@@ -57,3 +39,4 @@ GATE-OWNER: fleet
 - 2026-10-29 blocked: Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh after promotion. [probe `git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts` exit 1, owner main]
 - 2026-10-29 blocked reason updated: "Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh after promotion." -> "Waits on trips-hub's own 15-min promote cron (scripts/promote.mjs, load-gated) carrying th-c4c1 dd9c4f0e dev->main; not an attended merge. Then re-run check-csp-strength.sh once the deploy watchdog ships main (~16min)."
 - 2026-10-29 blocker th-c4c1 closed 2026-10-29T07:42:47Z — recheck whether this can proceed now.
+- 2026-10-29 unblocked
