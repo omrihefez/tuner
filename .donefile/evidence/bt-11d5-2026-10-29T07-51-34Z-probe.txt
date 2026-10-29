@@ -1,0 +1,2 @@
+$ git -C /home/omri/projects/trips-hub fetch -q origin main && git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts
+
