@@ -56,3 +56,4 @@ GATE-OWNER: fleet
 - 2026-10-29 claim by capacity-engine parked (blocked)
 - 2026-10-29 blocked: Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh after promotion. [probe `git -C /home/omri/projects/trips-hub grep -q 'IMG_HOSTS.join' origin/main -- lib/csp.ts` exit 1, owner main]
 - 2026-10-29 blocked reason updated: "Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh after promotion." -> "Waits on trips-hub's own 15-min promote cron (scripts/promote.mjs, load-gated) carrying th-c4c1 dd9c4f0e dev->main; not an attended merge. Then re-run check-csp-strength.sh once the deploy watchdog ships main (~16min)."
+- 2026-10-29 blocker th-c4c1 closed 2026-10-29T07:42:47Z — recheck whether this can proceed now.
