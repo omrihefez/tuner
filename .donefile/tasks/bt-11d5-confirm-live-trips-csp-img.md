@@ -2,7 +2,7 @@
 id: bt-11d5
 title: "Confirm live trips CSP img-src has no bare https: after dev->main promotion, then run
   bass-tuner check-csp-strength.sh"
-status: open
+status: claimed
 priority: p3
 tags:
   - csp
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-10-29T07:47:13Z
 reported: 2026-10-29
+claim:
+  owner: capacity-engine
+  at: 2026-10-29T07:48:51Z
 ---
 
 Named in the finding: check-csp-strength.sh
@@ -28,3 +31,6 @@ That task's report closed DONE (commit dd9c4f0e — does not resolve here, see b
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `dd9c4f0e` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-10-29 claimed by capacity-engine
