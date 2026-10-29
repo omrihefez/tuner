@@ -1,0 +1,19 @@
+$ curl -sfI https://trips.omrihefez.com/ | grep -iq "img-src 'self' data: blob: https://upload.wikimedia.org" && bash /home/omri/projects/bass-tuner/scripts/check-csp-strength.sh
+
+OK     bass.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     brain.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     compose.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     house.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     kidai.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     meni.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     meniapp.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     meniapp-api.omrihefez.com -> no Content-Security-Policy header, exempt: meni-hub API backend, JSON-only, no HTML page -- never serves a body a CSP header would apply to, measured live 2026-10-12
+OK     oauth.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     planner.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     preview.meni.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     tik.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     tik-api.omrihefez.com -> no Content-Security-Policy header, exempt: TIK API backend, JSON-only, same as meniapp-api, measured live 2026-10-12
+OK     tik-api-vps.omrihefez.com -> no Content-Security-Policy header, exempt: TIK API VPS cutover/rollback origin, JSON-only, same as meniapp-api, measured live 2026-10-12
+OK     trips.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+OK     tuner.omrihefez.com -> script-src/img-src/style-src/object-src/base-uri/frame-ancestors clean (style-src 'unsafe-inline' exempt)
+check-csp-strength: 13 CSP-sending host(s) all clean, out of 16 derived

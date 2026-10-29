@@ -2,7 +2,7 @@
 id: bt-11d5
 title: "Confirm live trips CSP img-src has no bare https: after dev->main promotion, then run
   bass-tuner check-csp-strength.sh"
-status: open
+status: done
 priority: p3
 tags:
   - csp
@@ -12,6 +12,24 @@ filed:
   owner: capacity-engine
   at: 2026-10-29T07:47:13Z
 reported: 2026-10-29
+done:
+  at: 2026-10-29T10:32:04Z
+  by: capacity-engine
+evidence:
+  - type: live
+    cmd: "curl -sfI https://trips.omrihefez.com/ | grep -iq \"img-src 'self' data: blob:
+      https://upload.wikimedia.org\" && bash
+      /home/omri/projects/bass-tuner/scripts/check-csp-strength.sh"
+    exit: 0
+    at: 2026-10-29T10:31:57Z
+    log: evidence/bt-11d5-2026-10-29T10-31-57Z-live.txt
+    sha256: b5e7feb19b5cf5197572fe8dff949fd63751a1870215c2263319217db7577494
+    bytes: 2553
+  - type: note
+    value: "Gate truly cleared, verified independently of the probe: trips-hub th-c4c1 dd9c4f0e is on
+      origin/main, live trips.omrihefez.com img-src = 'self' data: blob: + 4 named hosts (no bare
+      https:), and check-csp-strength.sh (which flags bare https: in img-src and was red on trips at
+      09:50 IST) exits 0, 13/16 hosts clean. Verified 2026-10-29 ~12:35 IST by ce-5bc0."
 ---
 
 Named in the finding: check-csp-strength.sh
@@ -40,3 +58,4 @@ PROBE: git -C /home/omri/projects/trips-hub fetch -q origin main && git -C /home
 - 2026-10-29 blocked reason updated: "Live trips CSP still has bare https: in img-src (checked 09:50 IST). Fix th-c4c1 is on trips-hub dev only, not on main; dev->main promotion is attended. Re-run check-csp-strength.sh after promotion." -> "Waits on trips-hub's own 15-min promote cron (scripts/promote.mjs, load-gated) carrying th-c4c1 dd9c4f0e dev->main; not an attended merge. Then re-run check-csp-strength.sh once the deploy watchdog ships main (~16min)."
 - 2026-10-29 blocker th-c4c1 closed 2026-10-29T07:42:47Z — recheck whether this can proceed now.
 - 2026-10-29 unblocked
+- 2026-10-29 done by capacity-engine — live `curl -sfI https://trips.omrihefez.com/ | grep -iq "img-src 'self' data: blob: https://upload.wikimedia.org" && bash /home/omri/projects/bass-tuner/scripts/check-csp-strength.sh` exit 0 (log: evidence/bt-11d5-2026-10-29T10-31-57Z-live.txt)
