@@ -81,6 +81,9 @@ declare -A EXPECTED_PP=(
   [tik]="camera=(), microphone=(), geolocation=()"                                   # estate baseline, grants nothing
   [oauth]="camera=(), microphone=(), geolocation=()"                                 # estate baseline, grants nothing -- sent despite being a bare stdlib server with no app-level header code (Cloudflare Tunnel origin), measured live 2026-10-11
   [brain]="camera=(), microphone=(), geolocation=()"                                 # estate baseline, grants nothing -- added by sb-6f36 (second-brain), measured live 2026-10-11
+  [meniapp-api]="camera=(), microphone=(), geolocation=()"                          # estate baseline, grants nothing -- added by ma-00bf (meniapp), pinned by bt-0c09
+  [tik-api]="camera=(), microphone=(), geolocation=()"                               # estate baseline, grants nothing -- added by tk-8c48 (tik-api), pinned by bt-0c09
+  [tik-api-vps]="camera=(), microphone=(), geolocation=()"                           # estate baseline, grants nothing -- same tik-api app (tk-8c48), VPS origin, pinned by bt-0c09
 )
 
 if [ -n "${PP_HOSTS:-}" ]; then
