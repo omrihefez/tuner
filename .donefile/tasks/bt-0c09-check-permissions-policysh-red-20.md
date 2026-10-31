@@ -2,7 +2,7 @@
 id: bt-0c09
 title: "check-permissions-policy.sh red 20 days running: meniapp-api, tik-api, tik-api-vps never
   pinned in EXPECTED_PP"
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -10,6 +10,9 @@ created: 2026-10-31
 filed:
   owner: meni-worker/board-refill-work-discov-d93724
   at: 2026-10-31T18:59:45Z
+claim:
+  owner: capacity-engine
+  at: 2026-10-31T19:11:37Z
 ---
 
 `scripts/check-permissions-policy.sh` (cron `16 6 * * *` via `run-monitor.sh permissions-policy`) has exited 1 on EVERY daily run since 2026-10-12 06:16 — 20 consecutive red runs, per `~/.cache/bass-tuner-permissions-policy.log`. The alert latch `~/.cache/bass-tuner-permissions-policy.alert-latch` is dated 2026-10-12, so it alerted once and has been silent since.
@@ -30,3 +33,6 @@ DONE WHEN:
 3. Consider (optional, worth a sentence in the close note): the sibling repos that add a header should pin it in the same change, or the check should name the task that would own the pin. This is the second time the same handoff gap has turned this monitor red.
 
 Evidence shape: `cd /home/omri/projects/bass-tuner && scripts/check-permissions-policy.sh` exits 0; it exited 1 before the change (the log above is the before-state).
+
+## Log
+- 2026-10-31 claimed by capacity-engine
