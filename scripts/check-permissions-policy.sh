@@ -125,6 +125,12 @@ for h in "${HOSTS[@]}"; do
 
   if [ -z "$expected" ]; then
     echo "UNPINNED $host -> sends Permissions-Policy: $value but nobody recorded an expected value for it in this script — add EXPECTED_PP[$h]" >&2
+    # bt-eefe: the pin is owed by whichever change ADDED the header on that
+    # host's repo (bt-c33d/sb-6f36, bt-0c09/tk-8c48+ma-00bf: each time the
+    # sibling repo shipped the header and nobody pinned it here). Name that
+    # owner and hand over the line to paste, so the red is actionable.
+    echo "         owner: the task/commit that added the header on $host's repo (find it: git -C <that repo> log -S'Permissions-Policy' --oneline). It should have pinned it HERE in the same change; if it is closed, file the pin on the bass-tuner board citing it." >&2
+    echo "         fix:   [$h]=\"$value\"   # <reason> -- added by <task-id>, pinned by <this-task-id>   (in EXPECTED_PP, scripts/check-permissions-policy.sh)" >&2
     FAIL=1
     continue
   fi

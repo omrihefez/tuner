@@ -84,6 +84,8 @@ printf 'newhost.omrihefez.com\tcamera=(), microphone=(), geolocation=()\n' >>"$F
 out="$(run_hosts newhost 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] || fail "expected exit 1 for an unpinned header-sending host, got $rc: $out"
 grep -q "^UNPINNED newhost.omrihefez.com -> sends Permissions-Policy:" <<<"$out" || fail "expected an UNPINNED line, got: $out"
+grep -q "owner: the task/commit that added the header on newhost.omrihefez.com" <<<"$out" || fail "UNPINNED must name who owns the pin (bt-eefe), got: $out"
+grep -q '\[newhost\]="' <<<"$out" || fail "UNPINNED must print a paste-ready EXPECTED_PP line (bt-eefe), got: $out"
 ok "an unrecorded host that starts sending the header is a loud UNPINNED failure, not a silent gap"
 
 echo "6. an untracked host sending NO header at all is silently skipped (presence-only coverage is audit-domains.sh's job, not this script's)"
