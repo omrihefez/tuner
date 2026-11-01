@@ -58,7 +58,10 @@ mkdir -p "$HOME/.cache" "$HOME/inbox"
 } >> "$LOG"
 
 if [[ "$code" -ne 0 ]]; then
-  fingerprint="$(printf '%s' "$out" | sha256sum | cut -d' ' -f1)"
+  # bt-06c9: strip per-request CSP nonces before fingerprinting, else a
+  # nonce-bearing host's DRIFT line changes the hash every run and the latch
+  # never matches. The alert body and log still carry the raw output.
+  fingerprint="$(printf '%s' "$out" | sed -E "s/'nonce-[^']*'/'nonce-'/g" | sha256sum | cut -d' ' -f1)"
   if [[ "$(cat "$LATCH" 2>/dev/null || true)" == "$fingerprint" ]]; then
     alert_latch_log "$NAME: already alerted for this exact failure, not re-notifying (see $LOG)"
   else

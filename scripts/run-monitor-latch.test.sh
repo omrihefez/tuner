@@ -97,5 +97,19 @@ env OUTPUT_FILE="$OUTPUT_FILE" "$RUNNER" "$NAME" "$FLAKY" >/dev/null 2>&1
 [ -f "$(inbox)" ] || fail "same failure did not re-alert after an intervening pass"
 ok "resolve-then-regress re-alerts (ma-c1b2: never permanent silence)"
 
+echo "5. failures differing only in a per-request CSP nonce alert exactly once (bt-06c9)"
+passes
+env OUTPUT_FILE="$OUTPUT_FILE" "$RUNNER" "$NAME" "$FLAKY" >/dev/null 2>&1
+rm -f "$(inbox)"
+fails
+echo "DRIFT  trips.omrihefez.com -> img-src has a bare wildcard origin -- csp: script-src 'self' 'nonce-TUICyzdlAAAA'; img-src 'self' https:" > "$OUTPUT_FILE"
+env OUTPUT_FILE="$OUTPUT_FILE" "$RUNNER" "$NAME" "$FLAKY" >/dev/null 2>&1
+[ -f "$(inbox)" ] || fail "first nonce-bearing failure did not alert"
+rm -f "$(inbox)"
+echo "DRIFT  trips.omrihefez.com -> img-src has a bare wildcard origin -- csp: script-src 'self' 'nonce-MF3bTOeu+/=BBBB'; img-src 'self' https:" > "$OUTPUT_FILE"
+env OUTPUT_FILE="$OUTPUT_FILE" "$RUNNER" "$NAME" "$FLAKY" >/dev/null 2>&1
+[ -f "$(inbox)" ] && fail "failure differing only in CSP nonce re-alerted (bt-06c9)"
+ok "nonce-only difference does not re-alert"
+
 echo
 echo "PASS ($pass assertions)"
