@@ -2,7 +2,7 @@
 id: bt-06c9
 title: "csp-strength alert latch never fires: per-request CSP nonce in output changes the
   fingerprint daily (18 identical alerts 10-12..10-29)"
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -10,6 +10,9 @@ created: 2026-11-01
 filed:
   owner: meni-worker/board-refill-work-discov-fc4603
   at: 2026-11-01T06:57:43Z
+claim:
+  owner: capacity-engine
+  at: 2026-11-01T07:10:28Z
 ---
 
 Found by the 2026-11-01 discovery sweep.
@@ -34,3 +37,6 @@ Either have check-csp-strength.sh redact `'nonce-[^']*'` to `'nonce-…'` before
 ## DONE WHEN
 
 A test feeds run-monitor.sh a stub monitor that fails twice with output differing only in a CSP nonce, and asserts that exactly one inbox alert gets written. That test must fail on current HEAD.
+
+## Log
+- 2026-11-01 claimed by capacity-engine
