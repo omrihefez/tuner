@@ -2,7 +2,7 @@
 id: bt-06c9
 title: "csp-strength alert latch never fires: per-request CSP nonce in output changes the
   fingerprint daily (18 identical alerts 10-12..10-29)"
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -10,9 +10,24 @@ created: 2026-11-01
 filed:
   owner: meni-worker/board-refill-work-discov-fc4603
   at: 2026-11-01T06:57:43Z
-claim:
-  owner: capacity-engine
-  at: 2026-11-01T07:10:28Z
+done:
+  at: 2026-11-01T07:12:31Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: ce0bb918d1bf026c033567ade0757dd5e471a079
+    verified: 2026-11-01T07:12:31Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && git fetch -q origin && git show
+      origin/main:scripts/run-monitor-latch.test.sh > /dev/null && bash
+      scripts/run-monitor-latch.test.sh
+    exit: 0
+    at: 2026-11-01T07:12:30Z
+    log: evidence/bt-06c9-2026-11-01T07-12-30Z-test.txt
+    sha256: d3695d4fe8ad7375d1be4adfc289a5bc1a957af643661c3905388e58d3cfa35c
+    bytes: 670
+  - type: note
+    value: test step 5 fails on parent 2289e1b, passes with fix
 ---
 
 Found by the 2026-11-01 discovery sweep.
@@ -40,3 +55,4 @@ A test feeds run-monitor.sh a stub monitor that fails twice with output differin
 
 ## Log
 - 2026-11-01 claimed by capacity-engine
+- 2026-11-01 done by capacity-engine/worker — commit ce0bb918d1bf, test `cd /home/omri/projects/bass-tuner && git fetch -q origin && git show origin/main:scripts/run-monitor-latch.test.sh > /dev/null && bash scripts/run-monitor-latch.test.sh` exit 0 (log: evidence/bt-06c9-2026-11-01T07-12-30Z-test.txt)
