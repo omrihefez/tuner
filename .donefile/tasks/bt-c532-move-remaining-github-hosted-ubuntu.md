@@ -2,7 +2,7 @@
 id: bt-c532
 title: Move remaining GitHub-hosted (ubuntu-latest) workflows to [self-hosted, meni-vps] fleet-wide
   to stay inside free minutes — bass-tuner
-status: open
+status: claimed
 priority: p1
 tags:
   - ci
@@ -13,6 +13,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-06T09:57:03Z
 reported: 2026-11-06
+claim:
+  owner: capacity-engine
+  at: 2026-11-06T10:42:07Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): 17 runs-on: ubuntu-latest remain (meniapp visual-check/external-probe/ci-app/ci-hub/ci-plugin/dependency-audit, donefile test+audit, capacity-engine test+ci-health-watch, tik-api x4, bass-tuner, apartment-planner, zn-tournaments, meni-arch, pete); trips-hub is already 100% self-hosted
@@ -26,3 +29,6 @@ This finding named multiple repos explicitly and was filed separately on each: a
 That task's report closed BLOCKED.
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-06 claimed by capacity-engine
