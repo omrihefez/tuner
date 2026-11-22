@@ -1,7 +1,7 @@
 ---
 id: bt-286d
 title: Repoint cp headers in other repos' *.vendored.sh (bass-tuner, etc.) to a header-preserving resync
-status: open
+status: claimed
 priority: p3
 tags:
   - vendored-pin
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-21T23:29:46Z
 reported: 2026-11-22
+claim:
+  owner: capacity-engine
+  at: 2026-11-22T00:20:03Z
 ---
 
 Named in the finding: vendored.sh
@@ -28,3 +31,6 @@ That task's report closed DONE (commit 88df90903 — does not resolve here, see 
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `88df90903` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-22 claimed by capacity-engine
