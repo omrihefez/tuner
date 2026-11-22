@@ -13,8 +13,8 @@
 #
 # Manually synced, and WILL drift if meniapp's copy changes and nobody
 # re-copies it. Re-sync with:
-#   cp /home/omri/projects/meniapp/scripts/lib/crontab-install-lock.sh \
-#      scripts/lib/crontab-install-lock.vendored.sh
+#   /home/omri/projects/meniapp/scripts/resync-vendored.sh scripts/lib/crontab-install-lock.vendored.sh
+# (NOT a bare cp: that overwrites this pin header too — ma-b3c9.)
 #
 # --- verbatim copy of meniapp's scripts/lib/crontab-install-lock.sh below ---
 

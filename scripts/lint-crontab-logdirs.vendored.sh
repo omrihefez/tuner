@@ -25,8 +25,9 @@
 # check-vendored-pin-drift.sh (meniapp, ma-2aba/ma-42bf) watches this file
 # against meniapp's canonical by function name and alerts on drift; keep this
 # pin current rather than relying on that guard to catch staleness late.
-# Re-sync by hand: splice meniapp's scripts/lint-crontab-logdirs.sh body in
-# below this header -- a bare `cp` overwrites this header along with the body.
+# Re-sync with `/home/omri/projects/meniapp/scripts/resync-vendored.sh
+# scripts/lint-crontab-logdirs.vendored.sh` -- a bare `cp` overwrites this
+# header along with the body (ma-b3c9).
 #
 # --- verbatim copy of meniapp's scripts/lint-crontab-logdirs.sh starts here ---
 # lint-crontab-logdirs.sh — refuses a crontab line whose log redirect can

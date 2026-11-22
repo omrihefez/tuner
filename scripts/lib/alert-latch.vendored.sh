@@ -28,10 +28,9 @@
 # check-vendored-pin-drift.sh (meniapp, ma-2aba/ma-42bf) watches this file
 # against donefile's canonical by function name and alerts on drift; keep
 # this pin current rather than relying on that guard to catch staleness late.
-# WARNING taken from bt-7727 itself: re-syncing with a bare
-# `cp donefile/scripts/lib/alert-latch.sh scripts/lib/alert-latch.vendored.sh`
-# OVERWRITES this header along with the body. Splice the canonical's body
-# below this header by hand (or script it), never a bare cp.
+# Re-sync with `/home/omri/projects/meniapp/scripts/resync-vendored.sh
+# scripts/lib/alert-latch.vendored.sh`, never a bare `cp` (it OVERWRITES this
+# header along with the body — bt-7727, ma-b3c9).
 #
 # --- verbatim copy of donefile's scripts/lib/alert-latch.sh starts here ---
 # alert-latch.sh — ma-c1b2. The one place a guard is allowed to write its
