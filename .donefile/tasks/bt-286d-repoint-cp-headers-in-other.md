@@ -1,7 +1,7 @@
 ---
 id: bt-286d
 title: Repoint cp headers in other repos' *.vendored.sh (bass-tuner, etc.) to a header-preserving resync
-status: claimed
+status: done
 priority: p3
 tags:
   - vendored-pin
@@ -11,9 +11,28 @@ filed:
   owner: capacity-engine
   at: 2026-11-21T23:29:46Z
 reported: 2026-11-22
-claim:
-  owner: capacity-engine
-  at: 2026-11-22T00:20:03Z
+done:
+  at: 2026-11-22T00:22:54Z
+  by: capacity-engine
+evidence:
+  - type: commit
+    value: bfee242
+    verified: 2026-11-22T00:22:54Z
+  - type: test
+    cmd: 'cd /home/omri/projects/bass-tuner && F="scripts/lib/alert-latch.vendored.sh
+      scripts/lib/crontab-install-lock.vendored.sh scripts/lib/stale-checkout-guard.vendored.sh
+      scripts/lint-crontab-logdirs.vendored.sh"; N=$(grep -hE "^#[[:space:]]+cp |re-sync with: .cp "
+      $F | wc -c); [ "$N" = "0" ] && for f in $F; do grep -q "resync-vendored.sh" $f || exit 1; done
+      && /home/omri/projects/meniapp/scripts/resync-vendored.sh
+      scripts/lint-crontab-logdirs.vendored.sh >/dev/null && git diff --quiet -- $F'
+    exit: 0
+    at: 2026-11-22T00:22:53Z
+    log: evidence/bt-286d-2026-11-22T00-22-53Z-test.txt
+    sha256: f1bf9525df7b80cf93d33c8acd09c3b5bd700f29c9f1f6216dfea77917e969b4
+    bytes: 495
+  - type: note
+    value: "premise live: 4 pins said bare cp; repointed to meniapp resync-vendored.sh (resync no-op on
+      all 4)"
 ---
 
 Named in the finding: vendored.sh
@@ -34,3 +53,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-11-22 claimed by capacity-engine
+- 2026-11-22 done by capacity-engine — commit bfee242, test `cd /home/omri/projects/bass-tuner && F="scripts/lib/alert-latch.vendored.sh scripts/lib/crontab-install-lock.vendored.sh scripts/lib/stale-checkout-guard.vendored.sh scripts/lint-crontab-logdirs.vendored.sh"; N=$(grep -hE "^#[[:space:]]+cp |re-sync with: .cp " $F | wc -c); [ "$N" = "0" ] && for f in $F; do grep -q "resync-vendored.sh" $f || exit 1; done && /home/omri/projects/meniapp/scripts/resync-vendored.sh scripts/lint-crontab-logdirs.vendored.sh >/dev/null && git diff --quiet -- $F` exit 0 (log: evidence/bt-286d-2026-11-22T00-22-53Z-test.txt)

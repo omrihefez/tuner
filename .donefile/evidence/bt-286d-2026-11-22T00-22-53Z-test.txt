@@ -1,0 +1,2 @@
+$ cd /home/omri/projects/bass-tuner && F="scripts/lib/alert-latch.vendored.sh scripts/lib/crontab-install-lock.vendored.sh scripts/lib/stale-checkout-guard.vendored.sh scripts/lint-crontab-logdirs.vendored.sh"; N=$(grep -hE "^#[[:space:]]+cp |re-sync with: .cp " $F | wc -c); [ "$N" = "0" ] && for f in $F; do grep -q "resync-vendored.sh" $f || exit 1; done && /home/omri/projects/meniapp/scripts/resync-vendored.sh scripts/lint-crontab-logdirs.vendored.sh >/dev/null && git diff --quiet -- $F
+
