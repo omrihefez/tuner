@@ -30,3 +30,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-11-26 claimed by capacity-engine
+- 2026-11-26 PREMISE-PROBE: grep -qE "^\[2026-12-[0-9]{2}T[^]]*\] issuance succeeded" "$HOME/.cache/bass-tuner-cert-renewal.log"
