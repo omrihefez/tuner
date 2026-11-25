@@ -31,3 +31,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 ## Log
 - 2026-11-26 claimed by capacity-engine
 - 2026-11-26 PREMISE-PROBE: grep -qE "^\[2026-12-[0-9]{2}T[^]]*\] issuance succeeded" "$HOME/.cache/bass-tuner-cert-renewal.log"
+- 2026-11-26 Checked 2026-11-26: final non-challenge issue step last ran for real 2026-09-21 (log line 69 'issuance succeeded'), pre-soft-block. Soft-block since 2026-11-24 only verified for certs ls + --challenge-only (bt-113a). Forcing a real issuance now was NOT done: writes prod Cloudflare TXT + ACME issuance on a cert with 57d left. Cron fires Mon 2026-12-07 06:17 IST; probe above passes once that run logs success.
