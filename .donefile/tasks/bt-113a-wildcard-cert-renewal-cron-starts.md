@@ -40,3 +40,4 @@ cross-board: names a file under 'meni' at /home/omri/meni — ~/meni is undispat
 
 ## Log
 - 2026-11-26 claimed by capacity-engine
+- 2026-11-26 2026-11-26 00:3x IST (a) verified under soft-block: 'vercel certs ls' rc=0, lists *.omrihefez.com cert_JTyU8Xf5... exp in 57d renew=yes (+ older wildcard 24d, apex 87d/26d). 'vercel certs issue *.omrihefez.com --challenge-only --non-interactive' rc=0, 'issuance started', returned _acme-challenge TXT. So both calls the cron makes before DNS/issue work; the final non-challenge 'issue' step is untested (writes). Cron kept. Residual: wildcard still serves only tombstones; (b) retirement not needed.
