@@ -1,0 +1,3 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-unregistered-live-hosts.sh >/dev/null && bash scripts/check-csp-strength.sh >/dev/null && bash scripts/check-permissions-policy.sh >/dev/null && bash deploy/activation-probes/probe-bt-5fb7.sh
+
+probe-bt-5fb7: PASS - live CACHE (tuner-v14) matches HEAD (tuner-v14)
