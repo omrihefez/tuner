@@ -1,0 +1,2 @@
+$ grep -qE "^\[2026-12-[0-9]{2}T[^]]*\] (issuance succeeded|FATAL)" "$HOME/.cache/bass-tuner-cert-renewal.log"
+
