@@ -297,6 +297,7 @@ declare -A VERCEL_ALIAS_SKIP_REASON=(
 # Remove this entry once DOMAIN.md's own row moves off 🟢 live (then the
 # host drops out of SUBS entirely and this map goes empty for it).
 declare -A VERCEL_RETIRED_SKIP_REASON=(
+  [preview.meni]="iac-ffdc 2026-11-25: meni-arch staging was a Vercel alias; Vercel team paused (iac-dc38), deploy-preview cron disabled, no VPS staging unit exists, no DNS record (the wildcard does not cover two labels) so it NXDOMAINs by design"
   [arch-preview]="ar-1fde 2026-10-09: vercel alias rm retired this host (meni-arch's staging surface moved to preview.meni.omrihefez.com); now 404 by design"
 )
 
@@ -647,6 +648,9 @@ for d in "${SUBS[@]}"; do
     fi
   elif [[ "$code" == "404" && -n "${VERCEL_RETIRED_SKIP_REASON[$d]:-}" ]]; then
     echo "SKIP   $host -> $code retired, not drift: ${VERCEL_RETIRED_SKIP_REASON[$d]}"
+  elif [[ -z "$code" && -n "${VERCEL_RETIRED_SKIP_REASON[$d]:-}" && -z "$(dig +short "$host" @1.1.1.1 2>/dev/null)" ]]; then
+    # iac-ffdc: retired AND no DNS answer at all (NXDOMAIN) is the same "gone by design" as a 404.
+    echo "SKIP   $host -> no DNS retired, not drift: ${VERCEL_RETIRED_SKIP_REASON[$d]}"
   else
     echo "CHECK  $host -> $code ${loc:+($loc)}"
     FAIL=1

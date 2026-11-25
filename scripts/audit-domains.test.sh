@@ -962,5 +962,14 @@ grep -q "^OK     oauth.omrihefez.com/health -> 200" <<<"$out" \
   || fail "expected oauth's /health to flip to OK, got: $out"
 ok "the same probe flips to OK the moment oauth sends COOP/CORP"
 
+echo "47. iac-ffdc: a retired host with NO response and NO DNS is SKIP (not CHECK/exit 1); same host without the retired entry would fail"
+: >"$TMP/empty47.tsv"
+out="$(AUDIT_SUBS="preview.meni" CURL_FIXTURE_MAP="$TMP/empty47.tsv" CURL_CMD=true DOMAIN_MD="$TMP/does-not-exist.md" bash "$SCRIPT" 2>&1)"; rc=$?
+grep -q "^SKIP   preview.meni.omrihefez.com -> no DNS retired" <<<"$out" \
+  || fail "expected SKIP for retired NXDOMAIN preview.meni, got (rc=$rc): $out"
+out="$(AUDIT_SUBS="zzz-not-retired" CURL_FIXTURE_MAP="$TMP/empty47.tsv" CURL_CMD=true DOMAIN_MD="$TMP/does-not-exist.md" bash "$SCRIPT" 2>&1)"; rc=$?
+[ "$rc" -ne 0 ] || fail "a non-retired host with no response must still fail, got rc=0: $out"
+ok "retired+NXDOMAIN skips; non-retired no-response host still fails"
+
 echo
 echo "PASS ($pass assertions)"

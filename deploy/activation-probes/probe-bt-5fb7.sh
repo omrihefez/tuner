@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Live probe (bt-5fb7): proves the deployed sw.js is the one a given git ref
-# actually shipped, not a stale bundle Vercel silently kept serving.
+# actually shipped, not a stale bundle the host (Vercel until 2026-11-25, now the VPS bass-web unit, iac-dc38) silently kept serving.
 #
 # scripts/check-sw-cache-bump.js already catches "changed a cached asset
 # without bumping CACHE" — but it only ever diffs two git refs at COMMIT
