@@ -255,17 +255,8 @@ declare -A VERCEL_CHECK_PATHS=(
   [trips]="/login"
   [tik]="/login"
   [planner]="/"
-  # preview.meni is arch-preview's replacement and the real meni-arch staging
-  # host (ar-111a). It took a DOMAIN.md §1 row on 2026-10-10 (ar-0058), having
-  # had none since it went live, and the moment that row existed this audit
-  # derived the host and reported UNPINNED — exit 1, so the 10 6 cron would
-  # have gone red daily on an otherwise-correct registry fix. Pinned in the
-  # same breath as the row. Same 307->/login shape as meni, which is not a
-  # coincidence: it serves the same Next.js app, and its rpId is deliberately
-  # pinned to meni.omrihefez.com (scripts/preview-passkey-env.ts) so Omri's
-  # production passkey logs in here — the login page this baselines is a real
-  # production auth surface, not a staging stub.
-  [preview.meni]="/login"
+  # preview.meni pin removed (ar-8083, 2026-11-25): host retired, see
+  # VERCEL_RETIRED_SKIP_REASON.
 )
 
 # VERCEL_ALIAS_SKIP_REASON: the UNPINNED fallback above assumes a 307/308/401
