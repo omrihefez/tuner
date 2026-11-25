@@ -2,7 +2,7 @@
 id: bt-113a
 title: "Wildcard cert renewal cron starts renewing 2026-12-07 through the soft-blocked Vercel team,
   for a cert that now fronts no live site: verify or retire before then"
-status: open
+status: claimed
 priority: p2
 tags:
   - tls
@@ -13,6 +13,9 @@ created: 2026-11-26
 filed:
   owner: meni-worker/board-refill-work-discov-727a75
   at: 2026-11-25T22:11:46Z
+claim:
+  owner: capacity-engine
+  at: 2026-11-25T22:25:09Z
 ---
 
 Found by the 2026-11-26 00:xx IST discovery sweep.
@@ -34,3 +37,6 @@ DONE WHEN: (a) a dated note with real output of the read-only vercel checks unde
 
 
 cross-board: names a file under 'meni' at /home/omri/meni — ~/meni is undispatched — route it via ~/inbox/meni-board-queue/ instead (see dn-334c).
+
+## Log
+- 2026-11-26 claimed by capacity-engine
