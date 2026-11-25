@@ -1,7 +1,7 @@
 ---
 id: bt-2593
 title: Confirm final `vercel certs issue` step works under soft-block on first real renewal (~2026-12-07)
-status: open
+status: claimed
 priority: p3
 tags:
   - tls
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-25T22:28:52Z
 reported: 2026-11-26
+claim:
+  owner: capacity-engine
+  at: 2026-11-25T22:31:20Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): only ls and --challenge-only were exercised; a real issue writes
@@ -24,3 +27,6 @@ See 'reported' in this task's frontmatter for the date this finding was original
 That task's report closed DONE.
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-26 claimed by capacity-engine
