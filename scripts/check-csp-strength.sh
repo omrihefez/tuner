@@ -99,6 +99,15 @@ declare -A NO_CSP_REASON=(
   [tik-api-vps]="TIK API VPS cutover/rollback origin, JSON-only, same as meniapp-api, measured live 2026-10-12"
 )
 
+# bt-281c: REDIRECT_ALIAS[label] = host that must answer a bare 3xx to a
+# different host. The self-hosted origin sends no security headers on a
+# redirect (nothing to protect: no body), and the target host's own CSP is
+# checked on its own row. Only exempt while it really IS a 3xx; the day it
+# serves a page without a CSP it is drift again.
+declare -A REDIRECT_ALIAS=(
+  [tuner]="308-redirects to bass (bt-b806); VPS tunnel origin sends no headers on the redirect (iac-dc38)"
+)
+
 if [ -n "${CSP_HOSTS:-}" ]; then
   read -r -a HOSTS <<<"$CSP_HOSTS"
 else
@@ -158,7 +167,10 @@ for h in "${HOSTS[@]}"; do
 
   if [ -z "$line" ]; then
     reason="${NO_CSP_REASON[$h]:-}"
-    if [ -n "$reason" ]; then
+    code=$(echo "$resp" | head -1 | awk '{print $2}')
+    if [ -n "${REDIRECT_ALIAS[$h]:-}" ] && [[ "$code" =~ ^30[0-9]$ ]]; then
+      echo "OK     $host -> no Content-Security-Policy header, exempt: HTTP $code redirect alias, ${REDIRECT_ALIAS[$h]}"
+    elif [ -n "$reason" ]; then
       echo "OK     $host -> no Content-Security-Policy header, exempt: $reason"
     else
       echo "DRIFT  $host -> no Content-Security-Policy header sent" >&2

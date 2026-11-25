@@ -112,6 +112,13 @@ for h in "${HOSTS[@]}"; do
   line=$(echo "$resp" | grep -i '^permissions-policy:' | head -1)
 
   if [ -z "$line" ]; then
+    # bt-281c: a bare 3xx alias on the self-hosted origin (tuner -> bass)
+    # carries no headers; the target's own header is pinned on its own row.
+    code=$(echo "$resp" | head -1 | awk '{print $2}')
+    if [ "$h" = "tuner" ] && [[ "$code" =~ ^30[0-9]$ ]]; then
+      echo "OK     $host -> no Permissions-Policy header, exempt: HTTP $code redirect alias to bass (bt-b806), VPS origin sends no headers on the redirect (bt-281c)"
+      continue
+    fi
     if [ -n "$expected" ]; then
       echo "DRIFT  $host -> no Permissions-Policy header sent (expected: $expected)" >&2
       FAIL=1

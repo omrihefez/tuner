@@ -297,9 +297,32 @@ if [ "${#LIVE_SOURCE[@]}" -eq 0 ]; then
   exit 2
 fi
 
+# bt-281c: Vercel aliases that outlive the Vercel project they point at.
+# Vercel was paused (iac-dc38, 2026-11-25), so these aliases still LIST but
+# nothing serves behind them. Exempt only while the host really is not
+# serving a page (no 2xx/3xx); if it ever starts answering, it is live and
+# unregistered again and this fails. Each entry needs its DOMAIN.md status.
+declare -A ALIAS_NOT_SERVING=(
+  [kidai]="DOMAIN.md row is ⏸️ PAUSED (kd-dcc4, 2026-11-24); Vercel project paused, answers 402"
+  [preview.meni]="DOMAIN.md row is 🔴 removed (ar-8083, 2026-11-25); Vercel paused, name does not resolve to a page"
+)
+
 FAIL=0
 while IFS= read -r h; do
   [ -n "$h" ] || continue
+  if [ -z "${REG_SET[$h]:-}" ] && [ -n "${ALIAS_NOT_SERVING[$h]:-}" ] && [ "${LIVE_SOURCE[$h]}" = "vercel-alias" ]; then
+    code=$("${CURL_CMD:-curl}" -s -o /dev/null -w '%{http_code}' --max-time 10 "https://$h.omrihefez.com/" 2>/dev/null)
+    case "$code" in
+      2??|3??)
+        echo "DRIFT  $h.omrihefez.com -> exempted as not-serving (${ALIAS_NOT_SERVING[$h]}) but now answers HTTP $code -- add a registry row"
+        FAIL=1
+        ;;
+      *)
+        echo "OK     $h.omrihefez.com -> stale vercel-alias, not serving (HTTP ${code:-none}): ${ALIAS_NOT_SERVING[$h]}"
+        ;;
+    esac
+    continue
+  fi
   if [ -z "${REG_SET[$h]:-}" ]; then
     echo "DRIFT  $h.omrihefez.com -> live via ${LIVE_SOURCE[$h]} but has no DOMAIN.md §1 row (🟢/🔵) -- add a registry row"
     FAIL=1
