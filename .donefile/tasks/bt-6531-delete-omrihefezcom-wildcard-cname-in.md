@@ -1,7 +1,7 @@
 ---
 id: bt-6531
 title: Delete *.omrihefez.com wildcard CNAME in generated.tf — bass-tuner
-status: blocked
+status: open
 priority: p3
 tags:
   - dns
@@ -11,24 +11,6 @@ filed:
   owner: capacity-engine
   at: 2026-11-26T10:39:25Z
 reported: 2026-11-26
-blocked:
-  reason: "iac deletion ready on branch bt-6531-delete-wildcard-cname (5d1f2c8d), NOT on iac main and
-    NOT applied: needs attended terraform apply by Main/Omri. Then Main flips
-    ~/meni/bin/check-public-surfaces.sh kidai/pete rows to NXDOMAIN and ~/meni/DOMAIN.md. bass-tuner
-    audit-domains.sh needs no change (derives hosts from DOMAIN.md; retired hosts already skip on
-    NXDOMAIN)."
-  since: 2026-11-26
-  probe:
-    cmd: dig +noall +comments nxprobe-bt6531.omrihefez.com @1.1.1.1 | grep -q NXDOMAIN
-    exit: 1
-    at: 2026-11-26T12:10:26Z
-    log: evidence/bt-6531-2026-11-26T12-10-26Z-probe.txt
-    sha256: 9cbb770583bc56c26abf730d5b4465eb2a47cd3e4734759db1d1b41379601f0f
-    bytes: 81
-  gate_owner: main
-  parked_claim:
-    owner: capacity-engine
-    at: 2026-11-26T12:05:17Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): blocked on kidai getting an explicit record or ny-tear-down-kidai, switching check-public-surfaces.sh pete rows + bass-tuner audit-domains.sh + DOMAIN.md to expect NXDOMAIN, and checking whether the Vercel wildcard cert (bt-113a/bt-2593/bt-f900) is still needed
@@ -48,7 +30,6 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 ## Gate
 PROBE: dig +noall +comments nxprobe-bt6531.omrihefez.com @1.1.1.1 | grep -q NXDOMAIN
 
-GATE-OWNER: main
 
 ## Log
 - 2026-11-26 claimed by capacity-engine
@@ -64,3 +45,4 @@ GATE-OWNER: main
 - 2026-11-26 claimed by capacity-engine
 - 2026-11-26 claim by capacity-engine parked (blocked)
 - 2026-11-26 blocked: iac deletion ready on branch bt-6531-delete-wildcard-cname (5d1f2c8d), NOT on iac main and NOT applied: needs attended terraform apply by Main/Omri. Then Main flips ~/meni/bin/check-public-surfaces.sh kidai/pete rows to NXDOMAIN and ~/meni/DOMAIN.md. bass-tuner audit-domains.sh needs no change (derives hosts from DOMAIN.md; retired hosts already skip on NXDOMAIN). [probe `dig +noall +comments nxprobe-bt6531.omrihefez.com @1.1.1.1 | grep -q NXDOMAIN` exit 1, owner main]
+- 2026-11-26 unblocked
