@@ -1,7 +1,7 @@
 ---
 id: bt-f900
 title: Check cert-renewal log after Mon 2026-12-07 06:17 IST run
-status: open
+status: dropped
 priority: p3
 tags:
   - tls
@@ -32,3 +32,4 @@ PROBE: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefil
 ## Log
 - 2026-11-26 blocked: INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on bt-2593, which was blocked (gate-owner time) at filing time. A child task must not become a copy button around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: bt-2593 is unblocked — then re-scope this finding on its own merits (the parent's own work may already cover it) and unblock it too. Parent's reason: Wait for the 2026-12-07 06:17 IST renewal cron run (cert has ~57d left, so a failure still leaves ~45d). Probe flips on either outcome; then: success -> close, FATAL -> retire the wildcard cert or move issuance off Vercel. [probe `s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show bt-2593 --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"` exit 1, owner time]
 - 2026-11-26 unblocked
+- 2026-11-26 dropped: duplicate of bt-2593, which is parked on the same 2026-12-07 renewal-log probe
