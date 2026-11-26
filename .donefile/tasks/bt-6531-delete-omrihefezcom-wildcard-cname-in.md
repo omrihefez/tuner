@@ -1,7 +1,7 @@
 ---
 id: bt-6531
 title: Delete *.omrihefez.com wildcard CNAME in generated.tf — bass-tuner
-status: blocked
+status: open
 priority: p3
 tags:
   - dns
@@ -11,22 +11,6 @@ filed:
   owner: capacity-engine
   at: 2026-11-26T10:39:25Z
 reported: 2026-11-26
-blocked:
-  reason: "Main decision 2026-11-26: KEEP the wildcard until kidai is torn down (kd-dcc4) or gets an
-    explicit record. Then delete the wildcard in iac and flip pete/pete-api expectations to NXDOMAIN
-    in check-public-surfaces.sh, audit-domains.sh and DOMAIN.md in one change (steps in iac
-    generated.tf:221-238)."
-  since: 2026-11-26
-  probe:
-    cmd: git -C /home/omri/projects/iac grep -c "name *= *\"kidai.omrihefez.com\"" origin/main --
-      cloudflare/generated.tf
-    exit: 1
-    at: 2026-11-26T10:45:29Z
-    log: evidence/bt-6531-2026-11-26T10-45-29Z-probe.txt
-    sha256: 56d8f11f79483bd4b08f6abddcf1da60d02dfa116c35706d0975e1d5ee1b594a
-    bytes: 116
-  gate_owner: upstream
-  depends_on: kd-dcc4
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): blocked on kidai getting an explicit record or ny-tear-down-kidai, switching check-public-surfaces.sh pete rows + bass-tuner audit-domains.sh + DOMAIN.md to expect NXDOMAIN, and checking whether the Vercel wildcard cert (bt-113a/bt-2593/bt-f900) is still needed
@@ -46,7 +30,6 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 ## Gate
 PROBE: git -C /home/omri/projects/iac grep -c "name *= *\"kidai.omrihefez.com\"" origin/main -- cloudflare/generated.tf
 
-GATE-OWNER: upstream
 
 ## Log
 - 2026-11-26 claimed by capacity-engine
@@ -57,3 +40,4 @@ GATE-OWNER: upstream
 - 2026-11-26 blocked: Main decision 2026-11-26: KEEP the wildcard until kidai is torn down (kd-dcc4) or gets an explicit record. Then delete the wildcard in iac and flip pete/pete-api expectations to NXDOMAIN in check-public-surfaces.sh, audit-domains.sh and DOMAIN.md in one change (steps in iac generated.tf:221-238). [probe `git -C /home/omri/projects/iac grep -c "name *= *\"kidai.omrihefez.com\"" origin/main -- cloudflare/generated.tf` exit 1, owner upstream]
 - 2026-11-26 FOLLOW-UP restating this task (50% title overlap) was NOT filed as a child: Delete wildcard CNAME in iac and flip check-public-surfaces.sh pete rows, bass-tuner scripts/audit-domains.sh and DOMAIN.md pete/pete-api rows to expect NXDOMAIN in one change [p3] — why: only after kidai has an explicit record or is torn down; iac-2677 comment at generated.tf:221-238 lists the steps (ce-ea18; a child parked on its own parent adds no work the parent's closure does not already require)
 - 2026-11-26 FOLLOW-UP restating this task (50% title overlap) was NOT filed as a child: Delete wildcard CNAME in iac and flip check-public-surfaces.sh pete rows, bass-tuner scripts/audit-domains.sh and DOMAIN.md pete/pete-api rows to expect NXDOMAIN in one change [p3] — why: only after kidai has an explicit record or is torn down; iac-2677 comment at generated.tf:221-238 lists the steps (ce-ea18; a child parked on its own parent adds no work the parent's closure does not already require)
+- 2026-11-26 unblocked
