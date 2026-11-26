@@ -1,7 +1,7 @@
 ---
 id: bt-6531
 title: Delete *.omrihefez.com wildcard CNAME in generated.tf — bass-tuner
-status: open
+status: claimed
 priority: p3
 tags:
   - dns
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-26T10:39:25Z
 reported: 2026-11-26
+claim:
+  owner: capacity-engine
+  at: 2026-11-26T12:05:17Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): blocked on kidai getting an explicit record or ny-tear-down-kidai, switching check-public-surfaces.sh pete rows + bass-tuner audit-domains.sh + DOMAIN.md to expect NXDOMAIN, and checking whether the Vercel wildcard cert (bt-113a/bt-2593/bt-f900) is still needed
@@ -42,3 +45,4 @@ PROBE: git -C /home/omri/projects/iac grep -c "name *= *\"kidai.omrihefez.com\""
 - 2026-11-26 FOLLOW-UP restating this task (50% title overlap) was NOT filed as a child: Delete wildcard CNAME in iac and flip check-public-surfaces.sh pete rows, bass-tuner scripts/audit-domains.sh and DOMAIN.md pete/pete-api rows to expect NXDOMAIN in one change [p3] — why: only after kidai has an explicit record or is torn down; iac-2677 comment at generated.tf:221-238 lists the steps (ce-ea18; a child parked on its own parent adds no work the parent's closure does not already require)
 - 2026-11-26 unblocked
 - 2026-11-26 Main 2026-11-26: kd-dcc4 DONE (kidai torn down, now 404 via wildcard). Go: delete cname_wildcard in iac generated.tf (attended terraform apply = park for Main with the plan output), and in the same change set flip kidai + pete/pete-api expectations to NXDOMAIN in ~/meni/bin/check-public-surfaces.sh (report the diff to Main — workers do not write ~/meni), bass-tuner audit-domains.sh, and DOMAIN.md rows (also via Main).
+- 2026-11-26 claimed by capacity-engine
