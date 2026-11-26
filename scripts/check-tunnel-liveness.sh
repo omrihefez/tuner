@@ -51,6 +51,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #   house        /       -> 307  (passkey redirect to its own /login)
 #   brain        /       -> 404  (by-design auth wall, no index route)
 #   meniapp-api  /health -> 200
+#   tik          /       -> 307  (NextAuth login wall; /login?callbackUrl=%2F,
+#                                  probed live 2026-11-26, bt-999e. /health 307s too,
+#                                  so only / is pinned)
 declare -A EXPECT_PATH=(
   [oauth]=/health
   [tik-api-vps]=/
@@ -58,6 +61,7 @@ declare -A EXPECT_PATH=(
   [house]=/
   [brain]=/
   [meniapp-api]=/health
+  [tik]=/
 )
 declare -A EXPECT_STATUS=(
   [oauth]=200
@@ -66,6 +70,7 @@ declare -A EXPECT_STATUS=(
   [house]=307
   [brain]=404
   [meniapp-api]=200
+  [tik]=307
 )
 
 if [ -n "${TUNNEL_HOSTS:-}" ]; then
