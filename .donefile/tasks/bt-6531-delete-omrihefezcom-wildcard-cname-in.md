@@ -1,7 +1,7 @@
 ---
 id: bt-6531
 title: Delete *.omrihefez.com wildcard CNAME in generated.tf — bass-tuner
-status: open
+status: done
 priority: p3
 tags:
   - dns
@@ -11,6 +11,23 @@ filed:
   owner: capacity-engine
   at: 2026-11-26T10:39:25Z
 reported: 2026-11-26
+done:
+  at: 2026-11-26T12:21:40Z
+  by: main
+  waived: "applied live by Main 2026-11-26 14:13 IST (terraform apply: 1 destroyed); authoritative NS
+    answers NXDOMAIN for unlisted names"
+evidence:
+  - type: commit
+    value: "565356e7"
+    repo: /home/omri/projects/iac
+    verified: 2026-11-26T12:21:40Z
+  - type: test
+    cmd: dig +noall +comments nxprobe-bt6531.omrihefez.com @martha.ns.cloudflare.com | grep -c NXDOMAIN
+    exit: 0
+    at: 2026-11-26T12:21:39Z
+    log: evidence/bt-6531-2026-11-26T12-21-39Z-test.txt
+    sha256: 52a9aaeb4a5cf6ed835f319bc6a813f36f0b3687dad49629238c78cc031f2ce2
+    bytes: 100
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): blocked on kidai getting an explicit record or ny-tear-down-kidai, switching check-public-surfaces.sh pete rows + bass-tuner audit-domains.sh + DOMAIN.md to expect NXDOMAIN, and checking whether the Vercel wildcard cert (bt-113a/bt-2593/bt-f900) is still needed
@@ -46,3 +63,4 @@ PROBE: dig +noall +comments nxprobe-bt6531.omrihefez.com @1.1.1.1 | grep -q NXDO
 - 2026-11-26 claim by capacity-engine parked (blocked)
 - 2026-11-26 blocked: iac deletion ready on branch bt-6531-delete-wildcard-cname (5d1f2c8d), NOT on iac main and NOT applied: needs attended terraform apply by Main/Omri. Then Main flips ~/meni/bin/check-public-surfaces.sh kidai/pete rows to NXDOMAIN and ~/meni/DOMAIN.md. bass-tuner audit-domains.sh needs no change (derives hosts from DOMAIN.md; retired hosts already skip on NXDOMAIN). [probe `dig +noall +comments nxprobe-bt6531.omrihefez.com @1.1.1.1 | grep -q NXDOMAIN` exit 1, owner main]
 - 2026-11-26 unblocked
+- 2026-11-26 done by main — commit 565356e7 (/home/omri/projects/iac), test `dig +noall +comments nxprobe-bt6531.omrihefez.com @martha.ns.cloudflare.com | grep -c NXDOMAIN` exit 0 (log: evidence/bt-6531-2026-11-26T12-21-39Z-test.txt) (evidence waived: applied live by Main 2026-11-26 14:13 IST (terraform apply: 1 destroyed); authoritative NS answers NXDOMAIN for unlisted names)

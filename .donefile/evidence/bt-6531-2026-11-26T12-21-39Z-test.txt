@@ -1,0 +1,3 @@
+$ dig +noall +comments nxprobe-bt6531.omrihefez.com @martha.ns.cloudflare.com | grep -c NXDOMAIN
+
+1
