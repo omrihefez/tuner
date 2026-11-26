@@ -1,0 +1,10 @@
+$ cd /home/omri/projects/bass-tuner && bash scripts/check-tunnel-liveness.sh
+
+ok       brain.omrihefez.com/ — HTTP 404
+ok       house.omrihefez.com/ — HTTP 307
+ok       meniapp-api.omrihefez.com/health — HTTP 200
+ok       oauth.omrihefez.com/health — HTTP 200
+ok       tik.omrihefez.com/ — HTTP 307
+ok       tik-api.omrihefez.com/health — HTTP 200
+ok       tik-api-vps.omrihefez.com/ — HTTP 404
+check-tunnel-liveness: all 7 non-Vercel live hosts answering as pinned
