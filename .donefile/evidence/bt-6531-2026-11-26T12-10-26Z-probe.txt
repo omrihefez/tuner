@@ -1,0 +1,2 @@
+$ dig +noall +comments nxprobe-bt6531.omrihefez.com @1.1.1.1 | grep -q NXDOMAIN
+
