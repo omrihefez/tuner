@@ -32,3 +32,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-11-26 claimed by capacity-engine
+- 2026-11-26 PREMISE-PROBE: ! git -C /home/omri/projects/iac grep -q 'name *= *"\*.omrihefez.com"' origin/main -- cloudflare/generated.tf
