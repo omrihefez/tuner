@@ -1,7 +1,7 @@
 ---
 id: bt-f900
 title: Check cert-renewal log after Mon 2026-12-07 06:17 IST run
-status: blocked
+status: open
 priority: p3
 tags:
   - tls
@@ -11,29 +11,6 @@ filed:
   owner: capacity-engine
   at: 2026-11-25T22:35:29Z
 reported: 2026-11-26
-blocked:
-  reason: "INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on bt-2593,
-    which was blocked (gate-owner time) at filing time. A child task must not become a copy button
-    around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an
-    unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: bt-2593 is unblocked
-    — then re-scope this finding on its own merits (the parent's own work may already cover it) and
-    unblock it too. Parent's reason: Wait for the 2026-12-07 06:17 IST renewal cron run (cert has
-    ~57d left, so a failure still leaves ~45d). Probe flips on either outcome; then: success ->
-    close, FATAL -> retire the wildcard cert or move issuance off Vercel."
-  since: 2026-11-26
-  probe:
-    cmd: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show
-      bt-2593 --json) && printf '%s' "$s" | node -e "const
-      s=JSON.parse(require('fs').readFileSync(0,'utf8'));const
-      ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const
-      ev=(s.evidence||[]).slice().reverse();const
-      c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
-    exit: 1
-    at: 2026-11-25T22:35:37Z
-    log: evidence/bt-f900-2026-11-25T22-35-37Z-probe.txt
-    sha256: d43c29422f98b9d7bd23a6b08157861f468ab66a3f9dcc2b4882c4da0248cbcf
-    bytes: 620
-  gate_owner: time
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): the PREMISE-PROBE on bt-2593 passes only if a 2026-12 'issuance succeeded' line exists; a FATAL there means the soft-block breaks the final step
@@ -51,7 +28,7 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Gate
 PROBE: s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show bt-2593 --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"
-GATE-OWNER: time
 
 ## Log
 - 2026-11-26 blocked: INHERITED PARK — auto-filed by the capacity engine from a FOLLOW-UP line raised on bt-2593, which was blocked (gate-owner time) at filing time. A child task must not become a copy button around its parent's gate: on 2026-08-09 ma-5ec5 cloned parked ma-1436 this way and re-armed an unattended meni-hub restart 71 minutes later (ce-ce4f). UNBLOCK PREDICATE: bt-2593 is unblocked — then re-scope this finding on its own merits (the parent's own work may already cover it) and unblock it too. Parent's reason: Wait for the 2026-12-07 06:17 IST renewal cron run (cert has ~57d left, so a failure still leaves ~45d). Probe flips on either outcome; then: success -> close, FATAL -> retire the wildcard cert or move issuance off Vercel. [probe `s=$(cd /home/omri/projects/bass-tuner && node /home/omri/projects/donefile/dist/cli.js show bt-2593 --json) && printf '%s' "$s" | node -e "const s=JSON.parse(require('fs').readFileSync(0,'utf8'));const ok=['open','claimed','merged','done'];if(!ok.includes(s.status)){process.exit(1)}if(s.status!=='merged'&&s.status!=='done'){process.exit(0)}const ev=(s.evidence||[]).slice().reverse();const c=ev.find(e=>e&&e.type==='live'&&e.cmd)||ev.find(e=>e&&e.type==='test'&&e.cmd);if(!c){process.exit(0)}try{require('child_process').execSync(c.cmd,{stdio:'ignore',shell:'/bin/bash'});process.exit(0)}catch(e){process.exit(1)}"` exit 1, owner time]
+- 2026-11-26 unblocked
