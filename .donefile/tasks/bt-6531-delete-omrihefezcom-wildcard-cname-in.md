@@ -1,7 +1,7 @@
 ---
 id: bt-6531
 title: Delete *.omrihefez.com wildcard CNAME in generated.tf — bass-tuner
-status: claimed
+status: blocked
 priority: p3
 tags:
   - dns
@@ -11,9 +11,26 @@ filed:
   owner: capacity-engine
   at: 2026-11-26T10:39:25Z
 reported: 2026-11-26
-claim:
-  owner: capacity-engine
-  at: 2026-11-26T10:43:40Z
+blocked:
+  reason: "Premise live but prerequisites unmet (iac-2677 decision: KEEP for now). Wildcard at iac
+    cloudflare/generated.tf:241 still serves paused kidai, which has no explicit record; deleting it
+    breaks kidai and the pete tombstone monitors (check-public-surfaces.sh, audit-domains.sh,
+    DOMAIN.md must flip to expect NXDOMAIN in the same change). bt-113a closed: cert not a blocker.
+    Needs kidai explicit record or teardown first; the delete itself is an iac change, not
+    bass-tuner."
+  since: 2026-11-26
+  probe:
+    cmd: git -C /home/omri/projects/iac grep -q 'name *= *"kidai.omrihefez.com"' origin/main --
+      cloudflare/generated.tf
+    exit: 1
+    at: 2026-11-26T10:44:39Z
+    log: evidence/bt-6531-2026-11-26T10-44-39Z-probe.txt
+    sha256: e7af0c0ef96018027d2b5bab705eec8823a913196b53e5912b3a9fb60fcd7c43
+    bytes: 114
+  gate_owner: main
+  parked_claim:
+    owner: capacity-engine
+    at: 2026-11-26T10:43:40Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): blocked on kidai getting an explicit record or ny-tear-down-kidai, switching check-public-surfaces.sh pete rows + bass-tuner audit-domains.sh + DOMAIN.md to expect NXDOMAIN, and checking whether the Vercel wildcard cert (bt-113a/bt-2593/bt-f900) is still needed
@@ -30,6 +47,12 @@ PROVENANCE COMMIT DOES NOT RESOLVE HERE — `9a1c69653a0911e50ced13f8c689edd545c
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
 
+## Gate
+PROBE: git -C /home/omri/projects/iac grep -q 'name *= *"kidai.omrihefez.com"' origin/main -- cloudflare/generated.tf
+GATE-OWNER: main
+
 ## Log
 - 2026-11-26 claimed by capacity-engine
 - 2026-11-26 PREMISE-PROBE: ! git -C /home/omri/projects/iac grep -q 'name *= *"\*.omrihefez.com"' origin/main -- cloudflare/generated.tf
+- 2026-11-26 claim by capacity-engine parked (blocked)
+- 2026-11-26 blocked: Premise live but prerequisites unmet (iac-2677 decision: KEEP for now). Wildcard at iac cloudflare/generated.tf:241 still serves paused kidai, which has no explicit record; deleting it breaks kidai and the pete tombstone monitors (check-public-surfaces.sh, audit-domains.sh, DOMAIN.md must flip to expect NXDOMAIN in the same change). bt-113a closed: cert not a blocker. Needs kidai explicit record or teardown first; the delete itself is an iac change, not bass-tuner. [probe `git -C /home/omri/projects/iac grep -q 'name *= *"kidai.omrihefez.com"' origin/main -- cloudflare/generated.tf` exit 1, owner main]

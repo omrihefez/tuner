@@ -1,0 +1,2 @@
+$ git -C /home/omri/projects/iac grep -q 'name *= *"kidai.omrihefez.com"' origin/main -- cloudflare/generated.tf
+
