@@ -1,7 +1,7 @@
 ---
 id: bt-6531
 title: Delete *.omrihefez.com wildcard CNAME in generated.tf — bass-tuner
-status: open
+status: claimed
 priority: p3
 tags:
   - dns
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-26T10:39:25Z
 reported: 2026-11-26
+claim:
+  owner: capacity-engine
+  at: 2026-11-26T10:43:40Z
 ---
 
 Why this is worth doing (from the reporting worker's own FOLLOW-UP line): blocked on kidai getting an explicit record or ny-tear-down-kidai, switching check-public-surfaces.sh pete rows + bass-tuner audit-domains.sh + DOMAIN.md to expect NXDOMAIN, and checking whether the Vercel wildcard cert (bt-113a/bt-2593/bt-f900) is still needed
@@ -26,3 +29,6 @@ That task's report closed DONE (commit 9a1c69653a0911e50ced13f8c689edd545cf9b2f 
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `9a1c69653a0911e50ced13f8c689edd545cf9b2f` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-26 claimed by capacity-engine
