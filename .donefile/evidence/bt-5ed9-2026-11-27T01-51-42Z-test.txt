@@ -1,0 +1,3 @@
+$ for h in kidai pete pete-api; do if getent hosts $h.omrihefez.com; then exit 1; fi; done; N=$(grep -cE "\"https://(kidai|pete|pete-api)\." /home/omri/meni/bin/check-public-surfaces.sh || true); [ "$N" = "0" ] && echo ok
+
+ok
