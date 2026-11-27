@@ -1,7 +1,7 @@
 ---
 id: bt-5b84
 title: DOMAIN.md pete/pete-api rows still claim wildcard/404
-status: open
+status: claimed
 priority: p3
 tags:
   - dns
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-27T01:54:58Z
 reported: 2026-11-27
+claim:
+  owner: capacity-engine
+  at: 2026-11-27T01:56:47Z
 ---
 
 Named in the finding: domain.md, pete/pete-api, wildcard/404
@@ -26,3 +29,6 @@ Named file 'domain.md' actually lives in /home/omri/meni — a real repo, but de
 That task's report closed DONE (commit 7377e6449ee6).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-27 claimed by capacity-engine
