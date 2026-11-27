@@ -2,7 +2,7 @@
 id: bt-9833
 title: bass-tuner check-fallback-cert.sh still probes composer.omrihefez.com, NXDOMAIN since
   bt-6531; retire or re-target it
-status: open
+status: claimed
 priority: p2
 tags:
   - bass-tuner
@@ -12,6 +12,9 @@ filed:
   owner: capacity-engine
   at: 2026-11-27T04:27:01Z
 reported: 2026-11-27
+claim:
+  owner: capacity-engine
+  at: 2026-11-27T04:30:05Z
 ---
 
 Named in the finding: check-fallback-cert.sh
@@ -28,3 +31,6 @@ That task's report closed DONE (commit 9fa9fb70ab97ca191d3bfb726d222054adae6439 
 PROVENANCE COMMIT DOES NOT RESOLVE HERE — `9fa9fb70ab97ca191d3bfb726d222054adae6439` does not exist in this repo. It is the evidence commit from the task/board that raised this line, not this one — don't spend time trying to `git show` it here. Treat the finding above as UNVERIFIED and check whether it is still true against this repo's CURRENT state before doing anything else (ce-5112).
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-27 claimed by capacity-engine
