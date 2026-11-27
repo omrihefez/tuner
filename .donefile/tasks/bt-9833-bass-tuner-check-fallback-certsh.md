@@ -2,7 +2,7 @@
 id: bt-9833
 title: bass-tuner check-fallback-cert.sh still probes composer.omrihefez.com, NXDOMAIN since
   bt-6531; retire or re-target it
-status: claimed
+status: done
 priority: p2
 tags:
   - bass-tuner
@@ -12,9 +12,24 @@ filed:
   owner: capacity-engine
   at: 2026-11-27T04:27:01Z
 reported: 2026-11-27
-claim:
-  owner: capacity-engine
-  at: 2026-11-27T04:30:05Z
+done:
+  at: 2026-11-27T04:33:16Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: e9cf1dc
+    verified: 2026-11-27T04:33:16Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && bash scripts/check-fallback-cert.sh &&
+      out=$(HOST=localhost bash scripts/check-fallback-cert.sh || true) && grep -q "^FAIL" <<<"$out"
+    exit: 0
+    at: 2026-11-27T04:33:16Z
+    log: evidence/bt-9833-2026-11-27T04-33-16Z-test.txt
+    sha256: 24e8f36b5258d10811fd499350ab560c2555987d3e7f51d862a8d2ebc36f4aa8
+    bytes: 256
+  - type: note
+    value: Wildcard CNAME deleted (bt-6531) so the fallback-cert probe is moot; check now asserts the
+      phantom host stays NXDOMAIN. Sabotaged HOST=localhost goes red; test-monitoring.sh passes.
 ---
 
 Named in the finding: check-fallback-cert.sh
@@ -34,3 +49,4 @@ DONE WHEN: the finding above is either fixed and verified, or shown not to be re
 
 ## Log
 - 2026-11-27 claimed by capacity-engine
+- 2026-11-27 done by capacity-engine/worker — commit e9cf1dc, test `cd /home/omri/projects/bass-tuner && bash scripts/check-fallback-cert.sh && out=$(HOST=localhost bash scripts/check-fallback-cert.sh || true) && grep -q "^FAIL" <<<"$out"` exit 0 (log: evidence/bt-9833-2026-11-27T04-33-16Z-test.txt)
