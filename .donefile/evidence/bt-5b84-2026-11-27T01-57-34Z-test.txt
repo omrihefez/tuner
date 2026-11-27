@@ -1,0 +1,2 @@
+$ f=/home/omri/inbox/meni-board-queue; [ -f $f/bt-5ed9-domain-md-pete-rows-stale.md ] || [ -f $f/drained/bt-5ed9-domain-md-pete-rows-stale.md ] || [ -f $f/done/bt-5ed9-domain-md-pete-rows-stale.md ] || grep -q "NXDOMAIN" /home/omri/meni/DOMAIN.md
+
