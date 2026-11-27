@@ -2,7 +2,7 @@
 id: bt-5ed9
 title: Flip check-public-surfaces.sh kidai/pete/pete-api/brain rows and DOMAIN.md rows to NXDOMAIN
   after wildcard apply
-status: open
+status: claimed
 priority: p3
 tags:
   - dns
@@ -11,6 +11,9 @@ filed:
   owner: capacity-engine/backfill
   at: 2026-11-27T01:44:28Z
 reported: 2026-11-26
+claim:
+  owner: capacity-engine
+  at: 2026-11-27T01:49:18Z
 ---
 
 Named in the finding: check-public-surfaces.sh, kidai/pete/pete-api/brain, domain.md
@@ -24,3 +27,6 @@ Discovered while working bt-6531, session `delete-omrihefez-com-wil-8ef2ea`, dis
 See 'reported' in this task's frontmatter for the date this finding was originally observed — read any relative time in the title above ("this morning", "currently", "still", "right now") as dated from THAT day, not from when this task was filed.
 
 DONE WHEN: the finding above is either fixed and verified, or shown not to be real — say which in the closing evidence.
+
+## Log
+- 2026-11-27 claimed by capacity-engine
