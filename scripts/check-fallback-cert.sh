@@ -18,7 +18,7 @@
 # it rather than replacing it.
 set -uo pipefail
 
-HOST="composer.omrihefez.com"
+HOST="${HOST:-composer.omrihefez.com}"
 EXPIRY_WARN_DAYS="${EXPIRY_WARN_DAYS:-21}"
 
 # bt-b130: days remaining between $1 (now, seconds since epoch) and $2 (an
@@ -62,26 +62,19 @@ check_cert_expiry() {
 }
 
 main() {
-  local exit_code=0 resp code
-
-  if ! resp=$(curl -sI --max-time 10 "https://$HOST/" 2>&1); then
-    echo "FAIL   $HOST TLS/connection error:"
-    echo "$resp"
+  # bt-9833: the *.omrihefez.com wildcard CNAME was deleted (bt-6531), so
+  # unclaimed subdomains no longer reach Vercel at all and there is no
+  # fallback cert to serve or expire. The invariant now is the inverse: the
+  # phantom host must NOT resolve. If it does, a wildcard (or a stray record)
+  # is back and the fallback-cert exposure bt-2b10/bt-b130 guarded returns.
+  # check_cert_expiry() is kept for that case: re-run it if this goes red.
+  local out
+  if out=$(getent hosts "$HOST" 2>&1) && [[ -n "$out" ]]; then
+    echo "FAIL   $HOST resolves again (wildcard/stray DNS record is back): $out"
+    echo "       expected NXDOMAIN since bt-6531; check cert expiry with: bash -c 'source $0; check_cert_expiry $HOST $EXPIRY_WARN_DAYS'"
     exit 1
   fi
-
-  code=$(echo "$resp" | head -1 | awk '{print $2}')
-  if [[ "$code" == "404" ]]; then
-    echo "OK     $HOST -> $code (clean fallback 404, cert valid)"
-  else
-    echo "CHECK  $HOST -> $code (expected 404)"
-    echo "$resp"
-    exit_code=1
-  fi
-
-  check_cert_expiry "$HOST" "$EXPIRY_WARN_DAYS" || exit_code=1
-
-  exit "$exit_code"
+  echo "OK     $HOST does not resolve (NXDOMAIN, wildcard stays deleted)"
 }
 
 # Sourced by test-monitoring.sh's fixture test to reach days_remaining()

@@ -57,8 +57,9 @@ check() {
   rm -f "$inbox"
 }
 
-# --- 1. check-fallback-cert.sh, sabotaged to hit a domain that can't 404 ---
-sed 's/^HOST=.*/HOST="invalid.invalid.bt-a942-selftest"/' \
+# --- 1. check-fallback-cert.sh, sabotaged to probe a host that DOES resolve
+#        (bt-9833: the check now asserts NXDOMAIN, so failure = it resolves) ---
+sed 's/^HOST=.*/HOST="localhost"/' \
   "$REPO/scripts/check-fallback-cert.sh" > "$TMP/check-fallback-cert-fail.sh"
 chmod +x "$TMP/check-fallback-cert-fail.sh"
 check fallback-cert-selftest "check-fallback-cert.sh (forced failure)" \
