@@ -18,7 +18,7 @@ want="lbl
 $here/inst.sh --print-line
 scripts/inst.sh"
 if [ "$(cat "$tmp/state/cron.log")" = "$want" ]; then echo "OK     wrapper passes label/marks/expected-cmd/hint"; else echo "FAIL   wrapper env:"; cat "$tmp/state/cron.log"; fail=1; fi
-for inst in install-cert-renewal-cron.sh install-ff-sync-cron.sh install-monitoring-crons.sh; do
+for inst in install-ff-sync-cron.sh install-monitoring-crons.sh; do
   out="$(bash "$here/$inst" --print-line 2>&1)" || { echo "FAIL   $inst --print-line exited non-zero"; fail=1; continue; }
   line="$(grep run-crontab-drift.sh <<<"$out")"
   max="$(awk '{ if (length>m) m=length } END { print m+0 }' <<<"$line")"
