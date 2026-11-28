@@ -2,7 +2,7 @@
 id: bt-dd27
 title: "Retire the renew-wildcard-cert.sh cron before its 2026-12-07 run: no wildcard record since
   bt-6531, yet it writes prod-zone TXT records for an unused cert"
-status: claimed
+status: done
 priority: p2
 tags:
   - monitoring
@@ -11,9 +11,27 @@ created: 2026-11-28
 filed:
   owner: meni-worker/board-refill-work-discov-76b686
   at: 2026-11-28T10:28:15Z
-claim:
-  owner: capacity-engine
-  at: 2026-11-28T10:36:21Z
+done:
+  at: 2026-11-28T10:42:45Z
+  by: capacity-engine/worker
+evidence:
+  - type: commit
+    value: a01b97b
+    verified: 2026-11-28T10:42:45Z
+  - type: test
+    cmd: cd /home/omri/projects/bass-tuner && N=$(crontab -l | grep -v "^[[:space:]]*#" | grep -c
+      "renew-wildcard-cert.sh\|wildcard-cert-renewal" || true); [ "$N" = "0" ] && [ -z
+      "$(scripts/install-cert-renewal-cron.sh --print-line | grep run-monitor)" ] && bash
+      scripts/run-crontab-drift.test.sh
+    exit: 0
+    at: 2026-11-28T10:42:44Z
+    log: evidence/bt-dd27-2026-11-28T10-42-44Z-test.txt
+    sha256: d74d75c9da247f3acb15103025ae5e22f637fe8f57b8e7cf096bba0086946e0c
+    bytes: 457
+  - type: note
+    value: Installer retired (schedules nothing, strips block); ran live with --force; bt-2593 dropped
+      as moot. Test 6b in test-monitoring.sh is the falsifiable control (old installer's
+      --print-line has 1 run-monitor line).
 ---
 
 Found by the 2026-11-28 discovery sweep.
@@ -30,3 +48,4 @@ DONE WHEN: the cert-renewal block is removed through its installer (`scripts/ins
 
 ## Log
 - 2026-11-28 claimed by capacity-engine
+- 2026-11-28 done by capacity-engine/worker — commit a01b97b, test `cd /home/omri/projects/bass-tuner && N=$(crontab -l | grep -v "^[[:space:]]*#" | grep -c "renew-wildcard-cert.sh\|wildcard-cert-renewal" || true); [ "$N" = "0" ] && [ -z "$(scripts/install-cert-renewal-cron.sh --print-line | grep run-monitor)" ] && bash scripts/run-crontab-drift.test.sh` exit 0 (log: evidence/bt-dd27-2026-11-28T10-42-44Z-test.txt)

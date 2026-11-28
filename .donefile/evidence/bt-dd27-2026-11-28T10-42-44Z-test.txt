@@ -1,0 +1,5 @@
+$ cd /home/omri/projects/bass-tuner && N=$(crontab -l | grep -v "^[[:space:]]*#" | grep -c "renew-wildcard-cert.sh\|wildcard-cert-renewal" || true); [ "$N" = "0" ] && [ -z "$(scripts/install-cert-renewal-cron.sh --print-line | grep run-monitor)" ] && bash scripts/run-crontab-drift.test.sh
+
+OK     wrapper passes label/marks/expected-cmd/hint
+OK     install-ff-sync-cron.sh drift line is 179 chars
+OK     install-monitoring-crons.sh drift line is 189 chars
