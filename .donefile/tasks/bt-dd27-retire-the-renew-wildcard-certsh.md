@@ -2,7 +2,7 @@
 id: bt-dd27
 title: "Retire the renew-wildcard-cert.sh cron before its 2026-12-07 run: no wildcard record since
   bt-6531, yet it writes prod-zone TXT records for an unused cert"
-status: open
+status: claimed
 priority: p2
 tags:
   - monitoring
@@ -11,6 +11,9 @@ created: 2026-11-28
 filed:
   owner: meni-worker/board-refill-work-discov-76b686
   at: 2026-11-28T10:28:15Z
+claim:
+  owner: capacity-engine
+  at: 2026-11-28T10:36:21Z
 ---
 
 Found by the 2026-11-28 discovery sweep.
@@ -24,3 +27,6 @@ WHY IT MATTERS, with a date: bt-113a measured 59d left on 2026-11-23, so the fir
 bt-2593 (blocked, waiting on that 12-07 run) and the dropped bt-f900 then confirm a renewal that should not happen.
 
 DONE WHEN: the cert-renewal block is removed through its installer (`scripts/install-cert-renewal-cron.sh`, so the `run-crontab-drift.sh wildcard-cert-renewal` line stops expecting it), bt-2593 is closed as moot, and no cron line references `renew-wildcard-cert.sh`. Check with `crontab -l` before 2026-12-07. If someone decides the wildcard cert IS still needed, write down which hostname terminates TLS on it, measured, and close this as not-real.
+
+## Log
+- 2026-11-28 claimed by capacity-engine
