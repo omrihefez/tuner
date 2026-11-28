@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
-# Installs the weekly renew-wildcard-cert.sh cron entry into the interactive
-# user's crontab (bt-03ea). The script itself is idempotent -- it only acts
+# RETIRED (bt-dd27, 2026-11-28): this installer now schedules NOTHING. It
+# removes the managed wildcard-cert-renewal block (renewal cron + its drift
+# check) from the crontab. Since bt-6531 there is no wildcard DNS record, every
+# live host is a proxied Cloudflare CNAME on Cloudflare's edge cert, and Vercel
+# serves only the apex with its own cert, so the *.omrihefez.com cert protects
+# nothing -- while the renewal script writes TXT records into the prod zone.
+# First retiring run needs --force (drop guard); later runs are no-ops.
+# To bring it back, restore CRON_LINES from git history (pre-bt-dd27).
+#
+# Historical description: installed the weekly renew-wildcard-cert.sh cron
+# entry into the interactive user's crontab (bt-03ea). The script itself is idempotent -- it only acts
 # once the cert is within RENEW_THRESHOLD_DAYS of expiry -- so a weekly cadence
 # is enough to always catch the renewal window with margin to spare.
 # Idempotent: re-running replaces the managed block instead of duplicating it.
@@ -55,38 +64,14 @@ done
 # Hardcoded to the canonical checkout, not derived from this script's own
 # location -- this installer must produce the same crontab line regardless of
 # whether it's run from the main checkout or a throwaway task worktree.
-SCRIPT="/home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh"
-RUNNER="/home/omri/projects/bass-tuner/scripts/run-monitor.sh"
 
 BEGIN_MARK="# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
 
-CRON_LINE="17 6 * * 1 $RUNNER cert-renewal $SCRIPT"
-
-# crontab drift check (ma-09c1) — hourly: warns via meni-notify if the live
-# wildcard-cert-renewal block has drifted from this installer. Lives inside
-# the very block it guards, same convention as meniapp/deploy/crontab.meniapp.
-# Calls the single shared implementation in meniapp (ma-c616 — no more
-# per-repo vendored copies) by absolute path — this entry runs on the meni
-# VPS, same box as meniapp, so the absolute path always resolves. Its
-# BLOCK_LABEL/BEGIN_MARK/END_MARK/EXPECTED_CONTENT_CMD/INSTALLER_HINT are now
-# passed explicitly rather than relying on the script's own defaults — those
-# defaults derive from the script's OWN location (meniapp), not this repo's,
-# once it's no longer a local vendored copy.
-# Same consolidation for the log-dir lint (ma-b531): shared implementation,
-# falling back to the pinned snapshot when the canonical is unreachable (a
-# hosted CI runner has no /home/omri at all, bt-a5ff) -- same
-# shim/vendored-pin convention this repo already uses for
-# crontab-install-lock.sh and stale-checkout-guard.sh. -r, not -f: this file
-# is read by `bash "$LINT_LOGDIRS"`, not exec'd, so readability is the
-# property that matters.
-LINT_LOGDIRS="${LINT_LOGDIRS_CANONICAL:-/home/omri/projects/meniapp/scripts/lint-crontab-logdirs.sh}"
-[ -r "$LINT_LOGDIRS" ] || LINT_LOGDIRS="$SCRIPT_DIR/lint-crontab-logdirs.vendored.sh"
+# Retired (bt-dd27): no cron lines. The renewal line and its drift-check line
+# were removed; the block is stripped from the crontab and not re-added.
+CRON_LINES=""
 DRIFT_STATE_DIR="/home/omri/.local/share/meni-hub/bass-tuner-crontab-drift"
-DRIFT_LINE="47 * * * * /home/omri/projects/bass-tuner/scripts/run-crontab-drift.sh wildcard-cert-renewal install-cert-renewal-cron.sh $DRIFT_STATE_DIR"
-
-CRON_LINES="$CRON_LINE
-$DRIFT_LINE"
 
 if [ "$PRINT_LINE" = "1" ]; then
   printf '%s\n' "$CRON_LINES"
@@ -100,7 +85,7 @@ fi
 # future line that bypasses the wrapper and redirects directly. The drift
 # check line above is a real cron-level redirect and IS subject to ma-5896,
 # hence its own `mkdir -p ... &&` prefix.
-if ! printf '%s\n' "$CRON_LINES" | bash "$LINT_LOGDIRS" -; then
+if [ -n "$CRON_LINES" ] && ! printf '%s\n' "$CRON_LINES" | bash "$LINT_LOGDIRS" -; then
   echo "[install-cert-renewal-cron] refusing to install: rendered lines failed the log-dir lint (see above)." >&2
   exit 1
 fi
@@ -182,9 +167,12 @@ STRIPPED_CRON="$(printf '%s\n' "$CURRENT_CRON" | sed "\\|^$BEGIN_MARK\$|,\\|^$EN
 # install-monitoring-crons.sh's own legacy pass. Matching the FULL line
 # against $CRON_LINES verbatim instead still cleans up an exact stray
 # duplicate but leaves anything that merely mentions the monitor alone.
-STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vFxf <(printf '%s\n' "$CRON_LINES") || true)"
-
-NEW_CRON="$(printf '%s\n%s\n%s\n%s\n' "$STRIPPED_CRON" "$BEGIN_MARK" "$CRON_LINES" "$END_MARK")"
+if [ -n "$CRON_LINES" ]; then
+  STRIPPED_CRON="$(printf '%s\n' "$STRIPPED_CRON" | grep -vFxf <(printf '%s\n' "$CRON_LINES") || true)"
+  NEW_CRON="$(printf '%s\n%s\n%s\n%s\n' "$STRIPPED_CRON" "$BEGIN_MARK" "$CRON_LINES" "$END_MARK")"
+else
+  NEW_CRON="$STRIPPED_CRON"
+fi
 
 if [ "$DRY_RUN" = "1" ]; then
   echo "[install-cert-renewal-cron] dry-run: crontab would become:" >&2
@@ -192,5 +180,5 @@ if [ "$DRY_RUN" = "1" ]; then
 else
   refuse_if_stale_crontab_render "$SCRIPT_DIR" "scripts/install-cert-renewal-cron.sh" "--print-line" "$CRON_LINES" "main" || exit 1
   printf '%s\n' "$NEW_CRON" | crontab -
-  echo "[install-cert-renewal-cron] installed Monday 06:17 cron for $SCRIPT (see: crontab -l)"
+  echo "[install-cert-renewal-cron] wildcard-cert-renewal block removed (retired, bt-dd27); see: crontab -l"
 fi

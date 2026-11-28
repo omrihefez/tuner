@@ -299,7 +299,7 @@ read_crontab_locked() {
 }
 
 CRON="$(read_crontab_locked)"
-for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-tunnel-liveness.sh" "renew-wildcard-cert.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
+for pat in "check-fallback-cert.sh" "audit-domains.sh" "check-tunnel-liveness.sh" "check-monitor-heartbeats.sh" "probe-bt-5fb7.sh"; do
   if grep -qF -- "$pat" <<<"$CRON"; then
     echo "OK     $pat is scheduled in crontab"
   else
@@ -353,67 +353,19 @@ else
   done
 fi
 
-# --- 6b. bt-3f5a: install-cert-renewal-cron.sh carries the same wholesale-
-#         rewrite defect class as install-monitoring-crons.sh did before
-#         bt-34af -- ported the same drop guard. First confirm the tracked
-#         installer's own --dry-run still schedules cert-renewal (mirrors
-#         step 6), then prove the guard actually fires: a sabotaged copy
-#         with $CRON_LINE's monitor name renamed must exit non-zero, name
-#         "cert-renewal", and leave the live crontab untouched -- that's the
-#         negative control, not just reading the code.
+# --- 6b. bt-dd27: install-cert-renewal-cron.sh is RETIRED -- it schedules
+#         nothing and strips the managed wildcard-cert-renewal block. (This
+#         replaces the old 6b/6c/6d/6f sections, which tested that installer's
+#         scheduling, drop guard, unmanaged-line survival and drift wiring.)
+#         Fake `crontab` on PATH, never the real one. Asserts: --print-line
+#         names no monitor; without --force the drop guard refuses (and names
+#         cert-renewal); with --force the managed block and its drift line are
+#         gone from the rendered crontab while unmanaged lines -- including a
+#         hand-added renew-wildcard-cert.sh line -- survive.
 CERT_INSTALLER="$REPO/scripts/install-cert-renewal-cron.sh"
-cert_dry_out="$("$CERT_INSTALLER" --dry-run 2>&1)"
-cert_dry_code=$?
-if [[ "$cert_dry_code" -ne 0 ]]; then
-  echo "FAIL   install-cert-renewal-cron.sh --dry-run exited $cert_dry_code (drop guard tripped?):"
-  echo "$cert_dry_out" | sed 's/^/         /'
-  FAIL=1
-else
-  cert_dry_block="$(printf '%s\n' "$cert_dry_out" | sed -n '/# BEGIN wildcard-cert-renewal/,/# END wildcard-cert-renewal/p')"
-  if grep -qF "renew-wildcard-cert.sh" <<<"$cert_dry_block"; then
-    echo "OK     renew-wildcard-cert.sh is in install-cert-renewal-cron.sh's managed block"
-  else
-    echo "FAIL   renew-wildcard-cert.sh is NOT in install-cert-renewal-cron.sh's managed block -- the next installer run would unschedule it"
-    FAIL=1
-  fi
-fi
-
-SABOTAGED="$TMP/install-cert-renewal-cron-sabotaged.sh"
-sed 's/cert-renewal \$SCRIPT"/cert-renewal-bt3f5a-selftest \$SCRIPT"/' "$CERT_INSTALLER" > "$SABOTAGED"
-chmod +x "$SABOTAGED"
-crontab_before="$(crontab -l 2>/dev/null || true)"
-sabotaged_out="$("$SABOTAGED" --dry-run 2>&1)"
-sabotaged_code=$?
-crontab_after="$(crontab -l 2>/dev/null || true)"
-if [[ "$sabotaged_code" -eq 0 ]]; then
-  echo "FAIL   install-cert-renewal-cron.sh drop guard: sabotaged run (renamed monitor) exited 0, expected non-zero"
-  FAIL=1
-elif ! grep -q "cert-renewal" <<<"$sabotaged_out"; then
-  echo "FAIL   install-cert-renewal-cron.sh drop guard: refused to install but didn't name cert-renewal:"
-  echo "$sabotaged_out" | sed 's/^/         /'
-  FAIL=1
-elif [[ "$crontab_before" != "$crontab_after" ]]; then
-  echo "FAIL   install-cert-renewal-cron.sh drop guard: live crontab changed during the negative control"
-  FAIL=1
-else
-  echo "OK     install-cert-renewal-cron.sh drop guard: refuses to drop cert-renewal, names it, crontab untouched"
-fi
-
-# --- 6c. bt-b38f: install-cert-renewal-cron.sh's cleanup used to grep -vF on
-#         the raw script basename, which struck ANY crontab line mentioning
-#         renew-wildcard-cert.sh anywhere -- not just its own managed block
-#         -- including a hand-written or differently-scheduled renewal
-#         someone added deliberately. Fixed to scope the match to this
-#         monitor's run-monitor.sh invocation, the way
-#         install-monitoring-crons.sh scopes its own cleanup.
-#
-#         Verified with a fake `crontab` shimmed onto PATH (never touches
-#         the real crontab) feeding a synthetic one that has an UNMANAGED
-#         renew-wildcard-cert.sh line alongside the managed block -- it must
-#         survive a --dry-run.
-FAKE_CRONTAB_BIN="$TMP/fakebin-bt-b38f"
-mkdir -p "$FAKE_CRONTAB_BIN"
-cat > "$FAKE_CRONTAB_BIN/crontab" <<'FAKECRONTABEOF'
+FAKE_CRONTAB_BIN_DD27="$TMP/fakebin-bt-dd27"
+mkdir -p "$FAKE_CRONTAB_BIN_DD27"
+cat > "$FAKE_CRONTAB_BIN_DD27/crontab" <<'FAKECRONTABEOF'
 #!/usr/bin/env bash
 if [[ "$1" == "-l" ]]; then
   cat "$FAKE_CRONTAB_FILE"
@@ -422,105 +374,42 @@ fi
 cat > "${FAKE_CRONTAB_FILE}.installed"
 exit 0
 FAKECRONTABEOF
-chmod +x "$FAKE_CRONTAB_BIN/crontab"
-
-FAKE_CRONTAB_FILE="$TMP/fake-crontab-bt-b38f.txt"
-cat > "$FAKE_CRONTAB_FILE" <<'FAKECRONEOF'
+chmod +x "$FAKE_CRONTAB_BIN_DD27/crontab"
+FAKE_CRONTAB_FILE="$TMP/fake-crontab-bt-dd27.txt"
+cat > "$FAKE_CRONTAB_FILE" <<FAKECRONEOF
+5 5 * * * /bin/true unrelated-bt-dd27-selftest
 # BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
-17 6 * * 1 /home/omri/projects/bass-tuner/scripts/run-monitor.sh cert-renewal /home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh
+17 6 * * 1 $REPO/scripts/run-monitor.sh cert-renewal $REPO/scripts/renew-wildcard-cert.sh
+47 * * * * $REPO/scripts/run-crontab-drift.sh wildcard-cert-renewal install-cert-renewal-cron.sh /tmp/x
 # END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
-0 3 * * * /home/omri/projects/bass-tuner/scripts/renew-wildcard-cert.sh --hand-written-unmanaged-bt-b38f-selftest
+0 3 * * * /bin/true --hand-added-bt-dd27-selftest
 FAKECRONEOF
 
-unmanaged_out="$(PATH="$FAKE_CRONTAB_BIN:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$CERT_INSTALLER" --dry-run 2>&1)"
-unmanaged_code=$?
-if [[ "$unmanaged_code" -ne 0 ]]; then
-  echo "FAIL   install-cert-renewal-cron.sh: --dry-run exited $unmanaged_code against a crontab with an unmanaged renewal line:"
-  echo "$unmanaged_out" | sed 's/^/         /'
+dd27_print="$("$CERT_INSTALLER" --print-line 2>&1)"
+dd27_guard_out="$(PATH="$FAKE_CRONTAB_BIN_DD27:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$CERT_INSTALLER" --dry-run 2>&1)"
+dd27_guard_code=$?
+dd27_out="$(PATH="$FAKE_CRONTAB_BIN_DD27:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$CERT_INSTALLER" --dry-run --force 2>&1)"
+dd27_code=$?
+if grep -q 'run-monitor' <<<"$dd27_print"; then
+  echo "FAIL   install-cert-renewal-cron.sh --print-line still schedules a monitor (retired, bt-dd27)"
   FAIL=1
-elif ! grep -q "hand-written-unmanaged-bt-b38f-selftest" <<<"$unmanaged_out"; then
-  echo "FAIL   install-cert-renewal-cron.sh: cleanup deleted an UNMANAGED renew-wildcard-cert.sh line outside its own block"
+elif [[ "$dd27_guard_code" -eq 0 ]] || ! grep -q "cert-renewal" <<<"$dd27_guard_out"; then
+  echo "FAIL   install-cert-renewal-cron.sh: drop guard did not refuse (code $dd27_guard_code) without --force"
   FAIL=1
-else
-  echo "OK     install-cert-renewal-cron.sh: unmanaged renew-wildcard-cert.sh line survives the installer"
-fi
-
-# --- 6d. ma-09c1: install-cert-renewal-cron.sh now also carries its own
-#         drift check (check-crontab-drift.sh) inside the same managed block,
-#         sourced from the installer's own --print-line output rather than a
-#         second tracked file. Prove the wiring end to end with a fully
-#         sandboxed crontab/HOME (never touches the real crontab or sends a
-#         real alert): clean when the "live" block matches --print-line
-#         verbatim, drifted (and exit non-zero) when it doesn't. Calls
-#         meniapp's single shared implementation by absolute path (ma-c616 —
-#         no more local vendored copy), so BLOCK_LABEL/BEGIN_MARK/END_MARK/
-#         EXPECTED_CONTENT_CMD are passed explicitly below.
-DRIFT_CHECK="/home/omri/projects/meniapp/scripts/check-crontab-drift.sh"
-DRIFT_BEGIN_MARK="# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
-DRIFT_END_MARK="# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
-DRIFT_TMP="$(mktemp -d)"
-DRIFT_FAKE_HOME="$DRIFT_TMP/home"
-mkdir -p "$DRIFT_FAKE_HOME/meni/bin"
-cat > "$DRIFT_FAKE_HOME/meni/bin/meni-notify" <<'EOF'
-#!/usr/bin/env bash
-echo "$*" >>"$NOTIFY_CALLS"
-exit 0
-EOF
-chmod +x "$DRIFT_FAKE_HOME/meni/bin/meni-notify"
-DRIFT_NOTIFY_CALLS="$DRIFT_TMP/notify.calls"
-
-DRIFT_CRONTAB_STUB="$DRIFT_TMP/crontab-stub.sh"
-write_drift_live() {
-  # $1 = body to wrap in the wildcard-cert-renewal markers
-  {
-    echo '#!/usr/bin/env bash'
-    echo "cat <<'DRIFTCRONEOF'"
-    echo "# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
-    printf '%s\n' "$1"
-    echo "# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)"
-    echo "DRIFTCRONEOF"
-  } > "$DRIFT_CRONTAB_STUB"
-  chmod +x "$DRIFT_CRONTAB_STUB"
-}
-
-CURRENT_PRINT_LINE="$("$CERT_INSTALLER" --print-line)"
-
-write_drift_live "$CURRENT_PRINT_LINE"
-: >"$DRIFT_NOTIFY_CALLS"
-clean_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" \
-  BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK="$DRIFT_BEGIN_MARK" END_MARK="$DRIFT_END_MARK" \
-  EXPECTED_CONTENT_CMD="$CERT_INSTALLER --print-line" INSTALLER_HINT="scripts/install-cert-renewal-cron.sh" \
-  "$DRIFT_CHECK" 2>&1)"
-clean_code=$?
-if [[ "$clean_code" -ne 0 ]]; then
-  echo "FAIL   check-crontab-drift.sh: exited $clean_code against a live block matching --print-line verbatim:"
-  echo "$clean_out" | sed 's/^/         /'
+elif [[ "$dd27_code" -ne 0 ]]; then
+  echo "FAIL   install-cert-renewal-cron.sh --dry-run --force exited $dd27_code:"
+  echo "$dd27_out" | sed 's/^/         /'
   FAIL=1
-elif [[ -s "$DRIFT_NOTIFY_CALLS" ]]; then
-  echo "FAIL   check-crontab-drift.sh: meni-notify fired on a clean match ($(cat "$DRIFT_NOTIFY_CALLS"))"
+elif grep -q 'BEGIN wildcard-cert-renewal\|run-monitor.sh cert-renewal\|run-crontab-drift.sh wildcard' <<<"$dd27_out"; then
+  echo "FAIL   install-cert-renewal-cron.sh: managed block NOT stripped:"
+  echo "$dd27_out" | sed 's/^/         /'
+  FAIL=1
+elif ! grep -q 'unrelated-bt-dd27-selftest' <<<"$dd27_out" || ! grep -q 'hand-added-bt-dd27-selftest' <<<"$dd27_out"; then
+  echo "FAIL   install-cert-renewal-cron.sh: removed an unmanaged line outside its block"
   FAIL=1
 else
-  echo "OK     check-crontab-drift.sh: clean when the live block matches install-cert-renewal-cron.sh --print-line"
+  echo "OK     install-cert-renewal-cron.sh: retired -- schedules nothing, guard refuses w/o --force, --force strips block and keeps unmanaged lines"
 fi
-
-write_drift_live "$(sed 's/17 6/99 6/' <<<"$CURRENT_PRINT_LINE")"
-: >"$DRIFT_NOTIFY_CALLS"
-drift_out="$(HOME="$DRIFT_FAKE_HOME" NOTIFY_CALLS="$DRIFT_NOTIFY_CALLS" CRONTAB_CMD="$DRIFT_CRONTAB_STUB" \
-  BLOCK_LABEL=wildcard-cert-renewal BEGIN_MARK="$DRIFT_BEGIN_MARK" END_MARK="$DRIFT_END_MARK" \
-  EXPECTED_CONTENT_CMD="$CERT_INSTALLER --print-line" INSTALLER_HINT="scripts/install-cert-renewal-cron.sh" \
-  "$DRIFT_CHECK" 2>&1)"
-drift_code=$?
-if [[ "$drift_code" -eq 0 ]]; then
-  echo "FAIL   check-crontab-drift.sh: exited 0 against a deliberately drifted live block"
-  FAIL=1
-elif ! grep -q "wildcard-cert-renewal crontab drift" "$DRIFT_NOTIFY_CALLS"; then
-  echo "FAIL   check-crontab-drift.sh: didn't notify on drift ($(cat "$DRIFT_NOTIFY_CALLS" 2>/dev/null))"
-  FAIL=1
-else
-  echo "OK     check-crontab-drift.sh: detects drift and notifies, naming wildcard-cert-renewal"
-fi
-
-rm -rf "$DRIFT_TMP"
 
 # --- 6e. bt-d428: install-monitoring-crons.sh's legacy cleanup pass carried
 #         the same defect shape bt-b38f fixed in install-cert-renewal-cron.sh
@@ -575,54 +464,6 @@ elif [[ "$(grep -cF "5 6 * * * $RUNNER fallback-cert $REPO/scripts/check-fallbac
   FAIL=1
 else
   echo "OK     install-monitoring-crons.sh: unmanaged differently-scheduled line survives, exact stray duplicate still deduped"
-fi
-
-# --- 6f. bt-9777: install-cert-renewal-cron.sh's OWN cleanup line (separate
-#         from the raw-basename match bt-b38f already fixed, exercised in 6c
-#         above) still matched crontab lines on the SUBSTRING
-#         "run-monitor.sh cert-renewal ", which struck any line merely
-#         mentioning that monitor invocation -- including a hand-added,
-#         differently-scheduled cert-renewal line outside its own managed
-#         block. Fixed the same way as 6e/bt-d428: match the FULL line
-#         against $CRON_LINES verbatim (grep -vFxf) instead of a fragment.
-#
-#         Verified with a fake `crontab` shimmed onto PATH (never touches the
-#         real crontab) feeding a synthetic one that has, outside the managed
-#         block, an unmanaged cert-renewal line on a different schedule --
-#         must survive a --dry-run.
-FAKE_CRONTAB_BIN_9777="$TMP/fakebin-bt-9777"
-mkdir -p "$FAKE_CRONTAB_BIN_9777"
-cat > "$FAKE_CRONTAB_BIN_9777/crontab" <<'FAKECRONTABEOF'
-#!/usr/bin/env bash
-if [[ "$1" == "-l" ]]; then
-  cat "$FAKE_CRONTAB_FILE"
-  exit 0
-fi
-cat > "${FAKE_CRONTAB_FILE}.installed"
-exit 0
-FAKECRONTABEOF
-chmod +x "$FAKE_CRONTAB_BIN_9777/crontab"
-
-FAKE_CRONTAB_FILE="$TMP/fake-crontab-bt-9777.txt"
-cat > "$FAKE_CRONTAB_FILE" <<FAKECRONEOF
-# BEGIN wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
-17 6 * * 1 $RUNNER cert-renewal $REPO/scripts/renew-wildcard-cert.sh
-47 * * * * mkdir -p $HOME/.local/share/meni-hub/bass-tuner-crontab-drift && $REPO/scripts/check-crontab-drift.sh >> $HOME/.local/share/meni-hub/bass-tuner-crontab-drift/cron.log 2>&1
-# END wildcard-cert-renewal (scripts/install-cert-renewal-cron.sh)
-0 3 * * * $RUNNER cert-renewal $REPO/scripts/renew-wildcard-cert.sh --hand-added-different-schedule-bt-9777-selftest
-FAKECRONEOF
-
-n9777_out="$(PATH="$FAKE_CRONTAB_BIN_9777:$PATH" FAKE_CRONTAB_FILE="$FAKE_CRONTAB_FILE" "$CERT_INSTALLER" --dry-run 2>&1)"
-n9777_code=$?
-if [[ "$n9777_code" -ne 0 ]]; then
-  echo "FAIL   install-cert-renewal-cron.sh: --dry-run exited $n9777_code against a crontab with an unmanaged cert-renewal line:"
-  echo "$n9777_out" | sed 's/^/         /'
-  FAIL=1
-elif ! grep -q "hand-added-different-schedule-bt-9777-selftest" <<<"$n9777_out"; then
-  echo "FAIL   install-cert-renewal-cron.sh: cleanup deleted an UNMANAGED, differently-scheduled cert-renewal line outside its own block"
-  FAIL=1
-else
-  echo "OK     install-cert-renewal-cron.sh: unmanaged differently-scheduled cert-renewal line survives the installer"
 fi
 
 # --- 7. bt-6492: check-heartbeat-liveness.sh (watches check-monitor-
